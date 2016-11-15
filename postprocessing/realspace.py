@@ -13,7 +13,7 @@ from pyutils import utils
 from pyutils.utils import linear_grid, logx_grid
 from atooms import trajectory
 from .correlation import Correlation, adjust_skip, acf, gcf, gcf_offset, _setup_t_grid
-import .correlation
+from . import correlation
 
 
 def partition(inp, nbl):
