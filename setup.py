@@ -9,6 +9,7 @@ setup(name='postprocessing',
       author='Daniele Coslovich',
       author_email='daniele.coslovich@univ-montp2.fr',
       namespace_packages = ['postprocessing'],
+      install_requires=['argh'],
       packages=[],
       scripts=[]
      )
