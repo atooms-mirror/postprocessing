@@ -10,3 +10,4 @@ atooms/_version.py
 dist
 build
 MANIFEST
+*.egg-info
