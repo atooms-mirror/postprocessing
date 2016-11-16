@@ -1,6 +1,7 @@
 """Post processing API."""
 
 import postprocessing
+from postprocessing.partial import Partial
 from atooms.trajectory import Trajectory
 from pyutils.utils import linear_grid, logx_grid
 
@@ -50,3 +51,9 @@ def fskt(fname, time_target=1e9, t_samples=60, k_min=7.0, k_max=8.0, k_samples=1
     cf.do()
     cf.do_species(tag_by_name)
     trajectory.close()
+
+def gr(input_file):
+    """Radial distribution function."""
+    with Trajectory(input_file) as th:
+        cf = Partial(postprocessing.RadialDistributionFunction, [1, 2], th)
+        cf.do()
