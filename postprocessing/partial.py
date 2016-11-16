@@ -3,12 +3,16 @@
 
 from .correlation import filter_species
 
-"""Fake decorator to compute partial correlation functions.
-Uses filters internally"""
+"""
+Fake decorator to compute partial correlation functions.
+
+It uses filters internally.
+"""
 
 class Partial(object):
 
     def __init__(self, corr_cls, species, *args, **kwargs):
+        """The first positional argument must be the trajectory instance."""
         self._corr_cls = corr_cls
         self._species = species
         self._args = args
