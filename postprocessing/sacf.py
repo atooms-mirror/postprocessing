@@ -5,10 +5,10 @@
 
 import sys
 import numpy
-from pyutils.utils import linear_grid, logx_grid
+from .helpers import linear_grid, logx_grid
 from atooms import trajectory
 from .correlation import Correlation
-import .correlation
+from . import correlation
 
 correlation.LOG_LEVEL = 'INFO'
 

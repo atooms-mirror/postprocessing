@@ -10,8 +10,9 @@ import warnings
 from collections import defaultdict
 
 from pyutils import utils
-from pyutils.utils import linear_grid, logx_grid
+from pyutils.utils import feqc
 from atooms import trajectory
+from .helpers import linear_grid, logx_grid
 from .correlation import Correlation, adjust_skip, acf, gcf, gcf_offset, _setup_t_grid
 from . import correlation
 
@@ -127,8 +128,6 @@ class CollectiveOverlap(Correlation):
             return collective_overlap(x, y, side, self.a_square).sum() / float(x.shape[0])
         self.grid, self.value = gcf_offset(f, self._discrete_tgrid, self.skip, self.trajectory.steps, self._pos)
         self.grid = [ti * self.trajectory.timestep for ti in self.grid]
-
-from pyutils.utils import feqc
 
 class SelfOverlap(Correlation):
     
@@ -267,7 +266,6 @@ class OverlapDistribution(Correlation):
 
 def block_matrix(n, weight, max_size):
     """ Determine optimal partitioning of a nxn matrix into blocks of maximal area max_size """
-    from pyutils.utils import linear_grid
     nbl = max(1, int(n / float(max_size)**0.5)) * weight
     nbl = min(nbl, n)
     grid = linear_grid(0, n, nbl)

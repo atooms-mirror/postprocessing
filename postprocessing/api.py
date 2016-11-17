@@ -3,9 +3,7 @@
 import postprocessing
 from postprocessing.partial import Partial
 from atooms.trajectory import Trajectory
-from pyutils.utils import linear_grid, logx_grid
-
-
+from .helpers import linear_grid, logx_grid
 
 def gr(input_file):
     """Radial distribution function."""

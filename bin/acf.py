@@ -3,9 +3,9 @@
 import sys
 import numpy
 import postprocessing
-from pyutils.utils import linear_grid, logx_grid
+from postprocessing.helpers import linear_grid, logx_grid
 
-def main(fname ):
+def main(fname):
     x = numpy.loadtxt(sys.stdin if fname=='-' else fname, unpack=True)
     t_grid = range(0, len(x), 10)
     t = range(len(x))

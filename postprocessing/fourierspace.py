@@ -8,8 +8,8 @@ import random
 import warnings
 from collections import defaultdict
 
-from pyutils.utils import linear_grid, logx_grid, log_grid
-from correlation import Correlation, adjust_skip, _setup_t_grid
+from .helpers import linear_grid, logx_grid
+from .correlation import Correlation, adjust_skip, _setup_t_grid
 
 """Post processing code."""
 
@@ -221,7 +221,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
         # Before setting up the time grid, we need to check periodicity over blocks
         self.trajectory._check_block_period()
         if tgrid is None:
-            self.grid[1] = [0.0] + log_grid(trajectory.timestep, trajectory.time_total * 0.75, tsamples)
+            self.grid[1] = [0.0] + logx_grid(trajectory.timestep, trajectory.time_total * 0.75, tsamples)
         self._discrete_tgrid = _setup_t_grid(trajectory, self.grid[1])
 
         # TODO: Can this be moved up?
