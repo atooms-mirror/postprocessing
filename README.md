@@ -1,7 +1,7 @@
 Post processing
 ==================
 
-Tools to post processing molecular simulation data.
+Tools to analyze molecular simulation data.
 
 Getting started
 ---------------
