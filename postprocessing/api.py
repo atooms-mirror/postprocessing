@@ -36,7 +36,7 @@ def vacf(fname, time_target=1.0, t_samples=30, func=linear_grid):
         for species in [1, 2]:
             cf = Partial(postprocessing.VelocityAutocorrelation, [species], trajectory, t_grid)
             cf.do()
-        cf = postprocessing.VelocityAutocorrelation, trajectory, t_grid)
+        cf = postprocessing.VelocityAutocorrelation(trajectory, t_grid)
         cf.do()
 
 def fkt(fname, time_target=1e9, t_samples=60, k_min=7.0, k_max=7.0, k_samples=1, dk=0.1, tag_by_name=False, func=logx_grid):
