@@ -26,7 +26,7 @@ def msd(input_file, msd_target=3.0, time_target=-1.0, t_samples=30, norigins=50,
             cf = Partial(postprocessing.MeanSquareDisplacement, [species],
                          th, tgrid=t_grid, norigins=norigins, sigma=sigma)
             cf.do()
-        cf = postprocessing.MeanSquareDisplacement(th, t_grid, skip, sigma)
+        cf = postprocessing.MeanSquareDisplacement(th, tgrid=t_grid, norigins=norigins, sigma=sigma)
         cf.do()
 
 def vacf(fname, time_target=1.0, t_samples=30, func=linear_grid):

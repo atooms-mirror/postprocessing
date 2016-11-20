@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import glob
 from setuptools import setup, find_packages
 
 setup(name='postprocessing',
@@ -10,5 +11,5 @@ setup(name='postprocessing',
       author_email='daniele.coslovich@univ-montp2.fr',
       packages=find_packages(exclude=('tests', 'docs')),
       install_requires=['argh'],
-      scripts=[]
+      scripts=glob.glob(os.path.join('bin', '*.py'))
      )

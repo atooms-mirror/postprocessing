@@ -1,9 +1,6 @@
-PROJECT = sample
+PROJECT = postprocessing
 
 .PHONY: all dist test version install clean
-
-all:
-	cd $PROJECT; make; cd ..
 
 dist:
 	python setup.py sdist
