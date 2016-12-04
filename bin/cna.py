@@ -17,11 +17,11 @@ import os
 import sys
 import argparse
 from collections import defaultdict
+
 from atooms.trajectory import Trajectory, TrajectoryNeighbors
-from atooms.plugins.voronoi import TrajectoryVoronoi
 from atooms.utils import add_first_last_skip, fractional_slice
 from pyutils.histogram import Histogram
-from atooms.plugins.neighbors import all_neighbors, get_neighbors
+from postprocessing.neighbors import get_neighbors
 
 
 def cna(particle, neighbors):
@@ -49,9 +49,6 @@ def cna(particle, neighbors):
             #print 'cna (%s,%s): %d_%d_%d' % (i,j,1,len(common),bonds)
             data.append('%d_%d_%d' % (1,len(common),bonds))
     return data
-
-def main(t, tn):
-    cna(t[0].particle, [v.neighbors for v in tn[0].voronoi])
 
 parser = argparse.ArgumentParser()
 parser = add_first_last_skip(parser, what=['first', 'last'])
