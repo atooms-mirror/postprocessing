@@ -1,8 +1,6 @@
 # This file is part of atooms
 # Copyright 2010-2014, Daniele Coslovich
 
-#!/usr/bin/env python
-
 import sys
 import numpy
 import math
