@@ -5,9 +5,10 @@ from postprocessing.partial import Partial
 from atooms.trajectory import Trajectory
 from .helpers import linear_grid, logx_grid
 
-def gr(input_file):
+def gr(input_file, grandcanonical=False):
     """Radial distribution function."""
     with Trajectory(input_file) as th:
+        th._grandcanonical = grandcanonical
         cf = Partial(postprocessing.RadialDistributionFunction, [1, 2], th)
         cf.do()
 
