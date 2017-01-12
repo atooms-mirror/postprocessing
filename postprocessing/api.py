@@ -12,6 +12,13 @@ def gr(input_file, grandcanonical=False):
         cf = Partial(postprocessing.RadialDistributionFunction, [1, 2], th)
         cf.do()
 
+def sk(fname, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30, grandcanonical=False):
+    """Structure factor."""
+    with Trajectory(fname) as trajectory:
+        k_grid = linear_grid(kmin, kmax, ksamples)
+        cf = postprocessing.StructureFactor(trajectory, k_grid)
+        cf.do()
+
 def msd(input_file, msd_target=3.0, time_target=-1.0, t_samples=30, norigins=50, sigma=1.0, func=linear_grid):
     """Mean square displacement."""
     with Trajectory(input_file) as th:
@@ -40,22 +47,20 @@ def vacf(fname, time_target=1.0, t_samples=30, func=linear_grid):
         cf = postprocessing.VelocityAutocorrelation(trajectory, t_grid)
         cf.do()
 
-def fkt(fname, time_target=1e9, t_samples=60, k_min=7.0, k_max=7.0, k_samples=1, dk=0.1, tag_by_name=False, func=logx_grid):
+def fkt(fname, time_target=1e9, tsamples=60, kmin=7.0, kmax=7.0, ksamples=1, dk=0.1, tag_by_name=False, func=logx_grid):
     """Total intermediate scattering function."""
-    trajectory = Trajectory(fname)
-    t_grid = [0.0] + func(trajectory.timestep, time_target, t_samples)
-    k_grid = linear_grid(k_min, k_max, k_samples)
-    cf = postprocessing.IntermediateScattering(trajectory, k_grid, t_grid)
-    cf.do()
-    cf.do_species(tag_by_name)
-    trajectory.close()
+    with Trajectory(fname) as trajectory:
+        t_grid = [0.0] + func(trajectory.timestep, time_target, tsamples)
+        k_grid = linear_grid(kmin, kmax, ksamples)
+        cf = postprocessing.IntermediateScattering(trajectory, k_grid, t_grid)
+        cf.do()
+        cf.do_species(tag_by_name)
 
-def fskt(fname, time_target=1e9, t_samples=60, k_min=7.0, k_max=8.0, k_samples=1, dk=0.1, tag_by_name=False, func=logx_grid):
+def fskt(fname, time_target=1e9, tsamples=60, kmin=7.0, kmax=8.0, ksamples=1, dk=0.1, tag_by_name=False, func=logx_grid):
     """Self intermediate scattering function."""
-    trajectory = Trajectory(fname)
-    t_grid = [0.0] + func(trajectory.timestep, time_target, t_samples)
-    k_grid = linear_grid(k_min, k_max, k_samples)
-    cf = postprocessing.SelfIntermediateScattering(trajectory, k_grid, t_grid)
-    cf.do()
-    cf.do_species(tag_by_name)
-    trajectory.close()
+    with Trajectory(fname) as trajectory:
+        t_grid = [0.0] + func(trajectory.timestep, time_target, tsamples)
+        k_grid = linear_grid(kmin, kmax, ksamples)
+        cf = postprocessing.SelfIntermediateScattering(trajectory, k_grid, t_grid)
+        cf.do()
+        cf.do_species(tag_by_name)
