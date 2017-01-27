@@ -26,6 +26,17 @@ class Limited(object):
                 s.neighbors[i] = s.neighbors[i][0:min(self.max_neighbors, numn)]
         return s
 
+
+class TrajectoryNeighbors(trj.TrajectoryXYZ):
+
+    """Neighbors trajectory."""
+
+    def __init__(self, filename, mode='r', offset=1):
+        super(TrajectoryNeighbors, self).__init__(filename, mode=mode)
+        self._offset = offset # neighbors produced by voronoi are indexed from 1
+        self.callback_write['neighbors'] = lambda x: str(x.neighbors)[1:-1].replace(',', '')
+        self.fmt = ['neighbors']
+
 def get_neighbors(f, args, tag):
     if len(args.neigh_file) == 0:
         cmd = 'neigh.x -p %s %s %s' % (tag, args.neigh, f)
@@ -49,6 +60,28 @@ def get_neighbors(f, args, tag):
         tnl = tn
     return tnl, desc
 
+def compute_neighbors(fileinp, rcut=[[1.4, 1.4], [1.4, 1.4]]):
+    import copy
+    import neighbors_module
+
+    fileout = '/dev/stdout'
+    with trj.Trajectory(fileinp) as t, \
+         TrajectoryNeighbors(fileout, 'w') as tout:
+        npart = len(t[0].particle)
+        nmax = 200
+        nn = numpy.zeros(npart, dtype=numpy.int32)
+        neigh = numpy.zeros((npart, nmax), dtype=numpy.int32, order='F')
+        for i, s in enumerate(t):
+            pos = s.dump('pos').transpose() # copy is not needed, order not needed.
+            ids = [p.id for p in s.particle]
+            box = s.cell.side
+            rcut = numpy.asarray(rcut)
+            neighbors_module.neighbors_module.neighbors(box, pos, ids, rcut, nn, neigh)
+            for j, p in enumerate(s.particle):
+                p.neighbors = neigh[j, 0:nn[j]]
+            #print nn[0], neigh[0:nn[0], 0]
+            tout.write_sample(s, t.steps[i])
+
 def all_neighbors(s):
     neigh = []
     for i, pi in enumerate(s.particle):
@@ -67,5 +100,6 @@ def main(t, kcut=1.0):
                     print i, j
 
 if __name__ == '__main__':    
-    main(trj.TrajectoryXYZ(sys.argv[1]))
+    compute_neighbors(sys.argv[1])
+    #main(trj.TrajectoryXYZ(sys.argv[1]))
     
