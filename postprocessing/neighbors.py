@@ -79,7 +79,6 @@ def compute_neighbors(fileinp, rcut=[[1.4, 1.4], [1.4, 1.4]]):
             neighbors_module.neighbors_module.neighbors(box, pos, ids, rcut, nn, neigh)
             for j, p in enumerate(s.particle):
                 p.neighbors = neigh[j, 0:nn[j]]
-            #print nn[0], neigh[0:nn[0], 0]
             tout.write_sample(s, t.steps[i])
 
 def all_neighbors(s):
