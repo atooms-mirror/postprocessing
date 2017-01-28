@@ -38,6 +38,8 @@ class TrajectoryNeighbors(trj.TrajectoryXYZ):
         super(TrajectoryNeighbors, self).__init__(filename, mode=mode)
         self._offset = offset # neighbors produced by voronoi are indexed from 1
         self.fmt = ['neighbors']
+        # This is necessary to format integer numpy array correctly
+        self._fmt_float = True
 
 def get_neighbors(f, args, tag):
     if len(args.neigh_file) == 0:
