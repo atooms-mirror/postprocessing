@@ -26,6 +26,9 @@ class Limited(object):
                 s.neighbors[i] = s.neighbors[i][0:min(self.max_neighbors, numn)]
         return s
 
+class PrettyList(list):
+    def __str__(self):
+        return ' '.join([str(x) for x in self])
 
 class TrajectoryNeighbors(trj.TrajectoryXYZ):
 
@@ -34,7 +37,6 @@ class TrajectoryNeighbors(trj.TrajectoryXYZ):
     def __init__(self, filename, mode='r', offset=1):
         super(TrajectoryNeighbors, self).__init__(filename, mode=mode)
         self._offset = offset # neighbors produced by voronoi are indexed from 1
-        self.callback_write['neighbors'] = lambda x: str(x.neighbors)[1:-1].replace(',', '')
         self.fmt = ['neighbors']
 
 def get_neighbors(f, args, tag):
