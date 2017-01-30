@@ -7,7 +7,7 @@ class Neighbors_Module(f90wrap.runtime.FortranModule):
     Module neighbors_module
     
     
-    Defined at neighbors.f90 lines 1-43
+    Defined at neighbors.f90 lines 1-42
     
     """
     @staticmethod
@@ -16,7 +16,7 @@ class Neighbors_Module(f90wrap.runtime.FortranModule):
         neighbors(box, pos, ids, rcut, nn, neigh)
         
         
-        Defined at neighbors.f90 lines 13-43
+        Defined at neighbors.f90 lines 13-42
         
         Parameters
         ----------
