@@ -2,14 +2,19 @@
 
 import os
 import glob
-from setuptools import setup, find_packages
+
+# try:
+#     from setuptools import setup, find_packages
+# except ImportError:
+#     from distutils.core import setup
+
+from distutils.core import setup
 
 setup(name='postprocessing',
       version=0.1,
       description='Post processing tools for molecular simulations',
       author='Daniele Coslovich',
       author_email='daniele.coslovich@univ-montp2.fr',
-      packages=find_packages(exclude=('tests', 'docs')),
-      install_requires=['argh'],
+      packages=['postprocessing'],
       scripts=glob.glob(os.path.join('bin', '*.py'))
      )
