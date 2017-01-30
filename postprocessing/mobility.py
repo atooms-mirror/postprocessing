@@ -7,7 +7,6 @@ import os, sys
 from math import acos, sqrt
 import numpy
 from atooms import trajectory as trj
-import .realspace
 
 def mobility(f, fn, tau):
 
