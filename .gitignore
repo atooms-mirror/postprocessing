@@ -13,4 +13,3 @@ MANIFEST
 *.egg-info
 
 .f2py_f2cmap
-*.so
