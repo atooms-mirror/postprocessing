@@ -15,4 +15,4 @@ develop:
 	python setup.py develop --user
 
 clean:
-	rm -f $PROJECT/*pyc  $PROJECT/*/*pyc tests/*pyc
+	rm -f ${PROJECT}/*pyc  ${PROJECT}/*/*pyc tests/*pyc
