@@ -3,8 +3,8 @@ NAME = neighbors
 .SUFFIXES: .f90
 
 .f90.o:
-#	gfortran -O3 -ffast-math -finline-functions -finline-small-functions -fPIC -c $< -o $@
-	gfortran -O3 -pg -fbounds-check -fPIC -c $< -o $@
+	gfortran -O3 -ffast-math -finline-functions -finline-small-functions -fPIC -c $< -o $@
+#	gfortran -O3 -pg -fbounds-check -fPIC -c $< -o $@
 
 all: ${NAME}.o wrap clean
 
