@@ -1,6 +1,6 @@
 PROJECT = postprocessing
 
-.PHONY: all dist test version install clean
+.PHONY: all dist test install clean
 
 dist:
 	python setup.py sdist
@@ -8,7 +8,7 @@ dist:
 test:
 	python -m unittest discover -s tests
 
-install: version
+install:
 	python setup.py install --user
 
 develop:
