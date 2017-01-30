@@ -3,12 +3,10 @@
 import os
 import glob
 
-# try:
-#     from setuptools import setup, find_packages
-# except ImportError:
-#     from distutils.core import setup
-
-from distutils.core import setup
+try:
+    from setuptools import setup, find_packages
+except ImportError:
+    from distutils.core import setup
 
 setup(name='postprocessing',
       version=0.1,
