@@ -16,6 +16,7 @@ For instance, icosahedral bonds are 1,5,5.
 import os
 import sys
 import argparse
+import numpy
 from collections import defaultdict
 
 from atooms.trajectory import Trajectory, TrajectoryNeighbors
@@ -52,11 +53,12 @@ def cna(particle, neighbors):
 
 parser = argparse.ArgumentParser()
 parser = add_first_last_skip(parser, what=['first', 'last'])
-parser.add_argument('-n',              dest='neigh_file', type=str, default='', help='neighbors file')
+parser.add_argument('-n',              dest='neigh_file', help='neighbors file')
 parser.add_argument('-N', '--neighbor',dest='neigh', type=str, default='', help='flags for neigh.x command')
 parser.add_argument('-V', '--neighbor-voronoi',dest='neigh_voronoi', action='store_true', help='neigh_file is of Voronoi type')
 parser.add_argument('-M', '--neighbor-max',dest='neigh_limit', type=int, default=None, help='take up to *limit* neighbors (assuming they are ordered)')
-parser.add_argument('-s', '--signature',dest='signature', action='store', default=None, help='signature')
+parser.add_argument(      '--rcut', dest='rcut', help='cutoff radii as comma separated string, ex r11,r12,r22')
+parser.add_argument('-s', '--signature',dest='signature', help='signature')
 parser.add_argument('-o', '--output',dest='output', action='store_true', help='write to file')
 parser.add_argument('-t', '--tag',     dest='tag', type=str, default='', help='tag to add before suffix')
 parser.add_argument(nargs='+', dest='files',type=str, help='input files')
@@ -65,13 +67,29 @@ args = parser.parse_args()
 if len(args.tag) > 0:
     args.tag = '_' + args.tag
 
+# Unpack cut off radii as numpy array
+# TODO: refactor, this is in common with neigh.py
+if args.neigh_file is None:
+    desc = 'rcut:' + args.rcut
+    rc = args.rcut.split(',')
+    # This is the number of species given the number of independent cut off radii
+    nsp = (-1 + int(numpy.ceil((1+8*len(rc))**0.5))) / 2
+    args.rcut = numpy.ndarray((nsp, nsp))
+    i = 0
+    for isp in range(nsp):
+        for jsp in range(isp,nsp):
+            args.rcut[isp, jsp] = float(rc[i])
+            i+=1
+else:
+    desc = 'neighbors_file:' + args.neigh_file
+
 # Handle multiple signatures: make a list of them
 if args.signature is not None:
     args.signature = args.signature.split(',')
 
 for finp in args.files:
     t = Trajectory(finp)
-    tn, desc = get_neighbors(finp, args, os.path.basename(sys.argv[0]))
+    tn = get_neighbors(finp, args, os.path.basename(sys.argv[0]))
 
     # Fraction of selected CNA bonds (signature argument)
     if args.signature is not None:
@@ -99,7 +117,7 @@ for finp in args.files:
     # Write histogram
     with open(finp + '.cna%s.hist' % args.tag, 'w') as fhhist:
         norm = sum(hist.values())
-        fhhist.write('# CNA bonds histogram; neighbors: %s\n' % desc)
+        fhhist.write('# CNA bonds histogram; %s\n' % desc)
         for d in sorted(hist, key=hist.get, reverse=True):
             fhhist.write('%s %g\n' % (d, hist[d] / float(norm)))
 
@@ -107,6 +125,6 @@ for finp in args.files:
         for fhi in fh.values():
             fhi.close()
 
-    if len(args.neigh_file)==0:
+    if args.neigh_file is None:
         os.remove(tn.filename)
 
