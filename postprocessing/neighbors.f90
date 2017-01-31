@@ -1,8 +1,8 @@
-module neighbors_module
+! module neighbors_module
 
-  implicit none
+!   implicit none
 
-contains
+! contains
 
   !! Find nearest neighbors 
   !!
@@ -15,8 +15,8 @@ contains
     real(8), intent(in)  :: pos(:,:)
     real(8), intent(in)  :: rcut(:,:)
     integer, intent(in)  :: ids(:)
-    integer, intent(out) :: nn(:)
-    integer, intent(out) :: neigh(:,:)
+    integer, intent(inout) :: nn(:)
+    integer, intent(inout) :: neigh(:,:)
     real(8)              :: rij(size(pos,1)), rijsq, hbox(size(pos,1))
     real(8)              :: rcutsq(size(rcut,1),size(rcut,2))
     integer              :: i, j, isp, jsp
@@ -41,4 +41,4 @@ contains
     end do
   end subroutine neighbors
 
-end module neighbors_module
+!end module neighbors_module

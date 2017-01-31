@@ -62,7 +62,7 @@ def get_neighbors(f, args, tag):
 
 def compute_neighbors(fileinp, rcut, fileout='/dev/stdout'):
     import copy
-    import neighbors_module
+    import neighbors_wrap
     with trj.Trajectory(fileinp) as t, \
          TrajectoryNeighbors(fileout, 'w') as tout:
         npart = len(t[0].particle)
@@ -74,7 +74,7 @@ def compute_neighbors(fileinp, rcut, fileout='/dev/stdout'):
             pos = s.dump('pos').transpose() # copy is not needed, order not needed.
             ids = [p.id for p in s.particle]
             box = s.cell.side
-            neighbors_module.neighbors_module.neighbors(box, pos, ids, rcut, nn, neigh)
+            neighbors_wrap.neighbors(box, pos, ids, rcut, nn, neigh)
             for j, p in enumerate(s.particle):
                 p.neighbors = neigh[j, 0:nn[j]]
             tout.write_sample(s, t.steps[i])

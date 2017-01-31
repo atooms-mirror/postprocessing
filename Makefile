@@ -8,7 +8,10 @@ dist:
 test:
 	python -m unittest discover -s tests
 
-install:
+wrap:
+	cd postprocessing; f2py -c -m neighbors_wrap neighbors.f90
+
+install: wrap
 	python setup.py install --user
 
 develop:
