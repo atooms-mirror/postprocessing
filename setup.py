@@ -13,12 +13,12 @@ args = dict(name='postprocessing',
             scripts=glob.glob(os.path.join('bin', '*.py')))
 
 try:
-    from setuptools import setup, find_packages
-    args['package_data'] = {
-        'postprocessing': ['*.so', '*.f90'],
-    }
+    from setuptools import setup
+    # Note: setuptools accepts Extension, but let's do it the easy way
+    args['package_data'] = {'postprocessing': ['*.so', '*.f90']}
 except ImportError:
     from distutils.core import setup, Extension
-    args['ext_modules'] = [Extension('postprocessing', ['f90wrap_neighbors.f90', '_neighbors_module.so'])],
+    args['ext_package'] = 'postprocessing'
+    args['ext_modules'] = [Extension('f90wrap', ['f90wrap_neighbors.f90', '_neighbors_module.so'])]
 
 setup(**args)
