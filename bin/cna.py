@@ -125,9 +125,7 @@ def main(args):
             for fhi in fh.values():
                 fhi.close()
 
-        print tn.filename, args.neigh_file
         if args.neigh_file is None:
-            print 'remove', tn.filename
             os.remove(tn.filename)
 
 if __name__ == '__main__':
