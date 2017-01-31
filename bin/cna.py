@@ -64,7 +64,7 @@ def main(args):
         args.rcut = numpy.ndarray((nsp, nsp))
         i = 0
         for isp in range(nsp):
-            for jsp in range(isp,nsp):
+            for jsp in range(nsp):
                 args.rcut[isp, jsp] = float(rc[i])
                 i+=1
     else:
