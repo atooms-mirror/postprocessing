@@ -87,7 +87,7 @@ def main(args):
             for sign in args.signature:
                 fout = finp + '.cna%s.fraction-%s' % (args.tag, sign)
                 fh[sign] = open(fout, 'w', buffering=0)
-                fh[sign].write('# Fraction of CNA bond %s; neighbors: %s\n' % (sign, desc))
+                fh[sign].write('# columns: step, fraction of CNA bond %s; %s\n' % (sign, desc))
 
         # Loop over samples
         hist = defaultdict(int)
@@ -107,7 +107,7 @@ def main(args):
         # Write histogram
         with open(finp + '.cna%s.hist' % args.tag, 'w') as fhhist:
             norm = sum(hist.values())
-            fhhist.write('# CNA bonds histogram; %s\n' % desc)
+            fhhist.write('# columns: CNA bond, average; %s\n' % desc)
             for d in sorted(hist, key=hist.get, reverse=True):
                 fhhist.write('%s %g\n' % (d, hist[d] / float(norm)))
 
