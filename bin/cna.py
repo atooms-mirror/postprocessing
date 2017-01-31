@@ -3,7 +3,7 @@
 # Copyright 2010-2014, Daniele Coslovich
 
 """
-Common neighbor analysis.
+Common neighbor analysis (CNA).
 
 Bonds are identified by a signature (i,j,k), where 
 i: particle species (1 by default)
@@ -19,13 +19,10 @@ import argparse
 import numpy
 from collections import defaultdict
 
-from atooms.trajectory import Trajectory, TrajectoryNeighbors
+from atooms.trajectory import Trajectory
 from atooms.utils import add_first_last_skip, fractional_slice
 from pyutils.histogram import Histogram
 from postprocessing.neighbors import get_neighbors
-
-# Update factory
-Trajectory.update(__name__)
 
 def cna(particle, neighbors):
     # Add neighbor list to particles as sets
