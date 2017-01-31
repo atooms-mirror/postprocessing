@@ -33,6 +33,7 @@ parser.add_argument('-M', '--neighbor-max',dest='neigh_limit', type=int, default
 parser.add_argument(      '--rcut', dest='rcut', help='cutoff radii as comma separated string, ex r11,r12,r22')
 parser.add_argument('-o', '--output',dest='output', action='store_true', help='write to file')
 parser.add_argument('-t', '--tag',     dest='tag', type=str, default='', help='tag to add before suffix')
+parser.add_argument(      '--fmt',     dest='fmt', help='input file format')
 parser.add_argument(nargs='+', dest='files',type=str, help='input files')
 args = parser.parse_args()
 
@@ -50,10 +51,13 @@ if args.neigh_file is None:
     args.rcut = numpy.ndarray((nsp, nsp))
     i = 0
     for isp in range(nsp):
-        for jsp in range(isp,nsp):
+        for jsp in range(nsp):
             args.rcut[isp, jsp] = float(rc[i])
             i+=1
 
+    print args.rcut
+
 for finp in args.files:
-    tn = get_neighbors(finp, args)
+    fout = finp + '.neigh'
+    tn = get_neighbors(finp, fout, args, fmt=args.fmt)
 
