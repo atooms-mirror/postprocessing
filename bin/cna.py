@@ -77,13 +77,25 @@ def main(args):
     for finp in args.files:
         # We need to open the trajectory here anyway, we should we do that again in get_neighbors()?
         t = Trajectory(finp, fmt=args.fmt)
-        tn = get_neighbors(finp, args, os.path.basename(sys.argv[0]), fmt=args.fmt)
+        # We write neighbors to a tmp file
+        import tempfile
+        fout = tempfile.mkstemp()[1]
+        tn = get_neighbors(finp, fout, args, fmt=args.fmt)
+
+        # If required, we put CNA data in a separate directory
+        if args.dirout is not None:
+            dirout = os.path.dirname(args.dirout + '/' + finp)
+            from pyutils.utils import mkdir
+            mkdir(dirout)
+            fbase = args.dirout + '/' + finp
+        else:
+            fbase = finp
 
         # Fraction of selected CNA bonds (signature argument)
         if args.signature is not None:
             fh = dict()
             for sign in args.signature:
-                fout = finp + '.cna%s.fraction-%s' % (args.tag, sign)
+                fout = fbase + '.cna%s.fraction-%s' % (args.tag, sign)
                 fh[sign] = open(fout, 'w', buffering=0)
                 fh[sign].write('# columns: step, fraction of CNA bond %s; %s\n' % (sign, desc))
 
@@ -103,7 +115,7 @@ def main(args):
                     hist[d]+=1
 
         # Write histogram
-        with open(finp + '.cna%s.hist' % args.tag, 'w') as fhhist:
+        with open(fbase + '.cna%s.hist' % args.tag, 'w') as fhhist:
             norm = sum(hist.values())
             fhhist.write('# columns: CNA bond, average; %s\n' % desc)
             for d in sorted(hist, key=hist.get, reverse=True):
@@ -113,7 +125,9 @@ def main(args):
             for fhi in fh.values():
                 fhi.close()
 
+        print tn.filename, args.neigh_file
         if args.neigh_file is None:
+            print 'remove', tn.filename
             os.remove(tn.filename)
 
 if __name__ == '__main__':
@@ -127,6 +141,7 @@ if __name__ == '__main__':
     parser.add_argument(      '--rcut', dest='rcut', help='cutoff radii as comma separated string, ex r11,r12,r22')
     parser.add_argument('-s', '--signature',dest='signature', help='signature')
     parser.add_argument('-o', '--output',dest='output', action='store_true', help='write to file')
+    parser.add_argument('-d', '--dirout',dest='dirout', help='output dir')
     parser.add_argument('-t', '--tag',     dest='tag', type=str, default='', help='tag to add before suffix')
     parser.add_argument(      '--fmt',     dest='fmt', help='input file format')
     parser.add_argument(nargs='+', dest='files',type=str, help='input files')

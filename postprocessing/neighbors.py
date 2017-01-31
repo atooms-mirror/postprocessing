@@ -41,11 +41,10 @@ class TrajectoryNeighbors(trj.TrajectoryXYZ):
         # This is necessary to format integer numpy array correctly
         self._fmt_float = False
 
-def get_neighbors(fileinp, args, tag, fmt=None):
+def get_neighbors(fileinp, fileout, args, fmt=None):
     if args.neigh_file is None:
-        fn = fileinp + '.%s.neigh' % tag
-        compute_neighbors(fileinp, args.rcut, fn, fmt)
-        tn = trj.TrajectoryNeighbors(fn)
+        compute_neighbors(fileinp, args.rcut, fileout, fmt)
+        tn = trj.TrajectoryNeighbors(fileout)
     else:
         from atooms.plugins.voronoi import TrajectoryVoronoi
         # TODO: is we ever get to make this a clean factory, test can be avoided
