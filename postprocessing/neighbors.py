@@ -41,10 +41,10 @@ class TrajectoryNeighbors(trj.TrajectoryXYZ):
         # This is necessary to format integer numpy array correctly
         self._fmt_float = False
 
-def get_neighbors(f, args, tag):
+def get_neighbors(fileinp, args, tag, fmt=None):
     if args.neigh_file is None:
-        fn = f + '.%s.neigh' % tag
-        compute_neighbors(f, args.rcut, fn)
+        fn = fileinp + '.%s.neigh' % tag
+        compute_neighbors(fileinp, args.rcut, fn, fmt)
         tn = trj.TrajectoryNeighbors(fn)
     else:
         from atooms.plugins.voronoi import TrajectoryVoronoi
@@ -60,10 +60,10 @@ def get_neighbors(f, args, tag):
         tnl = tn
     return tnl
 
-def compute_neighbors(fileinp, rcut, fileout='/dev/stdout'):
+def compute_neighbors(fileinp, rcut, fileout='/dev/stdout', fmt=None):
     import copy
     import neighbors_wrap
-    with trj.Trajectory(fileinp) as t, \
+    with trj.Trajectory(fileinp, fmt=fmt) as t, \
          TrajectoryNeighbors(fileout, 'w') as tout:
         npart = len(t[0].particle)
         nmax = 300

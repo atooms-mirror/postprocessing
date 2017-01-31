@@ -55,6 +55,5 @@ if args.neigh_file is None:
             i+=1
 
 for finp in args.files:
-    t = Trajectory(finp)
-    tn = get_neighbors(finp, args, '')
+    tn = get_neighbors(finp, args)
 

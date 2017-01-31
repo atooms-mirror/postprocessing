@@ -75,8 +75,9 @@ def main(args):
         args.signature = args.signature.split(',')
 
     for finp in args.files:
-        t = Trajectory(finp)
-        tn = get_neighbors(finp, args, os.path.basename(sys.argv[0]))
+        # We need to open the trajectory here anyway, we should we do that again in get_neighbors()?
+        t = Trajectory(finp, fmt=args.fmt)
+        tn = get_neighbors(finp, args, os.path.basename(sys.argv[0]), fmt=args.fmt)
 
         # Fraction of selected CNA bonds (signature argument)
         if args.signature is not None:
@@ -127,6 +128,7 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--signature',dest='signature', help='signature')
     parser.add_argument('-o', '--output',dest='output', action='store_true', help='write to file')
     parser.add_argument('-t', '--tag',     dest='tag', type=str, default='', help='tag to add before suffix')
+    parser.add_argument(      '--fmt',     dest='fmt', help='input file format')
     parser.add_argument(nargs='+', dest='files',type=str, help='input files')
     args = parser.parse_args()
 
