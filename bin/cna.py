@@ -64,8 +64,9 @@ def main(args):
         args.rcut = numpy.ndarray((nsp, nsp))
         i = 0
         for isp in range(nsp):
-            for jsp in range(nsp):
+            for jsp in range(isp,nsp):
                 args.rcut[isp, jsp] = float(rc[i])
+                args.rcut[jsp, isp] = float(rc[i])
                 i+=1
     else:
         desc = 'neighbors_file:' + args.neigh_file
