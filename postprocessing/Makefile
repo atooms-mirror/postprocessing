@@ -17,7 +17,7 @@ wrap:
 # 	gfortran -c ${NAME}.f90
 
 clean:
-	-rm *.o *.mod f90wrap_*
+	-rm *.o *.mod #f90wrap_*
 
 veryclean:
 	-rm *.o *.mod *.so f90wrap_*
