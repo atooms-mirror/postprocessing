@@ -1,6 +1,8 @@
 # This file is part of atooms
 # Copyright 2010-2014, Daniele Coslovich
 
+"""Post processing code."""
+
 import sys
 import numpy
 import math
@@ -8,10 +10,9 @@ import random
 import warnings
 from collections import defaultdict
 
+from atooms.trajectory.utils import check_block_period
 from .helpers import linear_grid, logx_grid
 from .correlation import Correlation, adjust_skip, _setup_t_grid
-
-"""Post processing code."""
 
 def expo_sphere(k0, kmax, pos):
 
@@ -219,7 +220,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
                                          'fkt.self', 'Self intermediate scattering function', 'pos', nk, dk, kmin, kmax, ksamples)
         # Setup time grid
         # Before setting up the time grid, we need to check periodicity over blocks
-        self.trajectory._check_block_period()
+        check_block_period(self.trajectory)
         if tgrid is None:
             self.grid[1] = [0.0] + logx_grid(trajectory.timestep, trajectory.time_total * 0.75, tsamples)
         self._discrete_tgrid = _setup_t_grid(trajectory, self.grid[1])
@@ -313,7 +314,7 @@ class IntermediateScattering(FourierSpaceCorrelation):
         FourierSpaceCorrelation.__init__(self, trajectory, [kgrid, tgrid], ('k', 't'), 'fkt.total', \
                                          'Intermediate scattering function', 'pos', nk, dk, kmin, kmax, ksamples)
         # Setup time grid 
-        self.trajectory._check_block_period()
+        check_block_period(self.trajectory)
         if tgrid is None:
             self.grid[1] = logx_grid(0.0, trajectory.time_total * 0.75, tsamples)
         self._discrete_tgrid = _setup_t_grid(trajectory, self.grid[1])
