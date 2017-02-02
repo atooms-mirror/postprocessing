@@ -3,11 +3,7 @@
 import os
 import glob
 
-# try:
-#     from setuptools import setup
-# except:
-#     from distutils.core import setup
-
+# We use numpy distutils to compile and wrap f90 code via f2py
 from numpy.distutils.core import setup, Extension
 
 args = dict(name='postprocessing',
@@ -18,8 +14,8 @@ args = dict(name='postprocessing',
             url='http://www.coulomb.univ-montp2.fr/perso/daniele.coslovich/',
             packages=['postprocessing'],
             scripts=glob.glob(os.path.join('bin', '*.py')),
-            ext_modules=[Extension('postprocessing.neighbors_wrap', sources=['postprocessing/neighbors.f90'])]
-#            package_data = {'': ['*.so']},
+            ext_modules=[Extension('postprocessing.neighbors_wrap', 
+                                   sources=['postprocessing/neighbors.f90'])]
 )
 
 setup(**args)
