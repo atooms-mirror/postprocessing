@@ -8,7 +8,7 @@ dist:
 test:
 	python -m unittest discover -s tests
 
-install: wrap
+install:
 	python setup.py install --user
 
 # This does not work with distutils
