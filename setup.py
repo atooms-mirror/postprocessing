@@ -3,10 +3,12 @@
 import os
 import glob
 
-try:
-    from setuptools import setup
-except:
-    from distutils.core import setup
+# try:
+#     from setuptools import setup
+# except:
+#     from distutils.core import setup
+
+from numpy.distutils.core import setup, Extension
 
 args = dict(name='postprocessing',
             version='0.1',
@@ -16,7 +18,8 @@ args = dict(name='postprocessing',
             url='http://www.coulomb.univ-montp2.fr/perso/daniele.coslovich/',
             packages=['postprocessing'],
             scripts=glob.glob(os.path.join('bin', '*.py')),
-            package_data = {'': ['*.so']},
+            ext_modules=[Extension('postprocessing.neighbors_wrap', sources=['postprocessing/neighbors.f90'])]
+#            package_data = {'': ['*.so']},
 )
 
 setup(**args)
