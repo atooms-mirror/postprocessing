@@ -87,40 +87,7 @@ def gcf_offset_bin(f, grid, skip, t, x):
             acf.add([(t[i0+i] - t[i0], f(x[i0+i], x[i0]) / 0.1)])
     return acf.grid, acf.value
 
-# this seems to fit well as a trajectory method...
-def _setup_t_grid(trajectory, t_grid):
 
-    #from pyutils.utils import templated
-
-    def templated(entry, template, keep_multiple=False):
-        """Filter a list of entries so as to best match an input
-        template. Lazy, slow version O(N*M). Ex.:
-        entry=[1,2,3,4,5,10,20,100], template=[1,7,12,80] should
-        return [1,5,10,100].
-        """
-        match = [min(entry, key=lambda x: abs(x-t)) for t in template]
-        if not keep_multiple:
-            match = list(set(match))
-        return sorted(match)
-
-    # First get all possible time differences
-    steps = trajectory.steps
-    off_samp = {}
-    for off in range(trajectory.block_period):
-        for i in range(off, len(steps)-off):
-            if not steps[i] - steps[off] in off_samp:
-                off_samp[steps[i] - steps[off]] = (off, i-off)
-
-    # Retain only those pairs of offsets and sample
-    # difference that match the desired input. This is the grid
-    # used internally to calculate the time correlation function.
-    i_grid = set([int(round(t/trajectory.timestep)) for t in t_grid])
-    offsets = [off_samp[t] for t in templated(sorted(off_samp.keys()), sorted(i_grid))]
-    return offsets
-
-
-# Remember log level is DEBUG < INFO < ERROR
-LOG_LEVEL = 'ERROR'
 UPDATE = False
 
 class Correlation(object):
@@ -341,7 +308,7 @@ class Correlation(object):
         self.write()
 
     def do_dims(self):
-        raise NotImplementedError('do_dims is broken')
+        raise RuntimeError('do_dims is broken')
 
 
 class CorrelationTemplate(Correlation):

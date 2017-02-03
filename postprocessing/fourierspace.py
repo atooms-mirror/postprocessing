@@ -1,7 +1,7 @@
 # This file is part of atooms
 # Copyright 2010-2014, Daniele Coslovich
 
-"""Post processing code."""
+"""Fourier-space post processing code."""
 
 import sys
 import numpy
@@ -11,91 +11,64 @@ import warnings
 from collections import defaultdict
 
 from atooms.trajectory.utils import check_block_period
-from .helpers import linear_grid, logx_grid
-from .correlation import Correlation, adjust_skip, _setup_t_grid
+from .helpers import linear_grid, logx_grid, adjust_skip, setup_t_grid
+from .correlation import Correlation
+from .realspace import self_overlap
 
 def expo_sphere(k0, kmax, pos):
 
     """Returns the exponentials of the input positions for each k."""
 
-    # Technical note: we use ellipsis, so that we can pass either a single sample
-    # or multiple samples without having to add a trivial extra dimension to input array
-    # TODO: check performance and in case revert to original version
+    # Technical note: we use ellipsis, so that we can pass either a
+    # single sample or multiple samples without having to add a
+    # trivial extra dimension to input array
     im = numpy.complex(0.0, 1.0)
-    # critical, the integer grid must be the same as the one set in kgrid, otherwise there is an offset
-    # the problem is that integer negative indexing is impossible in python and rounding
-    # or truncating kmax can slightly offset the grid
+    # The integer grid must be the same as the one set in kgrid,
+    # otherwise there is an offset the problem is that integer
+    # negative indexing is impossible in python and rounding or
+    # truncating kmax can slightly offset the grid
 
     # We pick up the smallest k0 to compute the integer grid
-    # This leaves many unused vectors in the other directions, which could be dropped using different nkmax for x, y, z
+    # This leaves many unused vectors in the other directions, which
+    # could be dropped using different nkmax for x, y, z
     nk_max = 1 + int(kmax / min(k0))
     expo = numpy.ndarray((len(pos), ) + pos[0].shape + (2*nk_max+1, ), numpy.complex)
-    expo[...,nk_max] = numpy.complex(1.0, 0.0)
-    # first fill positive k
+    expo[..., nk_max] = numpy.complex(1.0, 0.0)
+    # First fill positive k
     for j in xrange(pos[0].shape[-1]):
-        expo[...,j,nk_max+1] = numpy.exp(im * k0[j] * pos[...,j])
-        expo[...,j,nk_max-1] = expo[...,j,nk_max+1].conjugate()
-        for i in xrange(2,nk_max):
-            expo[...,j,nk_max+i] = expo[...,j,nk_max+i-1] * expo[...,j,nk_max+1]
-    # then take complex conj for negative ones
+        expo[..., j, nk_max+1] = numpy.exp(im * k0[j] * pos[..., j])
+        expo[..., j, nk_max-1] = expo[..., j, nk_max+1].conjugate()
+        for i in xrange(2, nk_max):
+            expo[..., j, nk_max+i] = expo[..., j, nk_max+i-1] * expo[..., j, nk_max+1]
+    # Then take complex conj for negative ones
     for i in xrange(2, nk_max+1):
-        expo[...,nk_max+i] = expo[...,nk_max+i-1] * expo[...,nk_max+1]
-        expo[...,nk_max-i] = expo[...,nk_max+i].conjugate()
+        expo[..., nk_max+i] = expo[..., nk_max+i-1] * expo[..., nk_max+1]
+        expo[..., nk_max-i] = expo[..., nk_max+i].conjugate()
 
     return expo
 
 def expo_sphere_safe(k0, kmax, pos):
-
     """
     Returns the exponentials of the input positions for each k.
     It does not use ellipsis.
     """
-
     im = numpy.complex(0.0, 1.0)
     ndims = pos.shape[-1]
     nk_max = 1 + int(kmax / min(k0))
     expo = numpy.ndarray(pos.shape + (2*nk_max+1, ), numpy.complex)
-    expo[:,:,:,nk_max] = numpy.complex(1.0, 0.0)
+    expo[:, :, :, nk_max] = numpy.complex(1.0, 0.0)
 
     for j in xrange(ndims):
-        expo[:,:,j,nk_max+1] = numpy.exp(im*k0[j]*pos[:,:,j])
-        expo[:,:,j,nk_max-1] = expo[:,:,j,nk_max+1].conjugate()
-        for i in xrange(2,nk_max):
-            expo[:,:,j,nk_max+i] = expo[:,:,j,nk_max+i-1] * expo[:,:,j,nk_max+1]
+        expo[:, :, j, nk_max+1] = numpy.exp(im*k0[j]*pos[:, :, j])
+        expo[:, :, j, nk_max-1] = expo[:, :, j, nk_max+1].conjugate()
+        for i in xrange(2, nk_max):
+            expo[:, :, j, nk_max+i] = expo[:, :, j, nk_max+i-1] * expo[:, :, j, nk_max+1]
 
     for i in xrange(2, nk_max+1):
-        expo[:,:,:,nk_max+i] = expo[:,:,:,nk_max+i-1] * expo[:,:,:,nk_max+1]
-        expo[:,:,:,nk_max-i] = expo[:,:,:,nk_max+i].conjugate()
+        expo[:, :, :, nk_max+i] = expo[:, :, :, nk_max+i-1] * expo[:, :, :, nk_max+1]
+        expo[:, :, :, nk_max-i] = expo[:, :, :, nk_max+i].conjugate()
 
     return expo
-
-# # this method is horribly slow for large kmax compared to the f90 version.
-# # this is probably due to list amnd dict in the inner loop.
-# def kgrid_sphere(k0, dk, kgrid):
-#     """
-#     Setup wave vector grid with spherical average (no symmetry),
-#     picking up vectors that fit into shells of width dk centered around
-#     the values specified in the input list kgrid.
-#     Returns a dictonary of lists of wavevectors, one entry for each element in the grid.
-#     """
-#     kvec = defaultdict(list)
-#     kbin_max = 1 + int((kgrid[-1] + dk[-1]) / k0)
-#     # TODO: it would be more elegant to define an iterator over ix, iy, iz for sphere, hemisphere, ... unless kmax is very high it might be more efficient to operate on a 3d grid to construct the vectors
-#     for ix in xrange(-kbin_max, kbin_max+1):
-#         for iy in xrange(-kbin_max, kbin_max+1):
-#             for iz in xrange(-kbin_max, kbin_max+1):
-#                 kbin = ix**2 + iy**2 + iz**2
-#                 if (kbin > kbin_max**2):
-#                     continue
-#                 # beware: numpy.sqrt is x5 slower than math one!
-#                 knorm = math.sqrt(float(kbin)) * k0
-#                 # look for a shell in which the vector could fit
-#                 for ki, dki in zip(kgrid, dk):
-#                     if (abs(knorm - ki) < dki):
-#                         #kvec[ki].append([(ix, iy, iz), (ix+kbin_max, iy+kbin_max, iz+kbin_max), knorm])
-#                         kvec[ki].append((ix+kbin_max, iy+kbin_max, iz+kbin_max))
-#                         break
-#     return kvec
 
 def k_norm(ik, k0):
     if isinstance(k0, list) or isinstance(k0, numpy.ndarray):
@@ -103,16 +76,22 @@ def k_norm(ik, k0):
     else:
         return math.sqrt(float(ik[0]**2 + ik[1]**2 + ik[2]**2)) * k0
 
+
 class FourierSpaceCorrelation(Correlation):
 
-    def __init__(self, trajectory, grid, name, short_name, description, phasespace, nk=8, dk=0.1, kmin=-1, kmax=10, ksamples=20):
+    def __init__(self, trajectory, grid, name, short_name,
+                 description, phasespace, nk=8, dk=0.1, kmin=-1, kmax=10,
+                 ksamples=20):
         # grid and name variables can be lists or tuples, ex. ['k', 't'] or ['k', 'w']
         # TODO: the time grid is not used here
-        super(FourierSpaceCorrelation, self).__init__(trajectory, grid, name, short_name, description, phasespace)
+        super(FourierSpaceCorrelation, self).__init__(trajectory,
+                                                      grid, name, short_name,
+                                                      description, phasespace)
         if not self._need_update:
             return
 
-        # Some additional variables. k0 = smallest wave vectors compatible with the boundary conditions
+        # Some additional variables. k0 = smallest wave vectors
+        # compatible with the boundary conditions
         self.nk = nk
         self.dk = dk
         self.kmin = kmin
@@ -142,9 +121,10 @@ class FourierSpaceCorrelation(Correlation):
             # If the first wave-vector is negative we replace it by k0
             if self.kgrid[0] < 0.0:
                 self.kgrid[0] = min(self.k0)
-        
+
         # Setup the grid of wave-vectors
-        self.kvec, self.kvec_centered = self._setup_grid_sphere(len(self.kgrid)*[self.dk], self.kgrid, self.k0)
+        self.kvec, self.kvec_centered = self._setup_grid_sphere(len(self.kgrid)*[self.dk],
+                                                                self.kgrid, self.k0)
 
     def _setup_grid_sphere(self, dk, kgrid, k0):
         """
@@ -164,20 +144,20 @@ class FourierSpaceCorrelation(Correlation):
             for iy in xrange(-kbin_max, kbin_max+1):
                 for iz in xrange(-kbin_max, kbin_max+1):
                     ksq = sum([(x*y)**2 for x, y in zip(k0, [ix, iy, iz])])
-                    if (ksq > kmax**2):
+                    if ksq > kmax**2:
                         continue
                     # beware: numpy.sqrt is x5 slower than math one!
                     knorm = math.sqrt(ksq)
                     # look for a shell in which the vector could fit
                     for ki, dki in zip(kgrid, dk):
-                        if (abs(knorm - ki) < dki):
+                        if abs(knorm - ki) < dki:
                             kvec[ki].append((ix+kbin_max, iy+kbin_max, iz+kbin_max))
                             kvec_centered[ki].append((ix, iy, iz))
                             break
 
         if len(kvec.keys()) != len(kgrid):
             warnings.warn('some k points could not be found')
-            
+
         return kvec, kvec_centered
 
     def _decimate_k(self):
@@ -197,7 +177,8 @@ class FourierSpaceCorrelation(Correlation):
             av = 0.0
             for i in k_selected[kk]:
                 av += k_norm(self.kvec_centered[knorm][i], self.k0)
-            s.append("# k %g : k_av=%g (nk=%d)" % (knorm, av / len(k_selected[kk]), len(k_selected[kk]))) #, len(k_sorted[kk]))
+            s.append("# k %g : k_av=%g (nk=%d)" % (knorm, av / len(k_selected[kk]),
+                                                   len(k_selected[kk]))) #, len(k_sorted[kk]))
             # for i in k_selected[kk]:
             #     s.append('%s' % (self.kvec_centered[knorm][i] * self.k0))
         return '\n'.join(s)
@@ -210,20 +191,23 @@ class FourierSpaceCorrelation(Correlation):
                 av += k_norm(self.kvec_centered[knorm][i], self.k0)
             k_grid.append(av / len(k_selected[kk]))
         return k_grid
-        
+
 
 class SelfIntermediateScattering(FourierSpaceCorrelation):
-    
+
     #TODO: xyz files are 2 slower than hdf5 where
-    def __init__(self, trajectory, kgrid=None, tgrid=None, nk=8, tsamples=60, dk=0.1, kmin=1.0, kmax=10.0, ksamples=10):
+    def __init__(self, trajectory, kgrid=None, tgrid=None, nk=8, tsamples=60,
+                 dk=0.1, kmin=1.0, kmax=10.0, ksamples=10):
         FourierSpaceCorrelation.__init__(self, trajectory, [kgrid, tgrid], ('k', 't'), \
-                                         'fkt.self', 'Self intermediate scattering function', 'pos', nk, dk, kmin, kmax, ksamples)
+                                         'fkt.self', 'Self intermediate scattering function',
+                                         'pos', nk, dk, kmin, kmax, ksamples)
         # Setup time grid
         # Before setting up the time grid, we need to check periodicity over blocks
         check_block_period(self.trajectory)
         if tgrid is None:
-            self.grid[1] = [0.0] + logx_grid(trajectory.timestep, trajectory.time_total * 0.75, tsamples)
-        self._discrete_tgrid = _setup_t_grid(trajectory, self.grid[1])
+            self.grid[1] = [0.0] + logx_grid(trajectory.timestep,
+                                             trajectory.time_total * 0.75, tsamples)
+        self._discrete_tgrid = setup_t_grid(trajectory, self.grid[1])
 
         # TODO: Can this be moved up?
         self.k_sorted, self.k_selected = self._decimate_k()
@@ -235,13 +219,14 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
         # TODO: remove this redundancy
         pos = numpy.ndarray((len(self._pos), ) + self._pos[0].shape)
         for i in range(len(self._pos)):
-            pos[i,:,:] = self._pos[i]
+            pos[i, :, :] = self._pos[i]
 
-        # to optimize without wasting too much memory (we really have troubles here)
-        # we group particles in blocks and tabulate the exponentials over time
-        # this is more memory consuming but we can optimize the inner loop.
-        # even better we could change order in the tabulated expo array to speed things up
-        # shape is (Npart, Ndim)
+        # To optimize without wasting too much memory (we really have
+        # troubles here) we group particles in blocks and tabulate the
+        # exponentials over time this is more memory consuming but we
+        # can optimize the inner loop.  even better we could change
+        # order in the tabulated expo array to speed things up shape
+        # is (Npart, Ndim)
         block = min(100, self._pos[0].shape[0])
         skip = self.trajectory.block_period
         kmax = max(self.kvec.keys()) + self.dk
@@ -249,9 +234,9 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
         cnt = [defaultdict(float) for k in self.k_sorted]
 
         for j in range(0, pos.shape[1], block):
-            x = expo_sphere(self.k0, kmax, pos[:,j:j+block,:])
+            x = expo_sphere(self.k0, kmax, pos[:, j:j+block, :])
             for kk, knorm in enumerate(self.k_sorted):
-                # pick up a random, unique set of nk vectors out ot the avilable ones
+                # Pick up a random, unique set of nk vectors out ot the avilable ones
                 # without exceeding maximum number of vectors in shell nkmax
                 # TODO: refactor this using _k_decimate()
                 nkmax = len(self.kvec[knorm])
@@ -259,11 +244,11 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
                     ik = self.kvec[knorm][kkk]
                     for off, i in self._discrete_tgrid:
                         for i0 in xrange(off, len(x)-i-skip, skip):
-                            # Get the actual time difference. steps must be accessed efficiently (chached!)
+                            # Get the actual time difference. steps must be accessed efficiently (cached!)
                             dt = self.trajectory.steps[i0+i] - self.trajectory.steps[i0]
-                            acf[kk][dt] += numpy.sum(x[i0+i,:,0,ik[0]]*x[i0,:,0,ik[0]].conjugate() * 
-                                                     x[i0+i,:,1,ik[1]]*x[i0,:,1,ik[1]].conjugate() * 
-                                                     x[i0+i,:,2,ik[2]]*x[i0,:,2,ik[2]].conjugate()).real
+                            acf[kk][dt] += numpy.sum(x[i0+i, :, 0, ik[0]]*x[i0, :, 0, ik[0]].conjugate() *
+                                                     x[i0+i, :, 1, ik[1]]*x[i0, :, 1, ik[1]].conjugate() *
+                                                     x[i0+i, :, 2, ik[2]]*x[i0, :, 2, ik[2]].conjugate()).real
                             cnt[kk][dt] += block #pos.shape[1]
 
         t_sorted = sorted(acf[0].keys())
@@ -304,20 +289,22 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
 
         if not self.output is sys.stdout:
             out.close()
-        
+
 
 class IntermediateScattering(FourierSpaceCorrelation):
 
     nbodies = 2
-    
-    def __init__(self, trajectory, kgrid=None, tgrid=None, nk=100, dk=0.1, tsamples=60, kmin=1.0, kmax=10.0, ksamples=10):
-        FourierSpaceCorrelation.__init__(self, trajectory, [kgrid, tgrid], ('k', 't'), 'fkt.total', \
-                                         'Intermediate scattering function', 'pos', nk, dk, kmin, kmax, ksamples)
-        # Setup time grid 
+
+    def __init__(self, trajectory, kgrid=None, tgrid=None, nk=100, dk=0.1, tsamples=60,
+                 kmin=1.0, kmax=10.0, ksamples=10):
+        FourierSpaceCorrelation.__init__(self, trajectory, [kgrid, tgrid], ('k', 't'),
+                                         'fkt.total', 'Intermediate scattering function',
+                                         'pos', nk, dk, kmin, kmax, ksamples)
+        # Setup time grid
         check_block_period(self.trajectory)
         if tgrid is None:
             self.grid[1] = logx_grid(0.0, trajectory.time_total * 0.75, tsamples)
-        self._discrete_tgrid = _setup_t_grid(trajectory, self.grid[1])
+        self._discrete_tgrid = setup_t_grid(trajectory, self.grid[1])
 
     def _tabulate_rho(self, k_sorted, k_selected, f=numpy.sum):
 
@@ -340,10 +327,10 @@ class IntermediateScattering(FourierSpaceCorrelation):
             for kk, knorm in enumerate(k_sorted):
                 for i in k_selected[kk]:
                     ik = self.kvec[knorm][i]
-                    rho_0[it][ik] = numpy.sum(expo_0[...,0,ik[0]] * expo_0[...,1,ik[1]] * expo_0[...,2,ik[2]])
+                    rho_0[it][ik] = numpy.sum(expo_0[..., 0, ik[0]] * expo_0[..., 1, ik[1]] * expo_0[..., 2, ik[2]])
                     # Same optimization as above: only calculate rho_1 if needed
                     if not self._pos_1 is self._pos_0:
-                        rho_1[it][ik] = numpy.sum(expo_1[...,0,ik[0]] * expo_1[...,1,ik[1]] * expo_1[...,2,ik[2]])
+                        rho_1[it][ik] = numpy.sum(expo_1[..., 0, ik[0]] * expo_1[..., 1, ik[1]] * expo_1[..., 2, ik[2]])
             # Optimization
             if self._pos_1 is self._pos_0:
                 rho_1 = rho_0
@@ -381,18 +368,11 @@ class IntermediateScattering(FourierSpaceCorrelation):
             nav = sum([p.shape[0] for p in self._pos]) / len(self._pos)
             self.value_nonorm = [[acf[kk][ti] / (cnt[kk][ti]) for ti in times] for kk in range(len(self.grid[0]))]
             self.value = [[v / self.value_nonorm[kk][0] for v in self.value_nonorm[kk]] for kk in range(len(self.grid[0]))]
-            # self.value = [[acf[kk][ti] / cnt[kk][ti] for ti in times] for kk in range(len(self.grid[0]))]
-            # self.value = [[v for v in self.value[kk]] for kk in range(len(self.grid[0]))]
         else:
             nav_0 = sum([p.shape[0] for p in self._pos_0]) / len(self._pos_0)
             nav_1 = sum([p.shape[0] for p in self._pos_1]) / len(self._pos_1)
             self.value_nonorm = [[acf[kk][ti] / (cnt[kk][ti]) for ti in times] for kk in range(len(self.grid[0]))]
             self.value = [[v / self.value_nonorm[kk][0] for v in self.value_nonorm[kk]] for kk in range(len(self.grid[0]))]
-            # self.value = [[v / self.value[kk][0] for v in self.value[kk]] for kk in range(len(self.grid[0]))]
-            # self.value = [[acf[kk][ti] / (cnt[kk][ti]) for ti in times] for kk in range(len(self.grid[0]))]
-            # self.value = [[v for v in self.value[kk]] for kk in range(len(self.grid[0]))]
-        #self.value = [[acf[kk][ti] / (self._pos[0].shape[0]*cnt[kk][ti]) for ti in t_sorted] for kk in range(len(self.grid[0]))]
-        #self.value = [[acf[kk][ti] / cnt[kk][ti] for ti in t_sorted] for kk in range(len(self.grid[0]))]
 
     def analyze(self):
         from pyutils.utils import feqc
@@ -407,7 +387,6 @@ class IntermediateScattering(FourierSpaceCorrelation):
         Correlation.write(self)
         # Write down unnormalized functions
         Correlation.write(self, self.value_nonorm)
-        
 
         # TODO: refactor
         filename = '.'.join([e for e in [self.trajectory.filename, 'pp', self.short_name, self.tag] if len(e)>0])
@@ -428,8 +407,9 @@ class IntermediateScattering(FourierSpaceCorrelation):
         if not self.output is sys.stdout:
             out.close()
 
+
 class StructureFactor(FourierSpaceCorrelation):
-    
+
     def __init__(self, trajectory, kgrid=None, norigins=-1, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30):
         FourierSpaceCorrelation.__init__(self, trajectory, kgrid, 'k', 'sk', 'structure factor', ['pos'], \
                                          nk, dk, kmin, kmax, ksamples)
@@ -444,7 +424,7 @@ class StructureFactor(FourierSpaceCorrelation):
                 L0 = self.trajectory[0].cell.side
                 L1 = self.trajectory[sample].cell.side
                 if L0[0] != L1[0] or L0[1] != L1[1] or L0[2] != L1[2]:
-                    self._is_cell_variable = True                    
+                    self._is_cell_variable = True
                     print '# note: cell is variable'
                     break
         return self._is_cell_variable
@@ -462,7 +442,7 @@ class StructureFactor(FourierSpaceCorrelation):
                 self._setup(i)
                 k_sorted, k_selected = self._decimate_k()
                 kmax = max(self.kvec.keys()) + self.dk
-            
+
             expo = expo_sphere(self.k0, kmax, self._pos[i])
             for kk, knorm in enumerate(k_sorted):
                 for k in k_selected[kk]:
@@ -479,7 +459,7 @@ class StructureFactor(FourierSpaceCorrelation):
 
 
 class StructureFactorStats(FourierSpaceCorrelation):
-    
+
     def __init__(self, trajectory, kgrid=None, norigins=-1, nk=1000, dk=1.0, kmin=7.0):
         FourierSpaceCorrelation.__init__(self, trajectory, kgrid, 'k', 'skstats', 'structure factor stats', ['pos'], \
                                          nk, dk, kmin, kmin, 1)
@@ -523,19 +503,17 @@ class StructureFactorStats(FourierSpaceCorrelation):
             numpy.savetxt(fh, numpy.array(zip(self.grid, self._var, self._skew)), fmt="%g")
 
 
-from realspace import self_overlap
-
 class S4ktOverlap(FourierSpaceCorrelation):
-    
+
     # TODO: refactor a S4k base correlation that forces to implement tabulat method (e.g. overlap, Q_6, voronoi ...)
     # TODO: should we drop this instead and rely on F(k,t) with grandcanonical
-    
+
     def __init__(self, trajectory, tgrid, kgrid=None, norigins=-1, nk=20, dk=0.1, a=0.3, kmin=1.0, kmax=10.0, ksamples=10):
         FourierSpaceCorrelation.__init__(self, trajectory, [tgrid, kgrid], ('t', 'k'), 's4kt', \
                                          '4-point dynamic structure factor', ['pos','pos-unf'], \
                                          nk, dk, kmin, kmax, ksamples)
         # Setup time grid
-        self._discrete_tgrid = _setup_t_grid(trajectory, tgrid)
+        self._discrete_tgrid = setup_t_grid(trajectory, tgrid)
         self.skip = adjust_skip(self.trajectory, norigins)
         self.a_square = a**2
 
@@ -560,7 +538,7 @@ class S4ktOverlap(FourierSpaceCorrelation):
                     ik = self.kvec[knorm][i]
                     if not ik in W:
                         W[ik] = numpy.ndarray(len(nt), dtype=complex)
-                    W[ik][i_0] = numpy.sum(self_overlap(self._pos_unf[t_0], self._pos_unf[t_0+t], side, self.a_square) * 
+                    W[ik][i_0] = numpy.sum(self_overlap(self._pos_unf[t_0], self._pos_unf[t_0+t], side, self.a_square) *
                                           expo[...,0,ik[0]] * expo[...,1,ik[1]] * expo[...,2,ik[2]])
         return W
 
@@ -577,10 +555,10 @@ class S4ktOverlap(FourierSpaceCorrelation):
             # as for fkt
             W = self._tabulate_W(self.k_sorted, self.k_selected, off, i, self.skip)
 
-            # Compute vriance of W 
+            # Compute vriance of W
             cnt = [0 for k in self.k_sorted]
-            w_av = [complex(0.,0.) for k in self.k_sorted]
-            w2_av = [complex(0.,0.) for k in self.k_sorted]
+            w_av = [complex(0., 0.) for k in self.k_sorted]
+            w2_av = [complex(0., 0.) for k in self.k_sorted]
             for kk, knorm in enumerate(self.k_sorted):
                 for j in self.k_selected[kk]:
                     ik = self.kvec[knorm][j]
@@ -590,7 +568,7 @@ class S4ktOverlap(FourierSpaceCorrelation):
 
             # Normalization
             npart = self._pos[0].shape[0]
-            dt.append(self.trajectory.timestep *( self.trajectory.steps[off+i] - self.trajectory.steps[off]))
+            dt.append(self.trajectory.timestep * (self.trajectory.steps[off+i] - self.trajectory.steps[off]))
             #self.grid[1] = k_sorted
             self.value.append([float(w2_av[kk] - (w_av[kk]*w_av[kk].conjugate())) / npart for kk in range(len(self.grid[1]))])
         self.grid[0] = dt

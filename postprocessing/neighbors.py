@@ -5,30 +5,11 @@ import sys
 import numpy
 import atooms.trajectory as trj
 
-class Limited(object):
-
-    # TODO: refactor it as get_neighbors
-
-    """Limit the number of neighbors"""
-
-    def __new__(cls, component, max_neighbors):
-        cls = type('Limited', (Limited, component.__class__), component.__dict__)
-        return object.__new__(cls)
-
-    def __init__(self, component, max_neighbors=None):
-        self.max_neighbors = max_neighbors
-
-    def read_sample(self, sample):
-        s = super(Limited, self).read_sample(sample)
-        if self.max_neighbors is not None:
-            for i in range(len(s.neighbors)):
-                numn = len(s.neighbors[i])
-                s.neighbors[i] = s.neighbors[i][0:min(self.max_neighbors, numn)]
-        return s
 
 class PrettyList(list):
     def __str__(self):
         return ' '.join([str(x) for x in self])
+
 
 class TrajectoryNeighbors(trj.TrajectoryXYZ):
 
@@ -40,6 +21,7 @@ class TrajectoryNeighbors(trj.TrajectoryXYZ):
         self.fmt = ['neighbors']
         # This is necessary to format integer numpy array correctly
         self._fmt_float = False
+
 
 def get_neighbors(fileinp, fileout, args, fmt=None):
     if args.neigh_file is None:
@@ -53,11 +35,15 @@ def get_neighbors(fileinp, fileout, args, fmt=None):
             tn = TrajectoryVoronoi(args.neigh_file)
         else:
             tn = trj.TrajectoryNeighbors(args.neigh_file)
+
     if args.neigh_limit is not None:
-        tnl = Limited(tn, args.neigh_limit)
-    else:
-        tnl = tn
-    return tnl
+        def limited(system, max_neighbors):
+            for i in range(len(system.neighbors)):
+                numn = len(system.neighbors[i])
+                system.neighbors[i] = s.neighbors[i][0: min(max_neighbors, numn)]
+            return system
+        tn.register_callback(limited, args.neigh_limit)
+    return tn
 
 def compute_neighbors(fileinp, rcut, fileout='/dev/stdout', fmt=None):
     import copy
