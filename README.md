@@ -37,7 +37,7 @@ The same kind of calculation can be done from python:
 from atooms.trajectory import Trajectory
 import postprocessing as pp
 
-with Trajectory('trajectory.xyz') as t:
+with Trajectory('data/trajectory.xyz') as t:
      p = pp.RadialDistributionFunction(t)
      p.do()
 ```
