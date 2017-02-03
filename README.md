@@ -1,7 +1,7 @@
 Post processing
 ==================
 
-Python analysis tools for particle-based simulation data.
+Python analysis tools for particle-based simulations.
 
 - Time dependent correlation functions
   - real space: radial distribution function, mean square displacement, time-dependent overlap, ...
