@@ -1,29 +1,37 @@
 Post processing
 ==================
 
-Tools to analyze molecular simulation data. Current
+Tools to analyze molecular simulation data.
 
 - Time dependent correlation functions
-  - real space: radial distribution function, mean square displacement, time-dependent overlap 
-  - Fourier space: structure factor, intermediate scattering function, dynamic susceptibility
+  - real space: radial distribution function, mean square displacement, time-dependent overlap, ...
+  - Fourier space: structure factor, intermediate scattering function, dynamic susceptibility, ...
 - Bond-orientational order
 - Common neighbors analysis
+
+The tools rely on the `atooms` package to read trajectory files.
 
 Getting started
 ---------------
 
-Post-processing tools typically take as input trajectory files
-produced by some molecular simulation code. This can be done from the
-command line. For instance, the following line will compute the radial
-distribution function g(r) from the trajectory file `trajectory.xyz`
+Post processing tools typically operate on trajectory files produced
+by molecular simulation codes. Any trajectory format recognized by
+`atooms` can be processed, for instance most "xyz" kind of
+trajectories should work fine. Most tools are simple scripts that can
+be executed from the command line. For instance, the following command
+will compute the radial distribution function g(r) from the trajectory
+file `trajectory.xyz` contained in the `data/` directory
 
 ```bash
-$ pp.py gr trajectory.xyz
+$ pp.py gr data/trajectory.xyz
 ```
 
-Any trajectory format supported by `atooms` can be passed to the post-processing tools.
+The results will be stored in the file `data/trajectory.xyz.pp.gr`. If
+multiple chemical species are present, the program will create files
+named `trajectory.xyz.pp.<isp>-<jsp>`, where `<isp>` and `<jsp>` are
+species indices.
 
-The same calculation can be done from python
+The same kind of calculation can be done from python:
 
 ```python
 from atooms.trajectory import Trajectory
@@ -37,12 +45,12 @@ with Trajectory('trajectory.xyz') as t:
 Requirements
 ------------
 - numpy
-- atooms
+- [atooms]((https://gitlab.info-ufr.univ-montp2.fr/atooms/postprocessing.git)
 
 Installation
 ------------
 From the code repository
 ```
-git clone https://gitlab.info-ufr.univ-montp2.fr/atooms/postprocession.git
+git clone https://gitlab.info-ufr.univ-montp2.fr/atooms/postprocessing.git
 make install
 ```
