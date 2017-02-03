@@ -13,52 +13,31 @@ from collections import defaultdict
 from atooms.trajectory.decorators import Unfolded
 
 
-def filter_species(system, i):
-    s = copy.copy(system)
-    s.particle = [p for p in system.particle if p.id == i]
-    return s
-
-def filter_all(system):
-    s = copy.copy(system)
-    s.particle = [p for p in system.particle]
-    return s
-
-def adjust_skip(trajectory, n_origin=-1):
-    """ Utility function to set skip so as to keep computation time under control """
-    # TODO: We should also adjust it for Npart
-    if trajectory.block_period > 1:
-        return trajectory.block_period
-    else:
-        if n_origin > 0:
-            return max(1, int(len(trajectory.steps) / float(n_origin)))
-        else:
-            return 1
-
 def acf(grid, skip, t, x):
     """Auto correlation function.
-    Calculate the correlation between time t(i0) and t(i0+i) 
+    Calculate the correlation between time t(i0) and t(i0+i)
     for all possible pairs (i0,i) provided by grid.
     """
-    acf = defaultdict(float)
+    cf = defaultdict(float)
     cnt = defaultdict(int)
     xave = numpy.average(x)
     for i in grid:
         for i0 in range(0, len(x)-i, skip):
             # Get the actual time difference
             dt = t[i0+i] - t[i0]
-            acf[dt] += (x[i0+i]-xave) * (x[i0]-xave)
+            cf[dt] += (x[i0+i]-xave) * (x[i0]-xave)
             cnt[dt] += 1
 
-    # Return the ACF with the time differences sorted 
-    dt = sorted(acf.keys())
-    return dt, [acf[t] / cnt[t] for t in dt], cnt
+    # Return the ACF with the time differences sorted
+    dt = sorted(cf.keys())
+    return dt, [cf[t] / cnt[t] for t in dt], cnt
 
 def gcf(f, grid, skip, t, x):
     """Generalized correlation function.
     Pass a function to apply to the data.
     Exemple: mean square displacement.
     """
-    # Calculate the correlation between time t(i0) and t(i0+i) 
+    # Calculate the correlation between time t(i0) and t(i0+i)
     # for all possible pairs (i0,i) provided by grid
     acf = defaultdict(float)
     cnt = defaultdict(int)
@@ -70,7 +49,7 @@ def gcf(f, grid, skip, t, x):
             acf[dt] += f(x[i0+i], x[i0])
             cnt[dt] += 1
 
-    # Return the ACF with the time differences sorted 
+    # Return the ACF with the time differences sorted
     dt = sorted(acf.keys())
     return dt, [acf[t] / cnt[t] for t in dt], [cnt[t] for t in dt]
 
@@ -79,7 +58,7 @@ def gcf_offset(f, grid, skip, t, x):
     Pass a function to apply to the data.
     Exemple: mean square displacement.
     """
-    # Calculate the correlation between time t(i0) and t(i0+i) 
+    # Calculate the correlation between time t(i0) and t(i0+i)
     # for all possible pairs (i0,i) provided by grid
     acf = defaultdict(float)
     cnt = defaultdict(int)
@@ -90,7 +69,7 @@ def gcf_offset(f, grid, skip, t, x):
             acf[dt] += f(x[i0+i], x[i0])
             cnt[dt] += 1
 
-    # Return the ACF with the time differences sorted 
+    # Return the ACF with the time differences sorted
     dt = sorted(acf.keys())
     return dt, [acf[t] / cnt[t] for t in dt] #, [cnt[t] for t in dt]
 
@@ -99,21 +78,13 @@ def gcf_offset_bin(f, grid, skip, t, x):
     Pass a function to apply to the data.
     Exemple: mean square displacement.
     """
-    # Calculate the correlation between time t(i0) and t(i0+i) 
+    # Calculate the correlation between time t(i0) and t(i0+i)
     # for all possible pairs (i0,i) provided by grid
     from pyutils.histogram import Histogram
     acf = Histogram()
     for off, i in grid:
         for i0 in xrange(off, len(x)-i-skip, skip):
             acf.add([(t[i0+i] - t[i0], f(x[i0+i], x[i0]) / 0.1)])
-
-    # Return the ACF with the time differences sorted 
-    fh = open('/tmp/2', 'w')
-    for x, y, in zip(acf.grid, acf.frequency):
-        fh.write('%g %g %g\n' % (x[0], x[1], y))
-    fh.close()
-    import sys
-    sys.exit()
     return acf.grid, acf.value
 
 # this seems to fit well as a trajectory method...
@@ -122,9 +93,12 @@ def _setup_t_grid(trajectory, t_grid):
     #from pyutils.utils import templated
 
     def templated(entry, template, keep_multiple=False):
-        """Filter a list of entries so as to best match an input template. Lazy, slow version O(N*M).
-        Ex.: entry=[1,2,3,4,5,10,20,100], template=[1,7,12,80] should return [1,5,10,100]."""
-        match = [min(entry, key=lambda x : abs(x-t)) for t in template]
+        """Filter a list of entries so as to best match an input
+        template. Lazy, slow version O(N*M). Ex.:
+        entry=[1,2,3,4,5,10,20,100], template=[1,7,12,80] should
+        return [1,5,10,100].
+        """
+        match = [min(entry, key=lambda x: abs(x-t)) for t in template]
         if not keep_multiple:
             match = list(set(match))
         return sorted(match)
@@ -136,7 +110,7 @@ def _setup_t_grid(trajectory, t_grid):
         for i in range(off, len(steps)-off):
             if not steps[i] - steps[off] in off_samp:
                 off_samp[steps[i] - steps[off]] = (off, i-off)
-                
+
     # Retain only those pairs of offsets and sample
     # difference that match the desired input. This is the grid
     # used internally to calculate the time correlation function.
@@ -153,8 +127,8 @@ class Correlation(object):
 
     log = None
     nbodies = 1
-   
-    def __init__(self, trj, grid, name="", short_name="", description="", phasespace=[]):
+
+    def __init__(self, trj, grid, name="", short_name="", description="", phasespace=None):
         # TODO: we could force trajectory cast if a string is passed
         self.trajectory = trj
         self.grid = grid
@@ -163,7 +137,10 @@ class Correlation(object):
         self.description = description
         self.results = {}
         self.output = None
-        self._phasespace = phasespace
+        if phasespace is None:
+            self._phasespace = []
+        else:
+            self._phasespace = phasespace
         self.prefix = 'pp'
         self.tag = ''
         self.comments = None # can be modified by user at run time
@@ -181,10 +158,9 @@ class Correlation(object):
                 if os.path.getmtime(self.trajectory.filename) < os.path.getmtime(self._output_file):
                     self._need_update = False
                     # # TODO: to optimize avoid reading correlation objects unless we explicitly pass something to __init__
-                    # # We source the existing file
-                    # self._read()
+                    self.read()
 
-        # TODO: logging interferes with atooms 
+        # TODO: logging interferes with atooms
         # Create logger
         # log_level = getattr(logging, LOG_LEVEL)
         # if self.log is None: # or log_level != logging.getLogger().level:
@@ -261,9 +237,9 @@ class Correlation(object):
                     self._vel_1.append(s1.dump('vel'))
 
         # Dump unfolded positions if requested
-        self._pos_unf_0, self._pos_unf_1  = [], []
+        self._pos_unf_0, self._pos_unf_1 = [], []
         if 'pos-unf' in self._phasespace:
-            for s in trajectory.Unfolded(self.trajectory):
+            for s in Unfolded(self.trajectory):
                 s0 = self.cbk[0](s, *self.cbk_args[0], **self.cbk_kwargs[0])
                 s1 = self.cbk[1](s, *self.cbk_args[1], **self.cbk_kwargs[1])
                 self._pos_unf_0.append(s0.dump('pos'))
@@ -286,7 +262,7 @@ class Correlation(object):
             print 'Could not analyze due to missing modules, continuing...'
             print e.message
         return self.grid, self.value
-        
+
     def _compute(self):
         pass
 
@@ -295,7 +271,8 @@ class Correlation(object):
 
     @property
     def _output_file(self):
-        filename = '.'.join([e for e in [self.trajectory.filename, self.prefix, self.short_name, self.tag] if len(e)>0])
+        filename = '.'.join([e for e in [self.trajectory.filename, self.prefix, 
+                                         self.short_name, self.tag] if len(e) > 0])
         # always remove trailing dot (this allows directories)
         filename = filename.replace('/.', '/')
         return filename
@@ -330,8 +307,8 @@ class Correlation(object):
             dump = numpy.transpose(numpy.array([x, y, z]))
         else:
             dump = numpy.transpose(numpy.array([self.grid, value]))
-        
-        comments='# %s (%s)\n' % (self.description, self.tag)
+
+        comments = '# %s (%s)\n' % (self.description, self.tag)
         if not self.comments is None:
             comments += self.comments
 
@@ -341,7 +318,7 @@ class Correlation(object):
         fh.write(comments)
         numpy.savetxt(fh, dump, fmt="%g")
         fh.close()
-        
+
         # Analysis results
         if len(self.results) == 0:
             return
@@ -364,14 +341,13 @@ class Correlation(object):
         self.write()
 
     def do_dims(self):
-        for i in range(self.trajectory.read(0).number_of_dimensions):
-            self.do(tag='dim%i' % (i+1), dim=slice(i, i+1, None))
+        raise NotImplementedError('do_dims is broken')
 
 
 class CorrelationTemplate(Correlation):
-    
+
     def __init__(self, trajectory, grid, name, description=""):
-        super().__init__(self, trajectory, tgrid, 't', '')
+        super(CorrelationTemplate).__init__(self, trajectory, grid, 't', '')
 
     def compute(self):
         pass
@@ -381,9 +357,3 @@ class CorrelationTemplate(Correlation):
 
     def write(self):
         pass
-                       
-
-
-
-
-                        
