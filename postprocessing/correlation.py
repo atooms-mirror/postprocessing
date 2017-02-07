@@ -275,7 +275,10 @@ class Correlation(object):
         else:
             dump = numpy.transpose(numpy.array([self.grid, value]))
 
-        comments = '# %s (%s)\n' % (self.description, self.tag)
+        if len(self.tag) > 0:
+            comments = '# %s (%s)\n' % (self.description, self.tag)
+        else:
+            comments = '# %s\n' % self.description
         if not self.comments is None:
             comments += self.comments
 
