@@ -3,21 +3,28 @@
 import postprocessing
 from postprocessing.partial import Partial
 from atooms.trajectory import Trajectory
+from atooms.system.particle import species
 from .helpers import linear_grid, logx_grid
 
 def gr(input_file, grandcanonical=False):
     """Radial distribution function."""
     with Trajectory(input_file) as th:
         th._grandcanonical = grandcanonical
-        cf = Partial(postprocessing.RadialDistributionFunction, [1, 2], th)
-        cf.do()
+        postprocessing.RadialDistributionFunction(th).do()
+        # We only do partial correlation functions in mixtures
+        ids = species(th[0].particle)
+        if len(ids) > 1:
+            Partial(postprocessing.RadialDistributionFunction, [1, 2], th).do()
 
 def sk(fname, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30, grandcanonical=False):
-    """Structure factor."""
-    with Trajectory(fname) as trajectory:
+    """Structure factor."""    
+    with Trajectory(fname) as th:
         k_grid = linear_grid(kmin, kmax, ksamples)
-        cf = postprocessing.StructureFactor(trajectory, k_grid)
-        cf.do()
+        postprocessing.StructureFactor(th, k_grid).do()
+        # We only do partial correlation functions in mixtures
+        ids = species(th[0].particle)
+        if len(ids) > 1:
+            Partial(postprocessing.StructureFactor, ids, th, k_grid).do()
 
 def msd(input_file, msd_target=3.0, time_target=-1.0, t_samples=30, norigins=50, sigma=1.0, func=linear_grid):
     """Mean square displacement."""
