@@ -23,9 +23,12 @@ def logx_grid(x1, x2, n):
         xx = (x2)**(1.0/n)
         return [x1] + [xx**(i+1)-1 for i in range(1,n)]
 
-def filter_species(system, i):
+def filter_species(system, species):
     s = copy.copy(system)
-    s.particle = [p for p in system.particle if p.id == i]
+    if type(species) is int:
+        s.particle = [p for p in system.particle if p.id == species]
+    else:
+        s.particle = [p for p in system.particle if p.name == species]
     return s
 
 def filter_all(system):
