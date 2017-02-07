@@ -1,3 +1,5 @@
+import copy
+
 def linear_grid(min,max,delta):
     """Linear grid."""
     if type(delta) is int:
