@@ -24,11 +24,18 @@ def logx_grid(x1, x2, n):
         return [x1] + [xx**(i+1)-1 for i in range(1,n)]
 
 def filter_species(system, species):
+    """Callback to filter particles by species.
+
+    The input species can be an integer (particle id), a string
+    (particle name), or None. In this latter case, all particles
+    are returned.
+    """
     s = copy.copy(system)
-    if type(species) is int:
-        s.particle = [p for p in system.particle if p.id == species]
-    else:
-        s.particle = [p for p in system.particle if p.name == species]
+    if species is not None:
+        if type(species) is int:
+            s.particle = [p for p in system.particle if p.id == species]
+        else:
+            s.particle = [p for p in system.particle if p.name == species]
     return s
 
 def filter_all(system):
