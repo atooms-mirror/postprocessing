@@ -56,8 +56,6 @@ if args.neigh_file is None:
             args.rcut[jsp, isp] = float(rc[i])
             i+=1
 
-    print args.rcut
-
 for finp in args.files:
     fout = finp + '.neigh'
     tn = get_neighbors(finp, fout, args, fmt=args.fmt)
