@@ -418,9 +418,14 @@ class StructureFactor(FourierSpaceCorrelation):
         self._is_cell_variable = None
 
     def _variable_cell(self):
+        """Simple test to check if cell changes.
+        We only compare the first and last sample.
+        """
+        # This is cached for efficiency. 
+        # TODO: It should be moved to trajectory helpers.
         if self._is_cell_variable is None:
             self._is_cell_variable = False
-            for sample in [-1, 1]:
+            for sample in [-1, ]:
                 L0 = self.trajectory[0].cell.side
                 L1 = self.trajectory[sample].cell.side
                 if L0[0] != L1[0] or L0[1] != L1[1] or L0[2] != L1[2]:
