@@ -6,7 +6,7 @@ import unittest
 import numpy
 from atooms import trajectory
 import postprocessing
-from postprocessing.correlation import filter_species
+from postprocessing.helpers import filter_species
 
 def filter_id(t, s, id):
     # TODO: should we do a copy or modify the system in place? Looks like modify it's ok
