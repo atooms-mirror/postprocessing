@@ -13,3 +13,4 @@ MANIFEST
 *.egg-info
 
 *.so
+data/*.pp.*
