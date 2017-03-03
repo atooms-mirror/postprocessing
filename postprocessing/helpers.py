@@ -32,7 +32,7 @@ def filter_species(system, species):
     """
     s = copy.copy(system)
     if species is not None:
-        if type(species) is int:
+        if type(species) is not str:
             s.particle = [p for p in system.particle if p.id == species]
         else:
             s.particle = [p for p in system.particle if p.name == species]
