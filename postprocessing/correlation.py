@@ -281,8 +281,6 @@ class Correlation(object):
         if not self.comments is None:
             comments += self.comments
 
-        # comments is not available in old numpy (< 1.7)
-#        numpy.savetxt(self._output_file, dump, fmt="%g", comments=comments)
         fh = open(self._output_file, 'w')
         fh.write(comments)
         numpy.savetxt(fh, dump, fmt="%g")
