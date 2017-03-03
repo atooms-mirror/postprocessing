@@ -20,6 +20,22 @@ class Partial(object):
         self.partial = {}
 
     def compute(self):
+        if self._corr_cls.nbodies == 1:
+            self._compute_one_body()
+        elif self._corr_cls.nbodies == 2:
+            self._compute_two_body()
+
+    def _compute_one_body(self):
+        for i in range(len(self._species)):
+            # Instantiate a correlation object
+            # with args passed upon construction
+            isp = self._species[i]
+            self.partial[isp] = self._corr_cls(*self._args, **self._kwargs)
+            self.partial[isp].add_filter(filter_species, isp)
+            self.partial[isp].compute()
+            self.partial[isp].tag = str(isp)
+
+    def _compute_two_body(self):
         for i in range(len(self._species)):
             for j in range(len(self._species)):
                 if j < i:

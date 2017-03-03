@@ -274,26 +274,27 @@ class Correlation(object):
         else:
             dump = numpy.transpose(numpy.array([self.grid, value]))
 
+        # Comment line
         if len(self.tag) > 0:
-            comments = '# %s (%s)\n' % (self.description, self.tag)
+            comments = '# %s, %s\n' % (self.description, self.tag)
         else:
             comments = '# %s\n' % self.description
+        comments += '# columns: %s, %s\n' % (self.name, self.short_name)
         if not self.comments is None:
             comments += self.comments
 
-        with open(self._output_file, 'w') as fh:
-            fh.write(comments)
-            numpy.savetxt(fh, dump, fmt="%g")
-
         # Analysis results
-        if len(self.results) == 0:
-            return
-
-        out = open(self._output_file + '.info', 'w')
+        analysis = ""
         for x, f in self.results.iteritems():
             if f is not None:
-                out.write('%s = %s\n' % (x, f))
-        out.close()
+                analysis += '# %s = %s\n' % (x, f)
+
+        # Put it all together
+        with open(self._output_file, 'w') as fh:
+            fh.write(comments)
+            if len(analysis) > 0:
+                fh.write(analysis)
+            numpy.savetxt(fh, dump, fmt="%g")
 
     def do(self):
         if not self._need_update:

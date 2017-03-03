@@ -382,7 +382,7 @@ class MeanSquareDisplacement(Correlation):
         else:
             diffusion = linear_fit(numpy.array(self.grid)[where], numpy.array(self.value)[where])
         ndim = self.trajectory.read(0).number_of_dimensions
-        self.results['D'] = diffusion[0] / (2*ndim)
+        self.results['diffusion coefficient D'] = diffusion[0] / (2*ndim)
 
 
 class NonGaussianParameter(Correlation):
