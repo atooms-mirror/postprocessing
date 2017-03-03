@@ -281,10 +281,9 @@ class Correlation(object):
         if not self.comments is None:
             comments += self.comments
 
-        fh = open(self._output_file, 'w')
-        fh.write(comments)
-        numpy.savetxt(fh, dump, fmt="%g")
-        fh.close()
+        with open(self._output_file, 'w') as fh:
+            fh.write(comments)
+            numpy.savetxt(fh, dump, fmt="%g")
 
         # Analysis results
         if len(self.results) == 0:
