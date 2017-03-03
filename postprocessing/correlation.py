@@ -238,10 +238,9 @@ class Correlation(object):
 
     @property
     def _output_file(self):
-        filename = '.'.join([e for e in [self.trajectory.filename, self.prefix, 
-                                         self.short_name, self.tag] if len(e) > 0])
-        # always remove trailing dot (this allows directories)
-        filename = filename.replace('/.', '/')
+        filename = '.'.join([e for e in [self.trajectory.filename,
+                                         self.prefix, self.short_name,
+                                         self.tag] if len(e) > 0])
         return filename
 
     def read(self):
