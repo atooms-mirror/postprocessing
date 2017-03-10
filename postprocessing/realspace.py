@@ -5,13 +5,15 @@
 
 import numpy
 import math
-import warnings
+import logging
 
 from pyutils import utils
 from pyutils.utils import feqc
 from .helpers import linear_grid, logx_grid
 from .correlation import Correlation, gcf_offset
 from .helpers import adjust_skip, setup_t_grid
+
+log = logging.getLogger(__name__)
 
 
 # Kernels
@@ -393,13 +395,13 @@ class MeanSquareDisplacement(Correlation):
             (numpy.array(self.value) < self.sigma_max**2)
 
         if list(where).count(True) < 2:
-            warnings.warn('could not fit MSD: not enough data above sigma')
+            log.warn('could not fit MSD: not enough data above sigma')
             return
 
         try:
             from pyutils.fit import linear_fit
         except ImportError as e:
-            warnings.warn('could not fit MSD: missing modules' + e)
+            log.warn('could not fit MSD: missing fitting modules')
             return
 
         if not self.var is None:
