@@ -1,6 +1,8 @@
 # This file is part of atooms
 # Copyright 2010-2014, Daniele Coslovich
 
+"""Real space correlation functions."""
+
 import numpy
 import math
 import warnings
@@ -28,28 +30,34 @@ def gr_kernel(x, y, L):
     return numpy.sqrt(numpy.sum(r**2, axis=1))
 
 def gr_kernel_square(x, y, L):
-    """ Return square distances """
+    """Return square distances."""
     # r is an array of array distances
     r = x-y
     r = r - numpy.rint(r/L) * L
     return numpy.sum(r**2, axis=1)
 
 def pairs(f, x, y, L):
-    """Apply function f to all pairs in x[i] and y[j] and return a list of f values."""
+    """Apply function f to all pairs in x[i] and y[j] and return a list of
+    f values.
+    """
     fxy = []
     for i in xrange(len(y)):
         fxy.append(f(x[:], y[i], L))
     return fxy
 
 def pairs_numpy(f, x, y, L):
-    """Apply function f to all pairs in x[i] and y[j] and return a numpy array of f values."""
-    fxy = numpy.ndarray((len(y),len(x)))
+    """Apply function f to all pairs in x[i] and y[j] and return a numpy
+    array of f values.
+    """
+    fxy = numpy.ndarray((len(y), len(x)))
     for i in xrange(fxy.shape[0]):
-        fxy[i,:] = f(x[:], y[i], L)
+        fxy[i, :] = f(x[:], y[i], L)
     return fxy
 
 def pairs_newton(f, x, y, L):
-    """Apply function f to all pairs in x[i] and y[j] and return a list of f values."""
+    """Apply function f to all pairs in x[i] and y[j] and return a list of
+    f values.
+    """
     fxy = []
     for i in xrange(len(y)-1):
         for value in f(x[i+1:], y[i], L):
@@ -57,7 +65,9 @@ def pairs_newton(f, x, y, L):
     return fxy
 
 def pairs_newton_hist(f, x, y, L, bins):
-    """Apply function f to all pairs in x[i] and y[j] and update the |hist| histogram using the |bins| bin edges."""
+    """Apply function f to all pairs in x[i] and y[j] and update the
+    |hist| histogram using the |bins| bin edges.
+    """
     hist, bins = numpy.histogram([], bins)
     # Do the calculation in batches to optimize
     bl = max(1, int(100 * 1000.0 / len(y)))
@@ -72,7 +82,9 @@ def pairs_newton_hist(f, x, y, L, bins):
     return hist
 
 def pairs_hist(f, x, y, L, bins):
-    """Apply function f to all pairs in x[i] and y[j] and update the |hist| histogram using the |bins| bin edges."""
+    """Apply function f to all pairs in x[i] and y[j] and update the
+    |hist| histogram using the |bins| bin edges.
+    """
     hist, bins = numpy.histogram([], bins)
     for i in xrange(len(y)):
         fxy = f(x[:], y[i], L)
@@ -81,7 +93,7 @@ def pairs_hist(f, x, y, L, bins):
     return hist
 
 def square_displacement(x, y, L=None):
-    """ Return array of square distances (no pbc) """
+    """Return array of square distances (no pbc)."""
     return numpy.sum((x-y)**2, axis=1)
 
 def mean_square_displacement(x, y):
@@ -106,8 +118,10 @@ def self_overlap(r0, r1, side, a_square):
 
 class CollectiveOverlap(Correlation):
 
-    def __init__(self, trajectory, grid=None, nsamples=60, a=0.3, norigins=1):
-        Correlation.__init__(self, trajectory, grid, 't', 'qt', 'Collective overlap', 'pos')
+    def __init__(self, trajectory, grid=None, nsamples=60, a=0.3,
+                 norigins=1):
+        Correlation.__init__(self, trajectory, grid, 't', 'qt',
+                             'Collective overlap', 'pos')
         self.a_square = a**2
         self.skip = adjust_skip(self.trajectory, norigins)
         if grid is None:
@@ -118,14 +132,17 @@ class CollectiveOverlap(Correlation):
         side = self.trajectory.read(0).cell.side
         def f(x, y):
             return collective_overlap(x, y, side, self.a_square).sum() / float(x.shape[0])
-        self.grid, self.value = gcf_offset(f, self._discrete_tgrid, self.skip, self.trajectory.steps, self._pos)
+        self.grid, self.value = gcf_offset(f, self._discrete_tgrid,
+                                           self.skip, self.trajectory.steps, self._pos)
         self.grid = [ti * self.trajectory.timestep for ti in self.grid]
 
 
 class SelfOverlap(Correlation):
 
-    def __init__(self, trajectory, grid=None, norigins=-1, a=0.3, nsamples=60):
-        Correlation.__init__(self, trajectory, grid, 't', 'qst', 'Self overlap', 'pos-unf')
+    def __init__(self, trajectory, grid=None, norigins=-1, a=0.3,
+                 nsamples=60):
+        Correlation.__init__(self, trajectory, grid, 't', 'qst',
+                             'Self overlap', 'pos-unf')
         # TODO: find a way to cache everything that does not need to be done on construction. How to encapsulate this check?
         if not self._need_update:
             return
@@ -139,11 +156,11 @@ class SelfOverlap(Correlation):
         side = self.trajectory.read(0).cell.side
         def f(x, y):
             return self_overlap(x, y, side, self.a_square).sum() / float(x.shape[0])
-        self.grid, self.value = gcf_offset(f, self._discrete_tgrid, self.skip, self.trajectory.steps, self._pos_unf)
+        self.grid, self.value = gcf_offset(f, self._discrete_tgrid,
+                                           self.skip, self.trajectory.steps, self._pos_unf)
         self.grid = [ti * self.trajectory.timestep for ti in self.grid]
 
     def analyze(self):
-        # TODO: use decorators to print debug messages
         try:
             self.results['tau'] = feqc(self.grid, self.value, 1/numpy.exp(1.0))[0]
         except:
@@ -153,8 +170,10 @@ class SelfOverlap(Correlation):
 class Chi4SelfOverlap(Correlation):
 
     # TODO: refactor correlation init via class variables??
-    def __init__(self, trajectory, grid=None, norigins=-1, a=0.3, nsamples=60):
-        Correlation.__init__(self, trajectory, grid, 't', 'chi4qs', 'Chi4 self overlap', 'pos-unf')
+    def __init__(self, trajectory, grid=None, norigins=-1, a=0.3,
+                 nsamples=60):
+        Correlation.__init__(self, trajectory, grid, 't', 'chi4qs',
+                             'Chi4 self overlap', 'pos-unf')
         if not self._need_update:
             return
         if grid is None:
@@ -162,11 +181,10 @@ class Chi4SelfOverlap(Correlation):
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid)
         self.skip = adjust_skip(self.trajectory, norigins)
         self.a_square = a**2
-        self.average = Correlation(trajectory, grid, 't', 'qsu', 'Average of self overlap not normalized')
-        self.variance = Correlation(trajectory, grid, 't', 'qs2u', 'Variance self overlap not normalized')
-
-    def filter(self, *args, **kwargs):
-        raise RuntimeError('filter is unimplemented')
+        self.average = Correlation(trajectory, grid, 't', 'qsu',
+                                   'Average of self overlap not normalized')
+        self.variance = Correlation(trajectory, grid, 't', 'qs2u',
+                                    'Variance self overlap not normalized')
 
     def _compute(self):
         side = self.trajectory.read(0).cell.side
@@ -219,7 +237,8 @@ class OverlapDistribution(Correlation):
     # TODO: filter matrix particles from overlap !
 
     def __init__(self, trajectory, grid, skip=1, a=0.3):
-        Correlation.__init__(self, trajectory, grid, 'q', 'P_q', 'Overlap distribution', 'pos')
+        Correlation.__init__(self, trajectory, grid, 'q', 'P_q',
+                             'Overlap distribution', 'pos')
         self.skip = skip
         self.a = a
         self.a_square = a**2
@@ -232,12 +251,14 @@ class OverlapDistribution(Correlation):
         self_threshold = 10.0 #/ N
         for i0 in range(0, len(self._pos), self.skip):
             for i in range(i0, len(self._pos), self.skip):
-                qs = self_overlap(self._pos[i0], self._pos[i], side, self.a_square).sum() #/ float(N)
+                qs = self_overlap(self._pos[i0], self._pos[i],
+                                  side, self.a_square).sum() #/ float(N)
 
                 # We apply at every time step because a replica might have come back
                 # to the initial state without having travelled around long enough
                 if qs < self_threshold:
-                    q = collective_overlap(self._pos[i0], self._pos[i], side, self.a_square) #/ float(N)
+                    q = collective_overlap(self._pos[i0], self._pos[i],
+                                           side, self.a_square) #/ float(N)
                     data.append(q)
 
         if len(data) == 0:
@@ -266,7 +287,8 @@ class RadialDistributionFunction(Correlation):
     nbodies = 2
 
     def __init__(self, trajectory, grid=None, norigins=-1, dr=0.04):
-        Correlation.__init__(self, trajectory, grid, 'r', 'gr', 'Radial distribution function', 'pos')
+        Correlation.__init__(self, trajectory, grid, 'r', 'gr',
+                             'Radial distribution function', 'pos')
         self.skip = adjust_skip(trajectory, norigins)
         self.side = self.trajectory.read(0).cell.side
         if grid is not None:
@@ -290,9 +312,11 @@ class RadialDistributionFunction(Correlation):
         _, r = numpy.histogram([], bins=self.grid)
         for i in range(0, ncfg, self.skip):
             if self._pos_0 is self._pos_1:
-                gr = pairs_newton_hist(gr_kernel, self._pos_0[i], self._pos_1[i], self.side, r)
+                gr = pairs_newton_hist(gr_kernel, self._pos_0[i], self._pos_1[i],
+                                       self.side, r)
             else:
-                gr = pairs_hist(gr_kernel, self._pos_0[i], self._pos_1[i], self.side, r)
+                gr = pairs_hist(gr_kernel, self._pos_0[i], self._pos_1[i],
+                                self.side, r)
             gr_all.append(gr)
 
         # Normalization
@@ -309,7 +333,8 @@ class RadialDistributionFunction(Correlation):
 
 class MeanSquareDisplacement(Correlation):
 
-    def __init__(self, trajectory, tgrid=None, sigma=1.0, norigins=50, nsamples=30, sigma_max=1e100, nblocks=1):
+    def __init__(self, trajectory, tgrid=None, sigma=1.0, norigins=50,
+                 nsamples=30, sigma_max=1e100, nblocks=1):
         # TODO: optimize targeting msd takes a lot of time especially on large systems because of pbc unfolding
         # TODO: memory is leaking when sourcing and analyzing many files!
         self.sigma = sigma
@@ -317,7 +342,8 @@ class MeanSquareDisplacement(Correlation):
         self.nblocks = nblocks
         self.var = None
 
-        Correlation.__init__(self, trajectory, tgrid, 't', 'msd', "Mean square displacement", ['pos-unf'])
+        Correlation.__init__(self, trajectory, tgrid, 't', 'msd',
+                             "Mean square displacement", ['pos-unf'])
         if not self._need_update:
             return
         # TODO: subtrajectories should behave well when sampling is logarithmic
@@ -326,7 +352,9 @@ class MeanSquareDisplacement(Correlation):
         # e.g. because we are just sourcing the correlation object from file
         if tgrid is None:
             if sigma_max < 1e99:
-                self.grid = linear_grid(0.0, min(trajectory.time_total * 1./(1+nblocks), trajectory.time_when_msd_is(sigma_max**2)), nsamples)
+                self.grid = linear_grid(0.0, min(trajectory.time_total * 1./(1+nblocks),
+                                                 trajectory.time_when_msd_is(sigma_max**2)),
+                                        nsamples)
             else:
                 self.grid = linear_grid(0.0, trajectory.time_total * 1./(1+nblocks), nsamples)
         else:
@@ -344,24 +372,21 @@ class MeanSquareDisplacement(Correlation):
             return numpy.sum((x-y)**2) / float(x.shape[0])
 
         # Go for it. Redefine the time grid.
-        self.grid, self.value = gcf_offset(f, self._discrete_tgrid, self.skip, self.trajectory.steps, self._pos_unf)
+        self.grid, self.value = gcf_offset(f, self._discrete_tgrid, self.skip,
+                                           self.trajectory.steps, self._pos_unf)
 
         # Collect results for subtrajectories (nblocks)
         v = []
         for sl in partition(self.trajectory, self.nblocks):
-            grid, value = gcf_offset(f, self._discrete_tgrid, self.skip, self.trajectory.steps[sl], self._pos_unf[sl])
+            grid, value = gcf_offset(f, self._discrete_tgrid, self.skip,
+                                     self.trajectory.steps[sl], self._pos_unf[sl])
             v.append(value)
 
         # Compute variance to provide diffusion coefficient fit with weights
-        #self.var = [x if x>0 else 1e-100 for x in numpy.std(v, axis=0)]
         self.var = numpy.std(v, axis=0) #[x if x>0 else 1e-100 for x in numpy.std(v, axis=0)]
 
         # Update real time grid
         self.grid = [ti * self.trajectory.timestep for ti in self.grid]
-
-        # Normalize correctly the 1d case. TODO: make it general # if self._dim[1] - self._dim[0] == 1:
-        #if self._pos[0].shape[-1] == 1:
-        #    self.value = [f*self.trajectory.system.number_of_dimensions for f in self.value]
 
     def analyze(self):
         where = (numpy.array(self.value) > self.sigma**2) * \
@@ -378,9 +403,12 @@ class MeanSquareDisplacement(Correlation):
             return
 
         if not self.var is None:
-            diffusion = linear_fit(numpy.array(self.grid)[where], numpy.array(self.value)[where], numpy.array(self.var)[where])
+            diffusion = linear_fit(numpy.array(self.grid)[where],
+                                   numpy.array(self.value)[where],
+                                   numpy.array(self.var)[where])
         else:
-            diffusion = linear_fit(numpy.array(self.grid)[where], numpy.array(self.value)[where])
+            diffusion = linear_fit(numpy.array(self.grid)[where],
+                                   numpy.array(self.value)[where])
         ndim = self.trajectory.read(0).number_of_dimensions
         self.results['diffusion coefficient D'] = diffusion[0] / (2*ndim)
 
@@ -388,7 +416,8 @@ class MeanSquareDisplacement(Correlation):
 class NonGaussianParameter(Correlation):
 
     def __init__(self, trajectory, tgrid=None, norigins=50, nsamples=30):
-        Correlation.__init__(self, trajectory, tgrid, 't', 'alpha2', "Non Gaussian parameter", ['pos-unf'])
+        Correlation.__init__(self, trajectory, tgrid, 't', 'alpha2',
+                             "Non Gaussian parameter", ['pos-unf'])
         if not self._need_update:
             return
         if self.grid is None:
@@ -398,7 +427,8 @@ class NonGaussianParameter(Correlation):
 
     def _compute(self):
         f = non_gaussian_parameter
-        self.grid, self.value = gcf_offset(f, self._discrete_tgrid, self.skip, self.trajectory.steps, self._pos_unf)
+        self.grid, self.value = gcf_offset(f, self._discrete_tgrid, self.skip,
+                                           self.trajectory.steps, self._pos_unf)
         self.grid = [ti * self.trajectory.timestep for ti in self.grid]
 
     def analyze(self):
@@ -408,14 +438,15 @@ class NonGaussianParameter(Correlation):
 class VelocityAutocorrelation(Correlation):
 
     def __init__(self, trajectory, tgrid):
-        Correlation.__init__(self, trajectory, tgrid, 't', 'vacf', "Velocity autocorrelation", ['vel'])
+        Correlation.__init__(self, trajectory, tgrid, 't', 'vacf',
+                             "Velocity autocorrelation", ['vel'])
         self._discrete_tgrid = setup_t_grid(trajectory, tgrid)
 
     def _compute(self):
         def f(x, y):
             return numpy.sum(x*y) / float(x.shape[0])
-        self.grid, self.value = gcf_offset(f, self._discrete_tgrid, self.trajectory.block_period, self.trajectory.steps, self._vel)
+        self.grid, self.value = gcf_offset(f, self._discrete_tgrid,
+                                           self.trajectory.block_period,
+                                           self.trajectory.steps,
+                                           self._vel)
         self.grid = [ti * self.trajectory.timestep for ti in self.grid]
-
-    def analyze(self):
-        pass
