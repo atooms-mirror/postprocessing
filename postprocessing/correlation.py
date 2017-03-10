@@ -12,6 +12,8 @@ import logging
 from collections import defaultdict
 from atooms.trajectory.decorators import Unfolded
 
+log = logging.getLogger(__name__)
+
 
 def acf(grid, skip, t, x):
     """Auto correlation function.
@@ -122,23 +124,14 @@ class Correlation(object):
         self._need_update = True
         if UPDATE:
             if os.path.exists(self._output_file):
-                if os.path.getmtime(self.trajectory.filename) < os.path.getmtime(self._output_file):
+                if os.path.getmtime(self.trajectory.filename) < \
+                   os.path.getmtime(self._output_file):
                     self._need_update = False
                     # # TODO: to optimize avoid reading correlation objects unless we explicitly pass something to __init__
                     self.read()
 
-        # TODO: logging interferes with atooms
-        # Create logger
-        # log_level = getattr(logging, LOG_LEVEL)
-        # if self.log is None: # or log_level != logging.getLogger().level:
-        #     logging.basicConfig(format="%(levelname)s:%(asctime)s: %(message)s", level=log_level, datefmt='%d/%m/%Y %H:%M')
-        #     self.log = logging.getLogger()
-
-        # Log
-        # if not self._need_update:
-        #     self.log.info('[%s] skipping %s' % (short_name, self.trajectory.filename))
-        # else:
-        #     self.log.info('[%s] processing %s' % (short_name, self.trajectory.filename))
+    def __str__(self):
+        return '%s' % (self.description, )
 
     def add_filter(self, cbk, *args, **kwargs):
         if len(self.cbk) > self.nbodies:
@@ -219,15 +212,23 @@ class Correlation(object):
                 raise ValueError('cannot handle null samples in GC trajectory')
 
     def compute(self):
+        # Log
         if not self._need_update:
+            log.info('skip %s (%s) for %s' % (self.short_name, self.tag, self.trajectory.filename))
             return
+        
+        from atooms.utils import Timer
+        t = Timer()
+        t.start()
         self._setup_arrays()
         self._compute()
+        t.stop()
+        log.info('computed %s %s for %s in %.1f sec', self.short_name,
+                 self.tag, self.trajectory.filename, t.wall_time)
         try:
             self.analyze()
         except ImportError as e:
-            print 'Could not analyze due to missing modules, continuing...'
-            print e.message
+            log.warn('no analysis due to missing modules')
         return self.grid, self.value
 
     def _compute(self):
@@ -307,8 +308,8 @@ class Correlation(object):
             print e.message
         self.write()
 
-    def do_dims(self):
-        raise RuntimeError('do_dims is broken')
+    def __call__(self):
+        self.do()
 
 
 class CorrelationTemplate(Correlation):
