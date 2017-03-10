@@ -2,10 +2,14 @@
 
 import postprocessing
 from postprocessing.partial import Partial
+from atooms.utils import setup_logging
 from atooms.trajectory import Trajectory
 from atooms.trajectory.decorators import filter_id
 from atooms.system.particle import species
 from .helpers import linear_grid, logx_grid
+
+setup_logging('postprocessing', level=20)
+setup_logging('atooms', level=20)
 
 # TODO; can we set trajectory format globally?
 
@@ -30,20 +34,20 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30, norigins=-1
         if len(ids) > 1:
             Partial(postprocessing.StructureFactor, ids, th, k_grid).do()
 
-def msd(input_file, msd_target=3.0, time_target=-1.0, t_samples=30,
+def msd(input_file, rmsd_target=None, time_target=-1.0, t_samples=30,
         norigins=50, sigma=1.0, func=linear_grid, fmt=None):
     """Mean square displacement."""
     with Trajectory(input_file, fmt=fmt) as th:
         dt = th.timestep
-        # TODO: restore this and get rid of relic in trjectory class
-        # if time_target < 0.0:
-        #     t_grid = [0.0] + func(dt, th.time_when_msd_is(msd_target), t_samples)
-        # else:
-        #t_grid = [0.0] + func(dt, min(th.steps[-1]*dt, time_target), t_samples)
-        if time_target > 0:
-            t_grid = [0.0] + func(dt, min(th.steps[-1]*dt, time_target), t_samples)
+        if rmsd_target is not None:
+            t_grid = [0.0] + func(dt, min(trajectory.time_total,
+                                          trajectory.time_when_msd_is(rmsd_target**2)),
+                                  t_samples)
         else:
-            t_grid = [0.0] + func(dt, th.steps[-1]*dt, t_samples)
+            if time_target > 0:
+                t_grid = [0.0] + func(dt, min(th.steps[-1]*dt, time_target), t_samples)
+            else:
+                t_grid = [0.0] + func(dt, th.steps[-1]*dt, t_samples)
         ids = species(th[0].particle)
         postprocessing.MeanSquareDisplacement(th, tgrid=t_grid, norigins=norigins, sigma=sigma).do()
         if len(ids) > 1:
