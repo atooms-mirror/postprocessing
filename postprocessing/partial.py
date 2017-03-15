@@ -52,7 +52,9 @@ class Partial(object):
                 self.partial[(isp, jsp)].tag = '%s-%s' % (isp, jsp)
                 self.partial[(isp, jsp)].compute()
 
-    def do(self):
+    def do(self, show=False):
         self.compute()
         for k in self.partial:
             self.partial[k].write()
+            if show:
+                print self.partial[k].results
