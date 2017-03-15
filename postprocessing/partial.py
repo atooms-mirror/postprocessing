@@ -32,8 +32,8 @@ class Partial(object):
             isp = self._species[i]
             self.partial[isp] = self._corr_cls(*self._args, **self._kwargs)
             self.partial[isp].add_filter(filter_species, isp)
-            self.partial[isp].compute()
             self.partial[isp].tag = str(isp)
+            self.partial[isp].compute()
 
     def _compute_two_body(self):
         for i in range(len(self._species)):
@@ -49,8 +49,8 @@ class Partial(object):
                 # Slight optimization: avoid filtering twice when isp==jsp
                 if isp != jsp:
                     self.partial[(isp, jsp)].add_filter(filter_species, jsp)
-                self.partial[(isp, jsp)].compute()
                 self.partial[(isp, jsp)].tag = '%s-%s' % (isp, jsp)
+                self.partial[(isp, jsp)].compute()
 
     def do(self):
         self.compute()
