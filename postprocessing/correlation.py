@@ -260,19 +260,15 @@ class Correlation(object):
 
         inp.close()
 
-    def write(self, value=None):
-        # We can pass a different value
-        if value is None:
-            value = self.value
-
+    def write(self):
         # TODO: it is probably the compute method that should be responsible for dumping grids appropriately, this would make the work here easier. Grouping with \n\n can be done with bash group
         if len(self.grid) == 2:
-            x = numpy.array(self.grid[0]).repeat(len(value[0]))
+            x = numpy.array(self.grid[0]).repeat(len(self.value[0]))
             y = numpy.array(self.grid[1] * len(self.grid[0]))
-            z = numpy.array(value).flatten()
+            z = numpy.array(self.value).flatten()
             dump = numpy.transpose(numpy.array([x, y, z]))
         else:
-            dump = numpy.transpose(numpy.array([self.grid, value]))
+            dump = numpy.transpose(numpy.array([self.grid, self.value]))
 
         # Comment line
         if len(self.tag) > 0:
@@ -296,7 +292,10 @@ class Correlation(object):
                 fh.write(analysis)
             numpy.savetxt(fh, dump, fmt="%g")
 
-    def do(self):
+        # Keep a copy to show
+        self.results = open(self._output_file).read()
+
+    def do(self, show=False):
         if not self._need_update:
             return
         self.compute()
@@ -306,6 +305,8 @@ class Correlation(object):
             print 'Could not analyze due to missing modules, continuing...'
             print e.message
         self.write()
+        if show:
+            print self.results
 
     def do_dims(self):
         raise RuntimeError('do_dims is broken')

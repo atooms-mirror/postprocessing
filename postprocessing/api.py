@@ -7,16 +7,16 @@ from atooms.trajectory.decorators import filter_id
 from atooms.system.particle import species
 from .helpers import linear_grid, logx_grid
 
-# TODO; can we set trajectory format globally?
+# TODO: can we set trajectory format globally?
 
-def gr(input_file, grandcanonical=False, fmt=None):
+def gr(input_file, grandcanonical=False, fmt=None, show=False):
     """Radial distribution function."""
     with Trajectory(input_file, fmt=fmt) as th:
         th._grandcanonical = grandcanonical
-        postprocessing.RadialDistributionFunction(th).do()
+        postprocessing.RadialDistributionFunction(th).do(show)
         ids = species(th[0].particle)
         if len(ids) > 1:
-            Partial(postprocessing.RadialDistributionFunction, ids, th).do()
+            Partial(postprocessing.RadialDistributionFunction, ids, th).do(show)
 
 def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30, norigins=-1, include_id=None,
        grandcanonical=False, fmt=None):

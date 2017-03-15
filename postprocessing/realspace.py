@@ -88,6 +88,8 @@ def mean_square_displacement(x, y):
     return numpy.sum((x-y)**2) / float(x.shape[0])
 
 def non_gaussian_parameter(x, y):
+    if x is y:
+        return 0.0
     dx2 = (x-y)**2
     dr2 = numpy.sum(dx2) / float(x.shape[0])
     dr4 = numpy.sum(numpy.sum(dx2, axis=1)**2) / float(x.shape[0])
