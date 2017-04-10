@@ -19,7 +19,7 @@ import argparse
 import numpy
 from collections import defaultdict
 
-from atooms.trajectory import Trajectory
+from atooms.trajectory import Trajectory, TrajectoryField
 from atooms.utils import add_first_last_skip, fractional_slice
 from pyutils.histogram import Histogram
 from postprocessing.neighbors import get_neighbors
@@ -80,7 +80,8 @@ def main(args):
         t = Trajectory(finp, fmt=args.fmt)
         # We write neighbors to a tmp file
         import tempfile
-        fout = tempfile.mkstemp()[1]
+        dirtmp = os.path.dirname(finp)
+        fout = tempfile.mkstemp(dir=dirtmp)[1]
         tn = get_neighbors(finp, fout, args, fmt=args.fmt)
 
         # If required, we put CNA data in a separate directory
@@ -100,6 +101,11 @@ def main(args):
                 fh[sign] = open(fout, 'w', buffering=0)
                 fh[sign].write('# columns: step, fraction of CNA bond %s; %s\n' % (sign, desc))
 
+        # Dump CNA bonds
+        if args.dump is not None:
+            fout = fbase + '.cna%s' % args.tag
+            fh_dump = TrajectoryField(fout, 'w')
+
         # Loop over samples
         hist = defaultdict(int)
         for i, s in enumerate(t):
@@ -114,6 +120,9 @@ def main(args):
                 # Fill histogram
                 for d in data:
                     hist[d]+=1
+                # Dump
+                if args.dump is not None:
+                    fh_dump.write_sample(data, t.steps[i])
 
         # Write histogram
         with open(fbase + '.cna%s.hist' % args.tag, 'w') as fhhist:
@@ -127,7 +136,13 @@ def main(args):
                 fhi.close()
 
         if args.neigh_file is None:
-            os.remove(tn.filename)
+            if args.keep_neigh:
+                os.rename(tn.filename, finp + '.neigh')
+            else:
+                os.remove(tn.filename)
+
+        if args.dump is not None:
+            fh_dump.close()
 
 if __name__ == '__main__':
 
@@ -137,8 +152,10 @@ if __name__ == '__main__':
     parser.add_argument('-N', '--neighbor',dest='neigh', type=str, default='', help='flags for neigh.x command')
     parser.add_argument('-V', '--neighbor-voronoi',dest='neigh_voronoi', action='store_true', help='neigh_file is of Voronoi type')
     parser.add_argument('-M', '--neighbor-max',dest='neigh_limit', type=int, default=None, help='take up to *limit* neighbors (assuming they are ordered)')
+    parser.add_argument('-k', '--neighbor-keep',dest='keep_neigh', action='store_true', help='keep neigh_file')
     parser.add_argument(      '--rcut', dest='rcut', help='cutoff radii as comma separated string, ex r11,r12,r22')
-    parser.add_argument('-s', '--signature',dest='signature', help='signature')
+    parser.add_argument('-D', '--dump', dest='dump', action='store_true', help='dump to field-liks file')
+    parser.add_argument('-s', '--signature', dest='signature', help='signature')
     parser.add_argument('-o', '--output',dest='output', action='store_true', help='write to file')
     parser.add_argument('-d', '--dirout',dest='dirout', help='output dir')
     parser.add_argument('-t', '--tag',     dest='tag', type=str, default='', help='tag to add before suffix')
