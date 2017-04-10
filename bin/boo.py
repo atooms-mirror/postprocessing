@@ -7,7 +7,7 @@ import sys
 import numpy
 from atooms.trajectory import Trajectory
 import postprocessing.boo as boo
-from atooms.plugins.neighbors import all_neighbors, get_neighbors
+from postprocessing.neighbors import all_neighbors, get_neighbors
 
 def write_xyz(filename, data, meta, mode='w'):
     # TODO: move it up the chain
@@ -39,7 +39,8 @@ def ave(f, args):
     Dump map if requested."""
 
     t = Trajectory(f)
-    tn, desc = get_neighbors(f, args, os.path.basename(sys.argv[0]))
+    tn = get_neighbors(f, None, args) #, os.path.basename(sys.argv[0]))
+    desc = ''
     mode = 'w'
     fbase = f + '.boo%s' % args.tag
 
@@ -66,12 +67,15 @@ def ave(f, args):
         except:
             continue
         # Compute average bond orientational order
+        print 'boo compute step', step, '...',
+        sys.stdout.flush()
         b = boo.BondOrientationalOrder(s.particle, tn[j].neighbors, s.cell.side)
         q4 = b.ql(4)
         q6 = b.ql(6)
         if not args.nobar:
             qb4 = b.ql_bar(4)
             qb6 = b.ql_bar(6)
+        print 'done'
 
         # Write q4, q6 in xyz format
         if args.xyz:
@@ -99,7 +103,7 @@ def map_boo(f, args):
     """Map q4 and q6 as a function of time."""
 
     t = Trajectory(f)
-    tn, desc = get_neighbors(f, args, os.path.basename(sys.argv[0]))
+    tn = get_neighbors(f, None, args) #get_neighbors(f, args, os.path.basename(sys.argv[0]))
 
     # This is a full dump on a per-particle basis
     if not args.nobar:
@@ -129,7 +133,7 @@ def map_boo(f, args):
 
             # Dump q4,q6 map
             fmap.write('#\n' % step)
-            fmap.write('# step:%d neighbors: %s\n' % (step, desc))
+            fmap.write('# step:%d neighbors: %s\n' % (step, ''))
             for i, j in zip(q4, q6):
                 fmap.write('%g %g\n' % (i, j))
 
