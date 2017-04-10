@@ -84,7 +84,7 @@ def neighbors_from_voronoi(s, match):
             neigh.append([v.central] + list(v.neighbors))
     return neigh
 
-def main(finp, fneigh, ffield, match=None, first=-1, last=-1):
+def main(finp, fneigh, ffield, match=None, first=-1, last=-1, visualize=False):
 
     if fneigh is None:
         fneigh = finp + '.neigh'
@@ -95,6 +95,13 @@ def main(finp, fneigh, ffield, match=None, first=-1, last=-1):
     th = trajectory.Sliced(trajectory.Trajectory(finp), slice(first, last, 1))
     tn = trajectory.Sliced(trajectory.TrajectoryNeighbors(fneigh), slice(first, last, 1))
     tf = trajectory.Sliced(trajectory.TrajectoryField(ffield), slice(first, last, 1))
+
+    if visualize:
+        from atooms import visualize as vis
+        from atooms import bonds as bonds
+        vis.scene()
+        vis.box(th[0].cell)
+        vis._radius = {"A": 0.25, "B": 0.15, '0': 0.25, '1': 0.15}
 
     base = finp
     fout = [base + '.cluster-%s' % match,
@@ -110,11 +117,6 @@ def main(finp, fneigh, ffield, match=None, first=-1, last=-1):
         fhout.write('# columns: step, average size of %s-clusters, size of largest %s-cluster\n' % 
                     (match, match))
         imin = None
-        from atooms import visualize as vis
-        from atooms import bonds as bonds
-        vis.scene()
-        vis.box(th[0].cell)
-        vis._radius = {"A": 0.25, "B": 0.15, '0': 0.25, '1': 0.15}
         try:
             match = float(match)
         except:
@@ -135,32 +137,33 @@ def main(finp, fneigh, ffield, match=None, first=-1, last=-1):
 
             c = get_clusters(neighbors_list)
             x = [len(ci) for ci in c]
-            # if len(c) > 0:
-            #     hist.add([float(xi) for xi in x])
+            if len(c) > 0:
+                hist.add([float(xi) for xi in x])
 
             step = th.steps[i]
             fhout.write('%d %s %s\n' % (step, numpy.average(x), max(x)))
 
-            # Simply draw all
-            #ids = [j for j, p in enumerate(system.particle) if (field[j] == match)]
-            #vis.show([system.particle[j] for j in ids], radius_auto=False)
-            cluster_particle = []
-            for ids in c:
-                if len(ids) == 0:
-                    continue
-                root = system.particle[list(ids)[0]]
-                cluster_particle += [system.particle[j].nearest_image(root, system.cell) for j in ids]
-                bonds.subset_with_bonds(ids, system.particle, cell=system.cell, neighbors=neighbors_list)
-            vis.show(cluster_particle, radius_auto=False)
-            vis.pause()
-            bonds.clear()
+            if visualize:
+                # Simply draw all
+                #ids = [j for j, p in enumerate(system.particle) if (field[j] == match)]
+                #vis.show([system.particle[j] for j in ids], radius_auto=False)
+                cluster_particle = []
+                for ids in c:
+                    if len(ids) == 0:
+                        continue
+                    root = system.particle[list(ids)[0]]
+                    cluster_particle += [system.particle[j].nearest_image(root, system.cell) for j in ids]
+                    bonds.subset_with_bonds(ids, system.particle, cell=system.cell, neighbors=neighbors_list)
+                vis.show(cluster_particle, radius_auto=False)
+                vis.pause()
+                bonds.clear()
 
         fhout.write(hist.stats)
 
     # Histogram of domain size
-    # with open(base + '.cluster-%s.stats' % match, 'w') as fh:
-    #     fh.write(hist.stats)
-    #     fh.write(str(hist))
+    with open(base + '.cluster-%s.stats' % match, 'w') as fh:
+        fh.write(hist.stats)
+        fh.write(str(hist))
 
 if __name__ == '__main__':
     import argh
