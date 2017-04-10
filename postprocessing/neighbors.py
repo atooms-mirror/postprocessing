@@ -25,13 +25,12 @@ class TrajectoryNeighbors(trj.TrajectoryXYZ):
 
 def get_neighbors(fileinp, fileout, args, fmt=None):
     if args.neigh_file is None:
-        compute_neighbors(fileinp, args.rcut, fileout, fmt)
+        write_neighbors(fileinp, args.rcut, fileout, fmt)
         tn = trj.TrajectoryNeighbors(fileout)
     else:
-        from atooms.plugins.voronoi import TrajectoryVoronoi
         # TODO: is we ever get to make this a clean factory, test can be avoided
         if args.neigh_voronoi:
-            from atooms.plugins.voronoi import TrajectoryVoronoi
+            from atooms.voronoi import TrajectoryVoronoi
             tn = TrajectoryVoronoi(args.neigh_file)
         else:
             tn = trj.TrajectoryNeighbors(args.neigh_file)
@@ -45,23 +44,28 @@ def get_neighbors(fileinp, fileout, args, fmt=None):
         tn.register_callback(limited, args.neigh_limit)
     return tn
 
-def compute_neighbors(fileinp, rcut, fileout='/dev/stdout', fmt=None):
+def compute_neighbors(system, rcut):
+    import neighbors_wrap
+    npart = len(system.particle)
+    nmax = 300
+    nn = numpy.zeros(npart, dtype=numpy.int32)
+    neigh = numpy.zeros((npart, nmax), dtype=numpy.int32, order='F')
+    rcut = numpy.asarray(rcut)
+    pos = system.dump('pos').transpose() # copy is not needed, order not needed.
+    ids = [p.id for p in system.particle]
+    box = system.cell.side
+    neighbors_wrap.neighbors(box, pos, ids, rcut, nn, neigh)
+    for j, p in enumerate(system.particle):
+        p.neighbors = neigh[j, 0:nn[j]]
+    return system
+
+def write_neighbors(fileinp, rcut, fileout='/dev/stdout', fmt=None):
     import copy
     import neighbors_wrap
     with trj.Trajectory(fileinp, fmt=fmt) as t, \
          TrajectoryNeighbors(fileout, 'w') as tout:
-        npart = len(t[0].particle)
-        nmax = 300
-        nn = numpy.zeros(npart, dtype=numpy.int32)
-        neigh = numpy.zeros((npart, nmax), dtype=numpy.int32, order='F')
-        rcut = numpy.asarray(rcut)
         for i, s in enumerate(t):
-            pos = s.dump('pos').transpose() # copy is not needed, order not needed.
-            ids = [p.id for p in s.particle]
-            box = s.cell.side
-            neighbors_wrap.neighbors(box, pos, ids, rcut, nn, neigh)
-            for j, p in enumerate(s.particle):
-                p.neighbors = neigh[j, 0:nn[j]]
+            s = compute_neighbors(s, rcut)
             tout.write_sample(s, t.steps[i])
 
 def all_neighbors(s):
