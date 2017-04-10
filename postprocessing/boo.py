@@ -41,7 +41,6 @@ class BondOrientationalOrder(object):
         self.box = box
 
     def _qlm(self, l):
-        # TODO: optimize kernel by packing more particles in multi dim array and passing them to Y. Y is waht takes time
         np = self.position.shape[0]
         qlm = numpy.zeros((2*l+1, np), dtype=complex)
         for i in xrange(np):            
@@ -50,7 +49,8 @@ class BondOrientationalOrder(object):
             rvec = periodic_vector(rvec, self.box)
             sph = car2sph(rvec)
             for m in xrange(2*l + 1):
-                qlm[m, i] = numpy.average(sph_harm(m-l, l, sph[:,1], sph[:,2]))
+                Y = sph_harm(m-l, l, sph[:,1], sph[:,2])
+                qlm[m, i] = numpy.average(Y)
         return qlm
 
     def _qlm_cluster(self, l):
