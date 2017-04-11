@@ -84,7 +84,7 @@ def neighbors_from_voronoi(s, match):
             neigh.append([v.central] + list(v.neighbors))
     return neigh
 
-def main(finp, fneigh, ffield, match=None, first=-1, last=-1, visualize=False):
+def main(finp, fneigh, ffield, match=None, first=-1, last=-1, visualize=False, tag=None):
 
     if fneigh is None:
         fneigh = finp + '.neigh'
@@ -104,15 +104,11 @@ def main(finp, fneigh, ffield, match=None, first=-1, last=-1, visualize=False):
         vis._radius = {"A": 0.25, "B": 0.15, '0': 0.25, '1': 0.15}
 
     base = finp
-    fout = [base + '.cluster-%s' % match,
-            base + '.cluster_largest-%s' % match,
-            base + '.cluster_average-%s' % match]
-
     # Define number of particles in an isolated structure
     hist = Histogram(bin_width=5)
 
     # Time series and stats of max domain size
-    fout = base + '.cluster-%s' % match
+    fout = base + '.cluster-%s' % tag
     with open(fout, 'w') as fhout:
         fhout.write('# columns: step, average size of %s-clusters, size of largest %s-cluster\n' % 
                     (match, match))
@@ -161,7 +157,7 @@ def main(finp, fneigh, ffield, match=None, first=-1, last=-1, visualize=False):
         fhout.write(hist.stats)
 
     # Histogram of domain size
-    with open(base + '.cluster-%s.stats' % match, 'w') as fh:
+    with open(base + '.cluster-%s.stats' % tag, 'w') as fh:
         fh.write(hist.stats)
         fh.write(str(hist))
 
