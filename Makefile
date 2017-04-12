@@ -9,7 +9,7 @@ test:
 	python -m unittest discover -s tests
 
 install:
-	python setup.py install --user
+	python setup.py config_fc --opt '-O3 -funroll-loops' install --user
 
 # This does not work with distutils
 # develop:
