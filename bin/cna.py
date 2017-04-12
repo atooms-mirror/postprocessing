@@ -102,7 +102,7 @@ def main(args):
                 fh[sign].write('# columns: step, fraction of CNA bond %s; %s\n' % (sign, desc))
 
         # Dump CNA bonds
-        if args.dump is not None:
+        if args.dump:
             fout = fbase + '.cna%s' % args.tag
             fh_dump = TrajectoryField(fout, 'w')
 
@@ -121,7 +121,7 @@ def main(args):
                 for d in data:
                     hist[d]+=1
                 # Dump
-                if args.dump is not None:
+                if args.dump:
                     fh_dump.write_sample(data, t.steps[i])
 
         # Write histogram
@@ -141,7 +141,7 @@ def main(args):
             else:
                 os.remove(tn.filename)
 
-        if args.dump is not None:
+        if args.dump:
             fh_dump.close()
 
 if __name__ == '__main__':
