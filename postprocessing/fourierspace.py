@@ -243,7 +243,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
                 for kkk in self.k_selected[kk]:
                     ik = self.kvec[knorm][kkk]
                     for off, i in self._discrete_tgrid:
-                        for i0 in xrange(off, len(x)-i-skip, skip):
+                        for i0 in xrange(off, len(x)-i, skip):
                             # Get the actual time difference. steps must be accessed efficiently (cached!)
                             dt = self.trajectory.steps[i0+i] - self.trajectory.steps[i0]
                             acf[kk][dt] += numpy.sum(x[i0+i, :, 0, ik[0]]*x[i0, :, 0, ik[0]].conjugate() *
@@ -252,6 +252,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
                             cnt[kk][dt] += block #pos.shape[1]
 
         t_sorted = sorted(acf[0].keys())
+        print t_sorted
         self.grid[0] = self.k_sorted
         self.grid[1] = [ti*self.trajectory.timestep for ti in t_sorted]
         self.value = [[acf[kk][ti] / cnt[kk][ti] for ti in t_sorted] for kk in range(len(self.grid[0]))]
