@@ -203,7 +203,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
                                          'pos', nk, dk, kmin, kmax, ksamples)
         # Setup time grid
         # Before setting up the time grid, we need to check periodicity over blocks
-        check_block_period(self.trajectory)
+        check_block_period(self.trajectory.steps, self.trajectory.block_period)
         if tgrid is None:
             self.grid[1] = [0.0] + logx_grid(trajectory.timestep,
                                              trajectory.time_total * 0.75, tsamples)
@@ -249,12 +249,13 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
                             acf[kk][dt] += numpy.sum(x[i0+i, :, 0, ik[0]]*x[i0, :, 0, ik[0]].conjugate() *
                                                      x[i0+i, :, 1, ik[1]]*x[i0, :, 1, ik[1]].conjugate() *
                                                      x[i0+i, :, 2, ik[2]]*x[i0, :, 2, ik[2]].conjugate()).real
-                            cnt[kk][dt] += block #pos.shape[1]
+                            cnt[kk][dt] += 1
 
         t_sorted = sorted(acf[0].keys())
         self.grid[0] = self.k_sorted
         self.grid[1] = [ti*self.trajectory.timestep for ti in t_sorted]
         self.value = [[acf[kk][ti] / cnt[kk][ti] for ti in t_sorted] for kk in range(len(self.grid[0]))]
+        self.value = [[self.value[kk][i] / self.value[kk][0] for i in range(len(self.value[kk]))] for kk in range(len(self.grid[0]))]
 
     def analyze(self):
         self.tau = {}
@@ -301,7 +302,7 @@ class IntermediateScattering(FourierSpaceCorrelation):
                                          'fkt.total', 'Intermediate scattering function',
                                          'pos', nk, dk, kmin, kmax, ksamples)
         # Setup time grid
-        check_block_period(self.trajectory)
+        check_block_period(self.trajectory.steps, self.trajectory.block_period)
         if tgrid is None:
             self.grid[1] = logx_grid(0.0, trajectory.time_total * 0.75, tsamples)
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid[1])
