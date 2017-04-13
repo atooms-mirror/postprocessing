@@ -386,7 +386,7 @@ class IntermediateScattering(FourierSpaceCorrelation):
     def write(self):
         Correlation.write(self)
         # Write down unnormalized functions
-        Correlation.write(self, self.value_nonorm)
+        # Correlation.write(self, self.value_nonorm)
 
         # TODO: refactor
         filename = '.'.join([e for e in [self.trajectory.filename, 'pp', self.short_name, self.tag] if len(e)>0])
