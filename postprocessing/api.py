@@ -54,30 +54,30 @@ def msd(input_file, rmsd_target=None, time_target=-1.0, t_samples=30,
 
 def vacf(input_file, time_target=1.0, t_samples=30, func=linear_grid, fmt=None):
     """Velocity autocorrelation function."""
-    with Trajectory(input_file, fmt=fmt) as trajectory:
-        t_grid = [0.0] + func(trajectory.timestep, time_target, t_samples)
-        postprocessing.VelocityAutocorrelation(trajectory, t_grid).do()
+    with Trajectory(input_file, fmt=fmt) as th:
+        t_grid = [0.0] + func(th.timestep, time_target, t_samples)
+        postprocessing.VelocityAutocorrelation(th, t_grid).do()
         ids = species(th[-1].particle)
         if len(ids) > 1:
-            Partial(postprocessing.VelocityAutocorrelation, ids, trajectory, t_grid).do()
+            Partial(postprocessing.VelocityAutocorrelation, ids, th, t_grid).do()
 
 def fkt(input_file, time_target=1e9, tsamples=60, kmin=7.0, kmax=7.0,
         ksamples=1, dk=0.1, tag_by_name=False, func=logx_grid, fmt=None):
     """Total intermediate scattering function."""
-    with Trajectory(input_file, fmt=fmt) as trajectory:
-        t_grid = [0.0] + func(trajectory.timestep, time_target, tsamples)
+    with Trajectory(input_file, fmt=fmt) as th:
+        t_grid = [0.0] + func(th.timestep, time_target, tsamples)
         k_grid = linear_grid(kmin, kmax, ksamples)
         ids = species(th[0].particle)
         if len(ids) > 1:
-            Partial(postprocessing.IntermediateScattering, ids, trajectory, k_grid, t_grid).do()
+            Partial(postprocessing.IntermediateScattering, ids, th, k_grid, t_grid).do()
 
 def fskt(input_file, time_target=1e9, tsamples=60, kmin=7.0, kmax=8.0,
          ksamples=1, dk=0.1, tag_by_name=False, func=logx_grid, fmt=None):
     """Self intermediate scattering function."""
-    with Trajectory(input_file, fmt=fmt) as trajectory:
-        t_grid = [0.0] + func(trajectory.timestep, time_target, tsamples)
+    with Trajectory(input_file, fmt=fmt) as th:
+        t_grid = [0.0] + func(th.timestep, time_target, tsamples)
         k_grid = linear_grid(kmin, kmax, ksamples)
-        postprocessing.SelfIntermediateScattering(trajectory, k_grid, t_grid).do()
+        postprocessing.SelfIntermediateScattering(th, k_grid, t_grid).do()
         ids = species(th[-1].particle)
         if len(ids) > 1:
-            Partial(postprocessing.SelfIntermediateScattering, ids, trajectory, k_grid, t_grid).do()
+            Partial(postprocessing.SelfIntermediateScattering, ids, th, k_grid, t_grid).do()
