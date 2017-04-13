@@ -84,7 +84,49 @@ def neighbors_from_voronoi(s, match):
             neigh.append([v.central] + list(v.neighbors))
     return neigh
 
-def main(finp, fneigh, ffield, match=None, first=-1, last=-1, visualize=False, tag=None):
+
+def network(data, show=False):
+    import matplotlib.pyplot as plt
+    import networkx as nx
+
+    links = []
+    nodes = []
+    for i, nlist in enumerate(data):
+        if len(nlist) > 0:
+            nodes.append(i)
+        for j in nlist:
+            links.append(tuple(sorted([i, j])))
+
+    G=nx.Graph()
+    G.add_nodes_from(nodes)
+    for link in links:
+        G.add_edge(link[0], link[1])
+        
+        #    bicomps = nx.components.biconnected.biconnected_component_edges(G)
+    bicomps = nx.components.biconnected_components(G)
+    #    print '# found %d bicomponents' % len(bicomps), len(nodes)
+    #    print bicomps, max([len(x) for x in bicomps])
+
+    if show:
+        graph_pos = nx.spring_layout(G, iterations=50)
+
+        colors = []
+        bicomp_col = ['red', 'green', 'yellow', 'orange']
+        for n in nodes:
+            c = 'white'
+            for i in range(len(bicomps)):
+                if n in bicomps[i]:
+                    c = bicomp_col[i % len(bicomp_col)]
+                    break
+            colors.append(c)
+
+        nx.draw_networkx_nodes(G,graph_pos, nodelist=nodes, alpha=0.3, node_color=colors)
+        nx.draw_networkx_edges(G,graph_pos, width=1, alpha=0.3)
+        plt.show()
+
+    return [len(x) for x in bicomps]
+
+def main(finp, fneigh, ffield, match=None, first=-1, last=-1, visualize=False, visualize_network=False, tag=None):
 
     if fneigh is None:
         fneigh = finp + '.neigh'
@@ -110,8 +152,11 @@ def main(finp, fneigh, ffield, match=None, first=-1, last=-1, visualize=False, t
     # Time series and stats of max domain size
     fout = base + '.cluster-%s' % tag
     with open(fout, 'w') as fhout:
-        fhout.write('# columns: step, average size of %s-clusters, size of largest %s-cluster\n' % 
-                    (match, match))
+        fhout.write('# tag: %s\n' % tag)
+        fhout.write('# match: %s\n' % match)
+        fhout.write('# neighbors: %s\n' % fneigh)
+        fhout.write('# field: %s\n' % ffield)
+        fhout.write('# columns: step, average cluster size, largest cluster, largest connected component\n')
         imin = None
         try:
             match = float(match)
@@ -136,8 +181,6 @@ def main(finp, fneigh, ffield, match=None, first=-1, last=-1, visualize=False, t
             if len(c) > 0:
                 hist.add([float(xi) for xi in x])
 
-            step = th.steps[i]
-            fhout.write('%d %s %s\n' % (step, numpy.average(x), max(x)))
 
             if visualize:
                 # Simply draw all
@@ -153,6 +196,15 @@ def main(finp, fneigh, ffield, match=None, first=-1, last=-1, visualize=False, t
                 vis.show(cluster_particle, radius_auto=False)
                 vis.pause()
                 bonds.clear()
+
+            xx = network(neighbors_list, visualize_network)
+            if len(xx)>0:
+                largest_component = max(xx)
+            else:
+                largest_component = 0
+
+            fhout.write('%d %s %s %s\n' % (step, numpy.average(x), max(x), largest_component))
+
 
         fhout.write(hist.stats)
 
