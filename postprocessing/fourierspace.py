@@ -249,7 +249,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
                             acf[kk][dt] += numpy.sum(x[i0+i, :, 0, ik[0]]*x[i0, :, 0, ik[0]].conjugate() *
                                                      x[i0+i, :, 1, ik[1]]*x[i0, :, 1, ik[1]].conjugate() *
                                                      x[i0+i, :, 2, ik[2]]*x[i0, :, 2, ik[2]].conjugate()).real
-                            cnt[kk][dt] += 1
+                            cnt[kk][dt] += x.shape[1]
 
         t_sorted = sorted(acf[0].keys())
         self.grid[0] = self.k_sorted
