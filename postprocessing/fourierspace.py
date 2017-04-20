@@ -228,7 +228,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
         # order in the tabulated expo array to speed things up shape
         # is (Npart, Ndim)
         block = min(100, self._pos[0].shape[0])
-        skip = self.trajectory.block_period
+        skip = self.trajectory.block_size
         kmax = max(self.kvec.keys()) + self.dk
         acf = [defaultdict(float) for k in self.k_sorted]
         cnt = [defaultdict(float) for k in self.k_sorted]
@@ -243,8 +243,9 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
                 for kkk in self.k_selected[kk]:
                     ik = self.kvec[knorm][kkk]
                     for off, i in self._discrete_tgrid:
-                        for i0 in xrange(off, len(x)-i, skip):
+                        for i0 in xrange(off, x.shape[0]-i, skip):
                             # Get the actual time difference. steps must be accessed efficiently (cached!)
+                            # TODO: fix x.shape[0] in loop and x.shape[1] in normalization everywhere!
                             dt = self.trajectory.steps[i0+i] - self.trajectory.steps[i0]
                             acf[kk][dt] += numpy.sum(x[i0+i, :, 0, ik[0]]*x[i0, :, 0, ik[0]].conjugate() *
                                                      x[i0+i, :, 1, ik[1]]*x[i0, :, 1, ik[1]].conjugate() *
@@ -346,7 +347,7 @@ class IntermediateScattering(FourierSpaceCorrelation):
         # Compute correlation function
         acf = [defaultdict(float) for k in k_sorted]
         cnt = [defaultdict(float) for k in k_sorted]
-        skip = self.trajectory.block_period
+        skip = self.trajectory.block_size
         for kk, knorm in enumerate(k_sorted):
             for j in k_selected[kk]:
                 ik = self.kvec[knorm][j]

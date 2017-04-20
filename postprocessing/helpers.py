@@ -70,7 +70,7 @@ def setup_t_grid(trajectory, t_grid):
     # First get all possible time differences
     steps = trajectory.steps
     off_samp = {}
-    for off in range(trajectory.block_period):
+    for off in range(trajectory.block_size):
         for i in range(off, len(steps)-off):
             if not steps[i] - steps[off] in off_samp:
                 off_samp[steps[i] - steps[off]] = (off, i-off)
@@ -80,4 +80,10 @@ def setup_t_grid(trajectory, t_grid):
     # used internally to calculate the time correlation function.
     i_grid = set([int(round(t/trajectory.timestep)) for t in t_grid])
     offsets = [off_samp[t] for t in templated(sorted(off_samp.keys()), sorted(i_grid))]
+    # TODO: add this as a test
+    # check = []
+    # for off, i in offsets:
+    #     for i0 in xrange(off, len(trajectory)-i, trajectory.block_size):
+    #         check.append(trajectory.steps[i0+i] - trajectory.steps[i0])
+    # print sorted(set(check)), sorted(dt)
     return offsets
