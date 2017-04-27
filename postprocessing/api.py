@@ -77,11 +77,11 @@ def fskt(input_file, time_target=1e9, tsamples=60, kmin=7.0, kmax=8.0,
     with Trajectory(input_file, fmt=fmt) as th:
         if func is None:
             func = logx_grid
-            t_grid = [0.0] + func(th.timestep, time_target, tsamples)
+            t_grid = [0.0] + func(th.timestep, min(th.times[-1], time_target), tsamples)
         else:
             t_grid = [th.timestep*i for i in th.steps]
         k_grid = linear_grid(kmin, kmax, ksamples)
-        postprocessing.SelfIntermediateScattering(th, k_grid, t_grid, nk).do()
+        postprocessing.SelfIntermediateScattering(th, k_grid, t_grid, nk, dk=dk).do()
         ids = species(th[-1].particle)
         if len(ids) > 1:
-            Partial(postprocessing.SelfIntermediateScattering, ids, th, k_grid, t_grid, nk).do()
+            Partial(postprocessing.SelfIntermediateScattering, ids, th, k_grid, t_grid, nk, dk=dk).do()
