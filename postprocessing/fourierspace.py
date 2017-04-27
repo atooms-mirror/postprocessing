@@ -161,9 +161,14 @@ class FourierSpaceCorrelation(Correlation):
         return kvec, kvec_centered
 
     def _decimate_k(self):
-        """ Pick up a random, unique set of nk vectors out ot the avilable ones
-        # without exceeding maximum number of vectors in shell nkmax """
-        # TODO: better have the same set independent of filter
+        """
+        Pick up a random, unique set of nk vectors out ot the avilable
+        ones # without exceeding maximum number of vectors in shell
+        nkmax.
+        """
+        # Setting the seed here once so as to get the same set
+        # independent of filters.
+        random.seed(1)
         k_sorted = sorted(self.kvec.keys())
         k_selected = []
         for knorm in k_sorted:
@@ -178,7 +183,7 @@ class FourierSpaceCorrelation(Correlation):
             for i in k_selected[kk]:
                 av += k_norm(self.kvec_centered[knorm][i], self.k0)
             s.append("# k %g : k_av=%g (nk=%d)" % (knorm, av / len(k_selected[kk]),
-                                                   len(k_selected[kk]))) #, len(k_sorted[kk]))
+                                                           len(k_selected[kk])))
             # for i in k_selected[kk]:
             #     s.append('%s' % (self.kvec_centered[knorm][i] * self.k0))
         return '\n'.join(s)
@@ -232,6 +237,8 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
         kmax = max(self.kvec.keys()) + self.dk
         acf = [defaultdict(float) for k in self.k_sorted]
         cnt = [defaultdict(float) for k in self.k_sorted]
+
+        #print self.report(self.k_sorted, self.k_selected)
 
         for j in range(0, pos.shape[1], block):
             x = expo_sphere(self.k0, kmax, pos[:, j:j+block, :])
