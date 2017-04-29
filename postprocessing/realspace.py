@@ -450,7 +450,7 @@ class VelocityAutocorrelation(Correlation):
         def f(x, y):
             return numpy.sum(x*y) / float(x.shape[0])
         self.grid, self.value = gcf_offset(f, self._discrete_tgrid,
-                                           self.trajectory.block_period,
+                                           self.trajectory.block_size,
                                            self.trajectory.steps,
                                            self._vel)
         self.grid = [ti * self.trajectory.timestep for ti in self.grid]

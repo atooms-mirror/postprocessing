@@ -37,7 +37,9 @@ def deviation(x, y):
 class TestRealSpace(unittest.TestCase):
 
     def setUp(self):
-        self.reference_path = os.path.join(os.path.dirname(sys.argv[0]), '../data')
+        self.reference_path = 'data'
+        if not os.path.exists(self.reference_path):
+            self.reference_path = os.path.join(os.path.dirname(sys.argv[0]), '../data')
 
     def test_msd_partial(self):
         f = os.path.join(self.reference_path, 'kalj-small.h5')
@@ -107,7 +109,9 @@ class TestFourierSpace(unittest.TestCase):
     def setUp(self):
         import random
         random.seed(10)
-        self.reference_path = os.path.join(os.path.dirname(sys.argv[0]), '../data')
+        self.reference_path = 'data'
+        if not os.path.exists(self.reference_path):
+            self.reference_path = os.path.join(os.path.dirname(sys.argv[0]), '../data')
 
     def test_sk(self):
         f = os.path.join(self.reference_path, 'kalj-small.h5')
@@ -144,9 +148,9 @@ class TestFourierSpace(unittest.TestCase):
             p = postprocessing.StructureFactor(t, [4, 7.3, 10])
             p.compute()
             if i == 1:
-                ref_value = numpy.array([0.078218154990600072, 2.9575791814743089, 0.54336352118808429])
+                ref_value = numpy.array([0.078218154990600072, 2.8964366727431656, 0.54336352118808429])
             else:
-                ref_value = numpy.array([0.83996936818017176, 0.87109168626515698, 0.98112175463699158])
+                ref_value = numpy.array([0.86716496871363735, 0.86986885176760842, 0.98112175463699136])
             self.assertLess(deviation(p.value, ref_value), 1e-2)
 
     def test_sk_random(self):

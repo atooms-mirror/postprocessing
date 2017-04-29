@@ -10,7 +10,7 @@ import random
 import warnings
 from collections import defaultdict
 
-from atooms.trajectory.utils import check_block_period
+from atooms.trajectory.utils import check_block_size
 from .helpers import linear_grid, logx_grid, adjust_skip, setup_t_grid
 from .correlation import Correlation
 from .realspace import self_overlap
@@ -208,7 +208,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
                                          'pos', nk, dk, kmin, kmax, ksamples)
         # Setup time grid
         # Before setting up the time grid, we need to check periodicity over blocks
-        check_block_period(self.trajectory.steps, self.trajectory.block_period)
+        check_block_size(self.trajectory.steps, self.trajectory.block_size)
         if tgrid is None:
             self.grid[1] = [0.0] + logx_grid(trajectory.timestep,
                                              trajectory.time_total * 0.75, tsamples)
@@ -233,7 +233,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
         # order in the tabulated expo array to speed things up shape
         # is (Npart, Ndim)
         block = min(100, self._pos[0].shape[0])
-        skip = self.trajectory.block_size
+        skip = self.trajectory.block_size #self.trajectory.block_size
         kmax = max(self.kvec.keys()) + self.dk
         acf = [defaultdict(float) for k in self.k_sorted]
         cnt = [defaultdict(float) for k in self.k_sorted]
@@ -310,7 +310,7 @@ class IntermediateScattering(FourierSpaceCorrelation):
                                          'fkt.total', 'Intermediate scattering function',
                                          'pos', nk, dk, kmin, kmax, ksamples)
         # Setup time grid
-        check_block_period(self.trajectory.steps, self.trajectory.block_period)
+        check_block_size(self.trajectory.steps, self.trajectory.block_size)
         if tgrid is None:
             self.grid[1] = logx_grid(0.0, trajectory.time_total * 0.75, tsamples)
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid[1])

@@ -46,8 +46,8 @@ def filter_all(system):
 def adjust_skip(trajectory, n_origin=-1):
     """ Utility function to set skip so as to keep computation time under control """
     # TODO: We should also adjust it for Npart
-    if trajectory.block_period > 1:
-        return trajectory.block_period
+    if trajectory.block_size > 1:
+        return trajectory.block_size
     else:
         if n_origin > 0:
             return max(1, int(len(trajectory.steps) / float(n_origin)))
@@ -55,7 +55,6 @@ def adjust_skip(trajectory, n_origin=-1):
             return 1
 
 def setup_t_grid(trajectory, t_grid):
-
     def templated(entry, template, keep_multiple=False):
         """Filter a list of entries so as to best match an input
         template. Lazy, slow version O(N*M). Ex.:

@@ -39,7 +39,7 @@ class StressAutocorrelation(Correlation):
 
         self._get_stress()
         V = self.trajectory.read(0).cell.volume
-        self.grid, self.value = gcf_offset(f, self._discrete_tgrid, self.trajectory.block_period,
+        self.grid, self.value = gcf_offset(f, self._discrete_tgrid, self.trajectory.block_size,
                                            self.trajectory.steps, self._stress)
         self.value = [x / V for x in self.value]
         self.grid = [ti * self.trajectory.timestep for ti in self.grid]
