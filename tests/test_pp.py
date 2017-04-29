@@ -41,7 +41,6 @@ class TestRealSpace(unittest.TestCase):
 
     def test_msd_partial(self):
         f = os.path.join(self.reference_path, 'kalj-small.h5')
-        print f
         ts = trajectory.Sliced(trajectory.TrajectoryHDF5(f), slice(0,1000,1))
         for i in [1, 2]:
             t = trajectory.Filter(ts, filter_id, i)
