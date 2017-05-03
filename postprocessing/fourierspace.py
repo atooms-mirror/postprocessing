@@ -202,7 +202,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
 
     #TODO: xyz files are 2 slower than hdf5 where
     def __init__(self, trajectory, kgrid=None, tgrid=None, nk=8, tsamples=60,
-                 dk=0.1, kmin=1.0, kmax=10.0, ksamples=10):
+                 dk=0.1, kmin=1.0, kmax=10.0, ksamples=10, skip=1):
         FourierSpaceCorrelation.__init__(self, trajectory, [kgrid, tgrid], ('k', 't'), \
                                          'fkt.self', 'Self intermediate scattering function',
                                          'pos', nk, dk, kmin, kmax, ksamples)
@@ -213,6 +213,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
             self.grid[1] = [0.0] + logx_grid(trajectory.timestep,
                                              trajectory.time_total * 0.75, tsamples)
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid[1])
+        self.skip = skip
 
         # TODO: Can this be moved up?
         self.k_sorted, self.k_selected = self._decimate_k()
@@ -232,14 +233,17 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
         # can optimize the inner loop.  even better we could change
         # order in the tabulated expo array to speed things up shape
         # is (Npart, Ndim)
-        block = min(100, self._pos[0].shape[0])
-        skip = self.trajectory.block_size #self.trajectory.block_size
+        block = min(200, self._pos[0].shape[0])
         kmax = max(self.kvec.keys()) + self.dk
         acf = [defaultdict(float) for k in self.k_sorted]
         cnt = [defaultdict(float) for k in self.k_sorted]
+        if self.trajectory.block_size > 1:
+            skip = self.trajectory.block_size
+        else:
+            skip = self.skip
 
         #print self.report(self.k_sorted, self.k_selected)
-
+        
         for j in range(0, pos.shape[1], block):
             x = expo_sphere(self.k0, kmax, pos[:, j:j+block, :])
             for kk, knorm in enumerate(self.k_sorted):
