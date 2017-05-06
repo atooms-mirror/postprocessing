@@ -12,6 +12,7 @@ class TestBOO(unittest.TestCase):
         pass
 
     def _load(self, structure):
+        # TODO: convert hdf5 to xyz for portability
         if structure == 'bcc':
             self.t = Trajectory('data/lj_bcc.h5')
             self.tn = TrajectoryNeighbors('data/lj_bcc.h5.voronoi.xyz.neigh')
