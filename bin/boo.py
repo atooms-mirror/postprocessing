@@ -40,6 +40,11 @@ def ave(f, args):
 
     t = Trajectory(f)
     tn = get_neighbors(f, None, args) #, os.path.basename(sys.argv[0]))
+    if args.field_file is not None:
+        tf = TrajectoryField(args.field_file)
+        if args.field is None:
+            raise ValueError('provide field')
+
     desc = ''
     mode = 'w'
     fbase = f + '.boo%s' % args.tag
@@ -63,13 +68,20 @@ def ave(f, args):
         # Find sample that matches step in neighbor file
         # If not found, skip sample.
         try:
-            j = tn.steps.index(step)
+            index_neigh = tn.steps.index(step)
         except:
             continue
+        if args.field is not None:
+            index_field = tf.steps.index(step)
+            field = getattr(tf[index_field].particle, args.field)
+        else:
+            field = None
+
         # Compute average bond orientational order
         print 'boo compute step', step, '...',
         sys.stdout.flush()
-        b = boo.BondOrientationalOrder(s.particle, tn[j].neighbors, s.cell.side)
+        field = None
+        b = boo.BondOrientationalOrder(s.particle, tn[j].neighbors, s.cell.side, field)
         q4 = b.ql(4)
         q6 = b.ql(6)
         if not args.nobar:

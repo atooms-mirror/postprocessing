@@ -31,13 +31,14 @@ def periodic_vector(a, box):
 
 class BondOrientationalOrder(object):
     
-    def __init__(self, particle, neighbors=None, box=None):
+    def __init__(self, particle, neighbors=None, box=None, weights=None):
         """If `neighbors` and `box` are None, particles are treated as an
         isolated cluster and we consider all particles around the
         central one as neighbors.
         """
         self.position = numpy.array([p.position for p in particle])
         self.neighbors = neighbors
+        self.weights = weigths
         self.box = box
 
     def _qlm(self, l):
@@ -50,7 +51,7 @@ class BondOrientationalOrder(object):
             sph = car2sph(rvec)
             for m in xrange(2*l + 1):
                 Y = sph_harm(m-l, l, sph[:,1], sph[:,2])
-                qlm[m, i] = numpy.average(Y)
+                qlm[m, i] = numpy.average(Y, self.weights)
         return qlm
 
     def _qlm_cluster(self, l):
