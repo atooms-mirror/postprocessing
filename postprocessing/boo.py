@@ -4,8 +4,9 @@
 """Bond-orientational order parameters."""
 
 import numpy
-from scipy.special import sph_harm
 import warnings
+from scipy.special import sph_harm
+
 warnings.simplefilter("ignore", numpy.ComplexWarning)
 
 # Helper functions
