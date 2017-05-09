@@ -35,8 +35,11 @@ def write_xyz(filename, data, meta, mode='w'):
             fh.write(fmt % tuple([data[j][i] for j in range(ncols)]))
 
 def ave(f, args):
-    """Average q4 and q6 as a function of time.
-    Dump map if requested."""
+    """
+    Average q_l as a function of time. Values of l must be passed as
+    args.lvalues, a string containing comma separated entries,
+    Example: lvalues='4,6'.
+    """
 
     t = Trajectory(f)
     tn = get_neighbors(f, None, args) #, os.path.basename(sys.argv[0]))
@@ -49,20 +52,17 @@ def ave(f, args):
     desc = ''
     mode = 'w'
     fbase = f + '.boo%s' % args.tag
+    lvalues = [int(i) for i in args.lvalues.split(',')]
 
-    fq4 = open(fbase + '.q4', 'w', buffering=0)
-    fq6 = open(fbase + '.q6', 'w', buffering=0)
-    # Keep track of which neighbor file was used
-    fq4.write('# neighbors: %s\n' % desc)
-    fq6.write('# neighbors: %s\n' % desc)
-
-    # If requested, write Lechner-Dellago variants too
-    if not args.nobar:
-        fqb4 = open(fbase + '.qb4', 'w', buffering=0)
-        fqb6 = open(fbase + '.qb6', 'w', buffering=0)
+    fq = {}
+    for l in lvalues:
         # Keep track of which neighbor file was used
-        fqb4.write('# neighbors: %s\n' % desc)
-        fqb6.write('# neighbors: %s\n' % desc)
+        fq[l] = open(fbase + '.q%d' % l, 'w', buffering=0)
+        fq[l].write('# neighbors: %s\n' % desc)
+        # If requested, write Lechner-Dellago variants too
+        if not args.nobar:
+            fqb[l] = open(fbase + '.qb%d' % l, 'w', buffering=0)
+            fqb[l].write('# neighbors: %s\n' % desc)
 
     for i, s in enumerate(t):
         step = t.steps[i]
@@ -72,6 +72,7 @@ def ave(f, args):
             index_neigh = tn.steps.index(step)
         except:
             continue
+
         if args.field is not None:
             index_field = tf.steps.index(step)
             field = getattr(tf[index_field].particle, args.field)
@@ -82,30 +83,32 @@ def ave(f, args):
         print 'boo compute step', step, '...',
         sys.stdout.flush()
         b = boo.BondOrientationalOrder(s.particle, tn[j].neighbors, s.cell.side, field)
-        q4 = b.ql(4)
-        q6 = b.ql(6)
-        if not args.nobar:
-            qb4 = b.ql_bar(4)
-            qb6 = b.ql_bar(6)
+        q, qb = {}, {}
+        for l in lvalues:
+            q[l] = b.ql(l)
+            if not args.nobar:
+                qb[l] = b.ql_bar(l)
         print 'done'
 
-        # Write q4, q6 in xyz format
+        # Write in xyz format
         if args.xyz:
-            write_xyz(fbase + '.q4q6.xyz', [q4, q6], {'step':step, 'columns':'q4,q6'}, mode)
+            tag = 'q'.join([str(i) for i in lvalues])
+            cols = ',q'.join([str(i) for i in lvalues])
+            cols = cols[1:]
+            # TODO: we can use trajectory field here
+            write_xyz(fbase + '.%s.xyz' % tag, [q[l] for l in lvalues], {'step':step, 'columns':cols}, mode)
             mode = 'a'
             
         # Dump average
-        fq4.write('%d %g\n' % (step, numpy.average(q4)))
-        fq6.write('%d %g\n' % (step, numpy.average(q6)))
-        if not args.nobar:
-            fqb4.write('%d %g\n' % (step, numpy.average(qb4)))
-            fqb6.write('%d %g\n' % (step, numpy.average(qb6)))
+        for l in lvalues:
+            fq[l].write('%d %g\n' % (step, numpy.average(q[l])))
+            if not args.nobar:
+                fqb[l].write('%d %g\n' % (step, numpy.average(qb[l])))
 
-    fq4.close()
-    fq6.close()
-    if not args.nobar:
-        fqb4.close()
-        fqb6.close()
+    for l in lvalues:
+        fq[l].close()
+        if not args.nobar:
+            fqb[l].close()
 
     if len(args.neigh_file) == 0:
         os.remove(tn.filename)
@@ -188,6 +191,7 @@ if __name__ == '__main__':
     parser.add_argument(      '--skip',    dest='skip', default=1, help='skip every SKIP configuration')
     parser.add_argument(      '--field',   dest='field', default='field', help='field to read')
     parser.add_argument('-F', '--field-file', dest='field_file', default=None, help='field file in xyz format')
+    parser.add_argument('-l', '--l-values', dest='lvalues', default='4,6', help='comma separated list of l (el) values')
     parser.add_argument(nargs='+',         dest='files',type=str, help='input files')
     args = parser.parse_args()
 
