@@ -58,11 +58,15 @@ def ave(f, args):
     for l in lvalues:
         # Keep track of which neighbor file was used
         fq[l] = open(fbase + '.q%d' % l, 'w', buffering=0)
-        fq[l].write('# neighbors: %s\n' % desc)
+        fq[l].write('# neighbors: %s\n' % tn.filename)
+        fq[l].write('# parameters: %s\n' % args)
+        fq[l].write('# columns: step,q%d\n' % l)
         # If requested, write Lechner-Dellago variants too
         if not args.nobar:
             fqb[l] = open(fbase + '.qb%d' % l, 'w', buffering=0)
-            fqb[l].write('# neighbors: %s\n' % desc)
+            fqb[l].write('# neighbors: %s\n' % tn.filename)
+            fqb[l].write('# parameters: %s\n' % args)
+            fqb[l].write('# columns: step,q%d\n' % l)
 
     for i, s in enumerate(t):
         step = t.steps[i]
@@ -105,9 +109,9 @@ def ave(f, args):
             
         # Dump average
         for l in lvalues:
-            fq[l].write('%d %g\n' % (step, numpy.average(q[l])))
+            fq[l].write('%d %g\n' % (step, q[l].mean()))
             if not args.nobar:
-                fqb[l].write('%d %g\n' % (step, numpy.average(qb[l])))
+                fqb[l].write('%d %g\n' % (step, qb[l].mean()))
 
     for l in lvalues:
         fq[l].close()
