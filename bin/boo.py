@@ -51,7 +51,7 @@ def ave(f, args):
 
     desc = ''
     mode = 'w'
-    fbase = f + '.boo-%s' % args.tag
+    fbase = f + '.boo%s' % args.tag
     lvalues = [int(i) for i in args.lvalues.split(',')]
 
     fq, fqb = {}, {}
@@ -200,7 +200,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if len(args.tag) > 0:
-        args.tag = '_' + args.tag
+        args.tag = '-' + args.tag
 
     for f in args.files:
         if args.cluster:
