@@ -5,7 +5,7 @@
 import os
 import sys
 import numpy
-from atooms.trajectory import Trajectory
+from atooms.trajectory import Trajectory, TrajectoryXYZ
 import postprocessing.boo as boo
 from postprocessing.neighbors import all_neighbors, get_neighbors
 
@@ -54,7 +54,7 @@ def ave(f, args):
     fbase = f + '.boo%s' % args.tag
     lvalues = [int(i) for i in args.lvalues.split(',')]
 
-    fq = {}
+    fq, fqb = {}, {}
     for l in lvalues:
         # Keep track of which neighbor file was used
         fq[l] = open(fbase + '.q%d' % l, 'w', buffering=0)
@@ -73,16 +73,20 @@ def ave(f, args):
         except:
             continue
 
-        if args.field is not None:
+        if args.field_file is not None:
             index_field = tf.steps.index(step)
-            field = getattr(tf[index_field].particle, args.field)
+            field = []
+            for pi in tf[index_field].particle:
+                fi = getattr(pi, args.field)
+                fi = [float(x) for x in fi.split(',')]
+                field.append(fi)
         else:
             field = None
 
         # Compute average bond orientational order
         print 'boo compute step', step, '...',
         sys.stdout.flush()
-        b = boo.BondOrientationalOrder(s.particle, tn[j].neighbors, s.cell.side, field)
+        b = boo.BondOrientationalOrder(s.particle, tn[index_neigh].neighbors, s.cell.side, field)
         q, qb = {}, {}
         for l in lvalues:
             q[l] = b.ql(l)

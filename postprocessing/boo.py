@@ -52,7 +52,10 @@ class BondOrientationalOrder(object):
             sph = car2sph(rvec)
             for m in xrange(2*l + 1):
                 Y = sph_harm(m-l, l, sph[:,1], sph[:,2])
-                qlm[m, i] = numpy.average(Y, self.weights)
+                if self.weights is None:
+                    qlm[m, i] = numpy.average(Y)
+                else:
+                    qlm[m, i] = numpy.average(Y, weights=self.weights[i])
         return qlm
 
     def _qlm_cluster(self, l):
