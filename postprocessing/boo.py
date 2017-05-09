@@ -39,7 +39,7 @@ class BondOrientationalOrder(object):
         """
         self.position = numpy.array([p.position for p in particle])
         self.neighbors = neighbors
-        self.weights = weigths
+        self.weights = weights
         self.box = box
 
     def _qlm(self, l):
