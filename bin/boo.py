@@ -51,7 +51,7 @@ def ave(f, args):
 
     desc = ''
     mode = 'w'
-    fbase = f + '.boo%s' % args.tag
+    fbase = f + '.boo-%s' % args.tag
     lvalues = [int(i) for i in args.lvalues.split(',')]
 
     fq, fqb = {}, {}
