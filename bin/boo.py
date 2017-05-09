@@ -40,8 +40,9 @@ def ave(f, args):
 
     t = Trajectory(f)
     tn = get_neighbors(f, None, args) #, os.path.basename(sys.argv[0]))
+
     if args.field_file is not None:
-        tf = TrajectoryField(args.field_file)
+        tf = TrajectoryXYZ(args.field_file)
         if args.field is None:
             raise ValueError('provide field')
 
@@ -80,7 +81,6 @@ def ave(f, args):
         # Compute average bond orientational order
         print 'boo compute step', step, '...',
         sys.stdout.flush()
-        field = None
         b = boo.BondOrientationalOrder(s.particle, tn[j].neighbors, s.cell.side, field)
         q4 = b.ql(4)
         q6 = b.ql(6)
@@ -186,6 +186,8 @@ if __name__ == '__main__':
     parser.add_argument('-B', '--no-bar',  dest='nobar', action='store_true', help='do not compute Lechner-Dellago variants')
     parser.add_argument(      '--cluster', dest='cluster', action='store_true', help='only compute boo for first particles')
     parser.add_argument(      '--skip',    dest='skip', default=1, help='skip every SKIP configuration')
+    parser.add_argument(      '--field',   dest='field', default='field', help='field to read')
+    parser.add_argument('-F', '--field-file', dest='field_file', default=None, help='field file in xyz format')
     parser.add_argument(nargs='+',         dest='files',type=str, help='input files')
     args = parser.parse_args()
 
