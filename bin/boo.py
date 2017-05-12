@@ -69,6 +69,8 @@ def ave(f, args):
             fqb[l].write('# columns: step,q%d\n' % l)
 
     for i, s in enumerate(t):
+        if i % args.skip != 0:
+            continue
         step = t.steps[i]
         # Find sample that matches step in neighbor file
         # If not found, skip sample.
@@ -196,7 +198,7 @@ if __name__ == '__main__':
     parser.add_argument(      '--xyz',     dest='xyz', action='store_true', help='write q4,q6 in xyz format')
     parser.add_argument('-B', '--no-bar',  dest='nobar', action='store_true', help='do not compute Lechner-Dellago variants')
     parser.add_argument(      '--cluster', dest='cluster', action='store_true', help='only compute boo for first particles')
-    parser.add_argument(      '--skip',    dest='skip', default=1, help='skip every SKIP configuration')
+    parser.add_argument(      '--skip',    dest='skip', default=1, type=int, help='skip every SKIP configuration')
     parser.add_argument(      '--field',   dest='field', default='field', help='field to read')
     parser.add_argument('-F', '--field-file', dest='field_file', default=None, help='field file in xyz format')
     parser.add_argument('-l', '--l-values', dest='lvalues', default='4,6', help='comma separated list of l (el) values')
