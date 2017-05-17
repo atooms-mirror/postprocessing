@@ -102,8 +102,8 @@ def ave(f, args):
 
         # Write in xyz format
         if args.xyz:
-            tag = 'q' + 'q'.join([str(i) for i in lvalues])
-            cols = ',q'.join([str(i) for i in lvalues])
+            tag = ''.join(['q'+str(i) for i in lvalues])
+            cols = ','.join(['q'+str(i) for i in lvalues])
             cols = cols[1:]
             # TODO: we can use trajectory field here
             write_xyz(fbase + '.%s.xyz' % tag, [q[l] for l in lvalues], {'step':step, 'columns':cols}, mode)
