@@ -7,8 +7,6 @@ import numpy
 import math
 import logging
 
-from pyutils import utils
-from pyutils.utils import feqc
 from .helpers import linear_grid, logx_grid
 from .correlation import Correlation, gcf_offset
 from .helpers import adjust_skip, setup_t_grid
@@ -166,6 +164,7 @@ class SelfOverlap(Correlation):
 
     def analyze(self):
         try:
+            from pyutils.utils import feqc
             self.results['tau'] = feqc(self.grid, self.value, 1/numpy.exp(1.0))[0]
         except:
             self.results['tau'] = None
@@ -436,7 +435,11 @@ class NonGaussianParameter(Correlation):
         self.grid = [ti * self.trajectory.timestep for ti in self.grid]
 
     def analyze(self):
-        self.results['t_star'], self.results['a2_star'] = utils.ifabsmm(self.grid, self.value)[1]
+        try:
+            from pyutils.utils import ifabsmm
+            self.results['t_star'], self.results['a2_star'] = ifabsmm(self.grid, self.value)[1]
+        except:
+            pass
 
 
 class VelocityAutocorrelation(Correlation):

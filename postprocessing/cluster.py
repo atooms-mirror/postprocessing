@@ -6,7 +6,6 @@ import argparse
 import numpy
 from atooms import trajectory
 from atooms.utils import add_first_last_skip, fractional_slice
-from pyutils.histogram import Histogram
 
 
 def get_clusters(neighbors, clusters=[]):    
@@ -126,7 +125,9 @@ def network(data, show=False):
 
     return [len(x) for x in bicomps]
 
-def main(finp, fneigh, ffield, match=None, first=-1, last=-1, visualize=False, visualize_network=False, tag=None):
+def main(finp, fneigh, ffield, match=None, first=-1, last=-1,
+         visualize=False, visualize_network=False, tag=None):
+    from pyutils.histogram import Histogram
 
     if fneigh is None:
         fneigh = finp + '.neigh'
@@ -134,6 +135,7 @@ def main(finp, fneigh, ffield, match=None, first=-1, last=-1, visualize=False, v
         ffield = finp + '.field'
     if first < 0:
         first = 0
+
     th = trajectory.Sliced(trajectory.Trajectory(finp), slice(first, last, 1))
     tn = trajectory.Sliced(trajectory.TrajectoryNeighbors(fneigh), slice(first, last, 1))
     tf = trajectory.Sliced(trajectory.TrajectoryField(ffield), slice(first, last, 1))
