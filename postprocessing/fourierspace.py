@@ -270,12 +270,12 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
         self.value = [[self.value[kk][i] / self.value[kk][0] for i in range(len(self.value[kk]))] for kk in range(len(self.grid[0]))]
 
     def analyze(self):
-        self.tau = {}
         try:
             from pyutils.utils import feqc
-        except:
+        except ImportError:
             return
 
+        self.tau = {}
         for i, k in enumerate(self.grid[0]):
             try:
                 self.tau[k] = feqc(self.grid[1], self.value[i], 1/numpy.exp(1.0))[0]
@@ -388,7 +388,10 @@ class IntermediateScattering(FourierSpaceCorrelation):
             self.value = [[v / self.value_nonorm[kk][0] for v in self.value_nonorm[kk]] for kk in range(len(self.grid[0]))]
 
     def analyze(self):
-        from pyutils.utils import feqc
+        try:
+            from pyutils.utils import feqc
+        except ImportError:
+            return
         self.tau = {}
         for i, k in enumerate(self.grid[0]):
             try:

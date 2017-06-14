@@ -21,7 +21,6 @@ from collections import defaultdict
 
 from atooms.trajectory import Trajectory, TrajectoryNeighbors
 from atooms.utils import add_first_last_skip, fractional_slice
-from pyutils.histogram import Histogram
 from postprocessing.neighbors import get_neighbors
 
 parser = argparse.ArgumentParser()
