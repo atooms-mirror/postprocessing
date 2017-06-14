@@ -64,6 +64,7 @@ def write_neighbors(fileinp, rcut, fileout='/dev/stdout', fmt=None):
     import neighbors_wrap
     with trj.Trajectory(fileinp, fmt=fmt) as t, \
          TrajectoryNeighbors(fileout, 'w') as tout:
+        tout.timestep = t.timestep
         for i, s in enumerate(t):
             s = compute_neighbors(s, rcut)
             tout.write_sample(s, t.steps[i])
