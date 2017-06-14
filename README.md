@@ -47,6 +47,7 @@ Requirements
 ------------
 - numpy
 - [atooms](https://gitlab.info-ufr.univ-montp2.fr/atooms/postprocessing.git)
+- scipy (optional, for bond-orientational order calculations)
 
 Installation
 ------------
