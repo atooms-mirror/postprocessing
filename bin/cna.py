@@ -20,7 +20,7 @@ import numpy
 from collections import defaultdict
 
 from atooms.trajectory import Trajectory, TrajectoryField
-from atooms.utils import add_first_last_skip, fractional_slice
+from atooms.utils import add_first_last_skip, fractional_slice, mkdir
 from postprocessing.neighbors import get_neighbors
 
 def cna(particle, neighbors):
@@ -86,7 +86,6 @@ def main(args):
         # If required, we put CNA data in a separate directory
         if args.dirout is not None:
             dirout = os.path.dirname(args.dirout + '/' + finp)
-            from pyutils.utils import mkdir
             mkdir(dirout)
             fbase = args.dirout + '/' + finp
         else:
