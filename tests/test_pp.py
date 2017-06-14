@@ -42,8 +42,8 @@ class TestRealSpace(unittest.TestCase):
             self.reference_path = os.path.join(os.path.dirname(sys.argv[0]), '../data')
 
     def test_msd_partial(self):
-        f = os.path.join(self.reference_path, 'kalj-small.h5')
-        ts = trajectory.Sliced(trajectory.TrajectoryHDF5(f), slice(0,1000,1))
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        ts = trajectory.Sliced(trajectory.TrajectoryXYZ(f), slice(0,1000,1))
         for i in [1, 2]:
             t = trajectory.Filter(ts, filter_id, i)
             p = postprocessing.MeanSquareDisplacement(t, [0.0, 3.0, 45.0, 90])
@@ -57,8 +57,8 @@ class TestRealSpace(unittest.TestCase):
             self.assertLess(deviation(p.value, ref_value), 4e-2)
 
     def test_msd_partial_filter(self):
-        f = os.path.join(self.reference_path, 'kalj-small.h5')
-        ts = trajectory.Sliced(trajectory.TrajectoryHDF5(f), slice(0,1000,1))
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        ts = trajectory.Sliced(trajectory.TrajectoryXYZ(f), slice(0,1000,1))
         for i in [1, 2]:
             p = postprocessing.MeanSquareDisplacement(ts, [0.0, 3.0, 45.0, 90])
             p.add_filter(filter_species, i)
@@ -72,8 +72,8 @@ class TestRealSpace(unittest.TestCase):
             self.assertLess(deviation(p.value, ref_value), 4e-2)
 
     def test_gr_partial(self):
-        f = os.path.join(self.reference_path, 'kalj-small.h5')
-        ts = trajectory.TrajectoryHDF5(f)
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        ts = trajectory.TrajectoryXYZ(f)
         ref = {}
         ref[(1,1)] = numpy.array([ 0.,          0.00675382,  0.27087136,  1.51486318])
         ref[(2,2)] = numpy.array([ 0.31065645,  0.51329066,  0.67485665,  0.78039485])
@@ -92,8 +92,8 @@ class TestRealSpace(unittest.TestCase):
 
     def test_gr_partial_2(self):
         from postprocessing.partial import Partial
-        f = os.path.join(self.reference_path, 'kalj-small.h5')
-        ts = trajectory.TrajectoryHDF5(f)
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        ts = trajectory.TrajectoryXYZ(f)
         ref = {}
         ref[(1,1)] = numpy.array([ 0.,          0.00675382,  0.27087136,  1.51486318])
         ref[(2,2)] = numpy.array([ 0.31065645,  0.51329066,  0.67485665,  0.78039485])
@@ -114,24 +114,24 @@ class TestFourierSpace(unittest.TestCase):
             self.reference_path = os.path.join(os.path.dirname(sys.argv[0]), '../data')
 
     def test_sk(self):
-        f = os.path.join(self.reference_path, 'kalj-small.h5')
-        t = trajectory.TrajectoryHDF5(f)
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        t = trajectory.TrajectoryXYZ(f)
         p = postprocessing.StructureFactor(t, kmin=-1, kmax=4, ksamples=3, dk=0.2)
         p.compute()
         ref_value = numpy.array([0.075820086512828039, 0.065300213310725302, 0.082485082309989494])
         self.assertLess(deviation(p.value, ref_value), 0.04)
 
     def test_sk_fixgrid(self):
-        f = os.path.join(self.reference_path, 'kalj-small.h5')
-        t = trajectory.TrajectoryHDF5(f)
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        t = trajectory.TrajectoryXYZ(f)
         p = postprocessing.StructureFactor(t, [4, 7.3, 10])
         p.compute()
         ref_value = numpy.array([0.083411717745282138, 2.76534619194135, 0.67129958432631986])
         self.assertLess(deviation(p.value, ref_value), 0.04)
 
     def test_sk_variable_cell(self):
-        f = os.path.join(self.reference_path, 'kalj-small.h5')
-        ts = trajectory.TrajectoryHDF5(f)
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        ts = trajectory.TrajectoryXYZ(f)
         p = postprocessing.StructureFactor(ts, range(1,10))
         p.compute()
         t = trajectory.AffineDeformation(ts, 1e-3)
@@ -141,8 +141,8 @@ class TestFourierSpace(unittest.TestCase):
         #     print x, y, z, w
 
     def test_sk_partial(self):
-        f = os.path.join(self.reference_path, 'kalj-small.h5')
-        ts = trajectory.TrajectoryHDF5(f)
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        ts = trajectory.TrajectoryXYZ(f)
         for i in [1, 2]:
             t = trajectory.Filter(ts, filter_id, i)
             p = postprocessing.StructureFactor(t, [4, 7.3, 10])
@@ -154,8 +154,8 @@ class TestFourierSpace(unittest.TestCase):
             self.assertLess(deviation(p.value, ref_value), 1e-2)
 
     def test_sk_random(self):
-        f = os.path.join(self.reference_path, 'kalj-small.h5')
-        ts = trajectory.TrajectoryHDF5(f)
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        ts = trajectory.TrajectoryXYZ(f)
         t = trajectory.Filter(ts, filter_random, 75)
         p = postprocessing.StructureFactor(t, [4, 7.3, 10, 30.0], nk=40)
         p.compute()
@@ -163,8 +163,8 @@ class TestFourierSpace(unittest.TestCase):
     @unittest.skip('Broken test')
     def test_fkt_random(self):
         import random
-        f = os.path.join(self.reference_path, 'kalj-small.h5')
-        ts = trajectory.TrajectoryHDF5(f)
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        ts = trajectory.TrajectoryXYZ(f)
         s = ts[0]
         ids = random.sample(xrange(len(s.particle)), len(s.particle))
         t = trajectory.Filter(ts, filter_selected_ids, ids)
@@ -174,8 +174,8 @@ class TestFourierSpace(unittest.TestCase):
         ps.compute()
 
     def test_fkt_partial(self):
-        f = os.path.join(self.reference_path, 'kalj-small.h5')
-        t = trajectory.TrajectoryHDF5(f)
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        t = trajectory.TrajectoryXYZ(f)
         p = postprocessing.IntermediateScattering(t, [4, 7.3, 10], nk=40)
         p.add_filter(filter_species, 1)
         p.compute()

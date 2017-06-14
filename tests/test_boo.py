@@ -2,7 +2,7 @@
 
 import unittest
 import numpy
-from atooms.trajectory import TrajectoryNeighbors, Trajectory, TrajectoryHDF5
+from atooms.trajectory import TrajectoryNeighbors, Trajectory
 from postprocessing.boo import BondOrientationalOrder, periodic_vector
 
 
@@ -12,18 +12,17 @@ class TestBOO(unittest.TestCase):
         pass
 
     def _load(self, structure):
-        # TODO: convert hdf5 to xyz for portability
         if structure == 'bcc':
-            self.t = Trajectory('data/lj_bcc.h5')
-            self.tn = TrajectoryNeighbors('data/lj_bcc.h5.voronoi.xyz.neigh')
+            self.t = Trajectory('data/lj_bcc.xyz')
+            self.tn = TrajectoryNeighbors('data/lj_bcc.xyz.voronoi.xyz.neigh')
             self.ref = {6: 0.510688230857, 4: 0.0363696483727, 8: 0.429322472922}
         elif structure == 'fcc':
-            self.t = Trajectory('data/lj_fcc.h5.min')
-            self.tn = TrajectoryNeighbors('data/lj_fcc.h5.min.voronoi.xyz.neigh')
+            self.t = Trajectory('data/lj_fcc.xyz.min')
+            self.tn = TrajectoryNeighbors('data/lj_fcc.xyz.min.voronoi.xyz.neigh')
             self.ref = {6: 0.574524259714, 4: 0.190940653956, 8: 0.403914561085}
         elif structure == 'fluid':
-            self.t = TrajectoryHDF5('data/lj.h5')
-            self.tn = TrajectoryNeighbors('data/lj.h5.neigh')
+            self.t = Trajectory('data/lj.xyz')
+            self.tn = TrajectoryNeighbors('data/lj.xyz.neigh')
             #self.ref = {6: 0.2731} # voronoi
             self.ref = {6: 0.33194535071671305}
 
