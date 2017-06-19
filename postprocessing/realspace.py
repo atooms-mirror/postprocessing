@@ -121,7 +121,7 @@ def self_overlap(r0, r1, side, a_square):
 class CollectiveOverlap(Correlation):
 
     def __init__(self, trajectory, grid=None, nsamples=60, a=0.3,
-                 norigins=1):
+                 norigins=-1):
         Correlation.__init__(self, trajectory, grid, 't', 'qt',
                              'Collective overlap', 'pos')
         self.a_square = a**2
@@ -133,7 +133,7 @@ class CollectiveOverlap(Correlation):
     def _compute(self):
         side = self.trajectory.read(0).cell.side
         def f(x, y):
-            return collective_overlap(x, y, side, self.a_square).sum() / float(x.shape[0])
+            return collective_overlap(x, y, side, self.a_square).sum() / float(x.shape[0])        
         self.grid, self.value = gcf_offset(f, self._discrete_tgrid,
                                            self.skip, self.trajectory.steps, self._pos)
         self.grid = [ti * self.trajectory.timestep for ti in self.grid]
