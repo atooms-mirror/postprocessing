@@ -1,42 +1,47 @@
 #!/usr/bin/env python
+
 import sys
+import datetime
 import atooms.trajectory as trj
 import atooms.voronoi as vor
+from postprocessing.helpers import setup_t_grid, adjust_skip, logx_grid
+from postprocessing.correlation import gcf_offset
 
-def bond(f, broken_bonds=1):
-#    with trj.TrajectoryXYZ(f) as th:
+def main(f, broken_bonds=1, norigins=40):
+
     with vor.TrajectoryVoronoi(f) as th:
-        npart = len(th[0].particle)
-        
-        # Put data into a big list
-        from collections import namedtuple
-        voronoi_list = []
-        for j in range(npart):
-            voronoi_list.append([])
-        for frame, s in enumerate(th):
-            for i in range(npart):
-                #nn = sorted([int(_) for _ in s.particle[i].neighbors.split(',')])
-                #nn = sorted(s.particle[i].neighbors)
-                nn = set(s.particle[i].neighbors)
-                #nn = sorted([int(_) for _ in getattr(s.particle[i], 'neighbors*').split(',')])
-                voronoi_list[i].append(nn)
-                
-                #        for t in voronoi_list[820]:
-                #            print t
-        
-        from collections import defaultdict
-        prob = defaultdict(list)
-        for i in range(npart):
-            for t in [0, 1, 2, 4, 6, 8, 12, 16, 24, 32, 48, 64, 92, 128]:
-                for t0 in range(0, len(voronoi_list[i])-t, 10):
-                    #                    print t, t0, voronoi_list[i][t0], voronoi_list[i][t0+t], voronoi_list[i][t0] == voronoi_list[i][t0+t]
-                    # prob[t].append(int(voronoi_list[i][t0] == voronoi_list[i][t0+t]))
-                    prob[t].append(len(voronoi_list[i][t0] & voronoi_list[i][t0+t]) > broken_bonds)
 
-        for key in sorted(prob):
-            print key, sum(prob[key]) / float(len(prob[key])) #, len(prob[key])
-#bond('/home/coslo/usr/atooms/voronoi/data/hspoly.h5.voronoi.xyz')
+        # Put data into a big list of lists
+        npart = len(th[0].particle)
+        neighbors_list = []
+        for frame, s in enumerate(th):
+            data = []
+            for i in range(npart):
+                nn = set(s.particle[i].neighbors)
+                data.append(nn)
+            neighbors_list.append(data)
+
+        # Kernel
+        def func(x, y):
+            broken = [int(len(x[i] & y[i]) > broken_bonds) for i in range(npart)]
+            return sum(broken) / float(npart)
+
+        # Compute probability
+        skip = adjust_skip(th, -1)
+        grid = logx_grid(0.0, th.time_total * 0.75, norigins)
+        discrete_tgrid = setup_t_grid(th, grid)
+        grid, value = gcf_offset(func, discrete_tgrid, skip, th.steps,
+                                 neighbors_list)
+
+        # Dump
+        with open('%s.bondbreak-%d' % (f, broken_bonds), 'w') as fh:
+            fh.write('# title: probability P_b(t) of loosing n=%s bonds after a time t\n' % broken_bonds)
+            fh.write('# columns: t, P_b(t)\n')
+            fh.write('# created: %s\n' % datetime.datetime.now())
+            fh.write('# notes: postprocessing v%s\n' % 0.1)
+            for x, y in zip(grid, value):
+                fh.write('%g %g\n' % (x, y))
 
 import argh
-argh.dispatch_command(bond)
+argh.dispatch_command(main)
 
