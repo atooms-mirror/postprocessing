@@ -16,7 +16,7 @@ import atooms.voronoi as vor
 from postprocessing.helpers import setup_t_grid, adjust_skip, logx_grid
 from postprocessing.correlation import gcf_offset
 
-def main(f, broken_bonds=1, norigins=40):
+def main(f, bonds=1, norigins=40):
 
     with vor.TrajectoryVoronoi(f) as th:
 
@@ -32,7 +32,7 @@ def main(f, broken_bonds=1, norigins=40):
 
         # Kernel
         def func(x, y):
-            broken = [int(len(x[i] & y[i]) > broken_bonds) for i in range(npart)]
+            broken = [int(len(x[i] & y[i]) > bonds) for i in range(npart)]
             return sum(broken) / float(npart)
 
         # Compute probability
@@ -43,8 +43,8 @@ def main(f, broken_bonds=1, norigins=40):
                                  neighbors_list)
 
         # Dump
-        with open('%s.bondbreak-%d' % (f, broken_bonds), 'w') as fh:
-            fh.write('# title: probability P_b(t) of loosing all but n=%s bonds after a time t\n' % broken_bonds)
+        with open('%s.bondbreak-%d' % (f, bonds), 'w') as fh:
+            fh.write('# title: probability P_b(t) of loosing all but n=%s bonds after a time t\n' % bonds)
             fh.write('# columns: t, P_b(t)\n')
             fh.write('# created: %s\n' % datetime.datetime.now())
             fh.write('# notes: postprocessing v%s\n' % 0.1)
