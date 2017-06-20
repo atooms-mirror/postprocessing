@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 
 """
-Bond breaking probability
+Bond breaking probability.
 
-Compute the probability of loosing `n` bonds (neighbors) after a time
-t.  Input file must contain neighbors information.
+Compute the probability of loosing all but `n` bonds (neighbors) after
+a time t.
+
+Input file must contain neighbors information.
 """
 
 import sys
@@ -42,7 +44,7 @@ def main(f, broken_bonds=1, norigins=40):
 
         # Dump
         with open('%s.bondbreak-%d' % (f, broken_bonds), 'w') as fh:
-            fh.write('# title: probability P_b(t) of loosing n=%s bonds after a time t\n' % broken_bonds)
+            fh.write('# title: probability P_b(t) of loosing all but n=%s bonds after a time t\n' % broken_bonds)
             fh.write('# columns: t, P_b(t)\n')
             fh.write('# created: %s\n' % datetime.datetime.now())
             fh.write('# notes: postprocessing v%s\n' % 0.1)
