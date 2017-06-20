@@ -1,5 +1,12 @@
 #!/usr/bin/env python
 
+"""
+Bond breaking probability
+
+Compute the probability of loosing `n` bonds (neighbors) after a time
+t.  Input file must contain neighbors information.
+"""
+
 import sys
 import datetime
 import atooms.trajectory as trj
