@@ -231,7 +231,8 @@ class Chi4SelfOverlap(Correlation):
         self.variance.write()
 
     def analyze(self):
-        self.results['tau_star'], self.results['chi4_star'] = utils.ifabsmm(self.grid, self.value)[1]
+        from pyutils.utils import ifabsmm
+        self.results['tau_star'], self.results['chi4_star'] = ifabsmm(self.grid, self.value)[1]
 
 
 class OverlapDistribution(Correlation):
