@@ -75,26 +75,26 @@ def gcf_offset(f, grid, skip, t, x):
     dt = sorted(acf.keys())
     return dt, [acf[t] / cnt[t] for t in dt] #, [cnt[t] for t in dt]
 
-def gcf_offset_bin(f, grid, skip, t, x):
-    """Generalized correlation function.
-    Pass a function to apply to the data.
-    Exemple: mean square displacement.
-    """
-    # Calculate the correlation between time t(i0) and t(i0+i)
-    # for all possible pairs (i0,i) provided by grid
-    from pyutils.histogram import Histogram
-    acf = Histogram()
-    for off, i in grid:
-        for i0 in xrange(off, len(x)-i-skip, skip):
-            acf.add([(t[i0+i] - t[i0], f(x[i0+i], x[i0]) / 0.1)])
-    return acf.grid, acf.value
+# TODO: drop this dead code
+# def gcf_offset_bin(f, grid, skip, t, x):
+#     """Generalized correlation function.
+#     Pass a function to apply to the data.
+#     Exemple: mean square displacement.
+#     """
+#     # Calculate the correlation between time t(i0) and t(i0+i)
+#     # for all possible pairs (i0,i) provided by grid
+#     from pyutils.histogram import Histogram
+#     acf = Histogram()
+#     for off, i in grid:
+#         for i0 in xrange(off, len(x)-i-skip, skip):
+#             acf.add([(t[i0+i] - t[i0], f(x[i0+i], x[i0]) / 0.1)])
+#     return acf.grid, acf.value
 
 
 UPDATE = False
 
 class Correlation(object):
 
-    log = None
     nbodies = 1
 
     def __init__(self, trj, grid, name="", short_name="", description="", phasespace=None):
@@ -245,11 +245,7 @@ class Correlation(object):
         return filename
 
     def read(self):
-        try:
-            inp = open(self._output_file, 'r')
-        except IOError:
-            self.log.error("could not find file %s" % self._output_file)
-
+        inp = open(self._output_file, 'r')
         x = numpy.loadtxt(inp, unpack=True)
         if len(x) == 3:
             self.grid, self.value = x
@@ -273,9 +269,9 @@ class Correlation(object):
 
         # Comment line
         if len(self.tag) > 0:
-            comments = '# %s, %s\n' % (self.description, self.tag)
+            comments = '# title: %s %s\n' % (self.description.lower(), self.tag)
         else:
-            comments = '# %s\n' % self.description
+            comments = '# title: %s\n' % self.description
         comments += '# columns: %s, %s\n' % (self.name, self.short_name)
         if not self.comments is None:
             comments += self.comments
@@ -284,7 +280,7 @@ class Correlation(object):
         analysis = ""
         for x, f in self.results.iteritems():
             if f is not None:
-                analysis += '# %s = %s\n' % (x, f)
+                analysis += '# %s: %s\n' % (x, f)
 
         # Put it all together
         with open(self._output_file, 'w') as fh:
