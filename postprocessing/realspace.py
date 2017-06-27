@@ -127,7 +127,7 @@ class CollectiveOverlap(Correlation):
         self.a_square = a**2
         self.skip = adjust_skip(self.trajectory, norigins)
         if grid is None:
-            self.grid = logx_grid(0.0, trajectory.time_total * 0.75, nsamples)
+            self.grid = logx_grid(0.0, trajectory.total_time * 0.75, nsamples)
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid)
 
     def _compute(self):
@@ -149,7 +149,7 @@ class SelfOverlap(Correlation):
         if not self._need_update:
             return
         if grid is None:
-            self.grid = logx_grid(0.0, trajectory.time_total * 0.75, nsamples)
+            self.grid = logx_grid(0.0, trajectory.total_time * 0.75, nsamples)
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid)
         self.skip = adjust_skip(self.trajectory, norigins)
         self.a_square = a**2
@@ -180,7 +180,7 @@ class Chi4SelfOverlap(Correlation):
         if not self._need_update:
             return
         if grid is None:
-            self.grid = logx_grid(0.0, trajectory.time_total * 0.75, nsamples)
+            self.grid = logx_grid(0.0, trajectory.total_time * 0.75, nsamples)
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid)
         self.skip = adjust_skip(self.trajectory, norigins)
         self.a_square = a**2
@@ -356,11 +356,11 @@ class MeanSquareDisplacement(Correlation):
         # e.g. because we are just sourcing the correlation object from file
         if tgrid is None:
             if sigma_max < 1e99:
-                self.grid = linear_grid(0.0, min(trajectory.time_total * 1./(1+nblocks),
+                self.grid = linear_grid(0.0, min(trajectory.total_time * 1./(1+nblocks),
                                                  trajectory.time_when_msd_is(sigma_max**2)),
                                         nsamples)
             else:
-                self.grid = linear_grid(0.0, trajectory.time_total * 1./(1+nblocks), nsamples)
+                self.grid = linear_grid(0.0, trajectory.total_time * 1./(1+nblocks), nsamples)
         else:
             self.grid = tgrid
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid)
@@ -425,7 +425,7 @@ class NonGaussianParameter(Correlation):
         if not self._need_update:
             return
         if self.grid is None:
-            self.grid = linear_grid(0.0, trajectory.time_total * 0.75, nsamples)
+            self.grid = linear_grid(0.0, trajectory.total_time * 0.75, nsamples)
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid)
         self.skip = adjust_skip(trajectory, norigins)
 

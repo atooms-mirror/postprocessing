@@ -89,7 +89,7 @@ def chi4qs(input_file, tsamples=60, a=0.3, fmt=None):
     """Dynamic susceptibility of self overlap."""
     with Trajectory(input_file, fmt=fmt) as th:
         func = logx_grid
-        time_target = th.time_total * 0.75
+        time_target = th.total_time * 0.75
         t_grid = [0.0] + func(th.timestep, time_target, tsamples)
         ids = species(th[0].particle)
         if len(ids) > 1:

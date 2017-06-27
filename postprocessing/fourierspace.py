@@ -211,7 +211,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
         check_block_size(self.trajectory.steps, self.trajectory.block_size)
         if tgrid is None:
             self.grid[1] = [0.0] + logx_grid(trajectory.timestep,
-                                             trajectory.time_total * 0.75, tsamples)
+                                             trajectory.total_time * 0.75, tsamples)
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid[1])
         self.skip = skip
 
@@ -316,7 +316,7 @@ class IntermediateScattering(FourierSpaceCorrelation):
         # Setup time grid
         check_block_size(self.trajectory.steps, self.trajectory.block_size)
         if tgrid is None:
-            self.grid[1] = logx_grid(0.0, trajectory.time_total * 0.75, tsamples)
+            self.grid[1] = logx_grid(0.0, trajectory.total_time * 0.75, tsamples)
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid[1])
 
     def _tabulate_rho(self, k_sorted, k_selected, f=numpy.sum):
