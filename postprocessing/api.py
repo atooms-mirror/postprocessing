@@ -5,6 +5,7 @@ from postprocessing.partial import Partial
 from atooms.utils import setup_logging
 from atooms.trajectory import Trajectory
 from atooms.trajectory.decorators import filter_id
+from atooms.trajectory.utils import time_when_msd_is
 from atooms.system.particle import species
 from .helpers import linear_grid, logx_grid
 
@@ -32,15 +33,13 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30, norigins=-1
         if len(ids) > 1:
             Partial(postprocessing.StructureFactor, ids, th, k_grid).do()
 
-def msd(input_file, rmsd_target=None, time_target=-1.0, t_samples=30,
+def msd(input_file, rmsd_target=-1.0, time_target=-1.0, t_samples=30,
         norigins=50, sigma=1.0, func=linear_grid, fmt=None):
     """Mean square displacement."""
     with Trajectory(input_file, fmt=fmt) as th:
         dt = th.timestep
-        if rmsd_target is not None:
-            t_grid = [0.0] + func(dt, min(trajectory.time_total,
-                                          trajectory.time_when_msd_is(rmsd_target**2)),
-                                  t_samples)
+        if rmsd_target > 0:
+            t_grid = [0.0] + func(dt, time_when_msd_is(th, rmsd_target**2), t_samples)
         else:
             if time_target > 0:
                 t_grid = [0.0] + func(dt, min(th.steps[-1]*dt, time_target), t_samples)
@@ -85,3 +84,16 @@ def fskt(input_file, time_target=1e9, tsamples=60, kmin=7.0, kmax=8.0,
         ids = species(th[-1].particle)
         if len(ids) > 1:
             Partial(postprocessing.SelfIntermediateScattering, ids, th, k_grid, t_grid, nk, dk=dk, skip=skip).do()
+
+def chi4qs(input_file, tsamples=60, a=0.3, fmt=None):
+    """Dynamic susceptibility of self overlap."""
+    with Trajectory(input_file, fmt=fmt) as th:
+        func = logx_grid
+        time_target = th.time_total * 0.75
+        t_grid = [0.0] + func(th.timestep, time_target, tsamples)
+        ids = species(th[0].particle)
+        if len(ids) > 1:
+            Partial(postprocessing.Chi4SelfOverlap, ids, th, t_grid, a).do()
+        else:
+            postprocessing.Chi4SelfOverlap(th, t_grid, a).do()
+            
