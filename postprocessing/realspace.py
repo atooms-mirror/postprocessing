@@ -232,7 +232,11 @@ class Chi4SelfOverlap(Correlation):
 
     def analyze(self):
         from pyutils.utils import ifabsmm
-        self.results['tau_star'], self.results['chi4_star'] = ifabsmm(self.grid, self.value)[1]
+        try:
+            self.results['tau_star'], self.results['chi4_star'] = ifabsmm(self.grid, self.value)[1]
+        except ZeroDivisionError:
+            print '# warning : could not find maximum'
+            pass
 
 
 class OverlapDistribution(Correlation):
