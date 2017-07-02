@@ -163,11 +163,12 @@ class Correlation(object):
         # Dump unfolded positions if requested
         self._pos_unf = []
         if 'pos-unf' in self._phasespace:
-            for s in Unfolded(self.trajectory):
-                # Apply filter if there is one
-                if len(self.cbk) > 0:
-                    s = self.cbk[0](s, *self.cbk_args[0], **self.cbk_kwargs[0])
-                self._pos_unf.append(s.dump('pos'))
+            with Unfolded(self.trajectory) as thu:
+                for s in thu:
+                    # Apply filter if there is one
+                    if len(self.cbk) > 0:
+                        s = self.cbk[0](s, *self.cbk_args[0], **self.cbk_kwargs[0])
+                    self._pos_unf.append(s.dump('pos'))
 
         # If trajectory is grandcanonical, we make sure all samples
         # have non-zero particles and raise an exception.
