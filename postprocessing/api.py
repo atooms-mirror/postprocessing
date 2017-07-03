@@ -33,16 +33,22 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30, norigins=-1
         if len(ids) > 1:
             Partial(postprocessing.StructureFactor, ids, th, k_grid).do()
 
-def msd(input_file, rmsd_target=-1.0, time_target=-1.0, tsamples=30,
-        norigins=50, sigma=1.0, func=linear_grid, fmt=None):
+def msd(input_file, rmsd_target=-1.0, time_target=-1.0,
+        time_target_fraction=-1.0, tsamples=30, norigins=50, sigma=1.0,
+        func=linear_grid, fmt=None):
     """Mean square displacement."""
     with Trajectory(input_file, fmt=fmt) as th:
         dt = th.timestep
         if rmsd_target > 0:
-            t_grid = [0.0] + func(dt, time_when_msd_is(th, rmsd_target**2), tsamples)
+            t_grid = [0.0] + func(dt, time_when_msd_is(th, rmsd_target**2),
+                                  tsamples)
         else:
             if time_target > 0:
-                t_grid = [0.0] + func(dt, min(th.steps[-1]*dt, time_target), tsamples)
+                t_grid = [0.0] + func(dt, min(th.total_time,
+                                              time_target), tsamples)
+            elif time_target_fraction > 0:
+                t_grid = [0.0] + func(dt, time_target_fraction*th.total_time,
+                                      tsamples)
             else:
                 t_grid = [0.0] + func(dt, th.steps[-1]*dt, tsamples)
         ids = species(th[-1].particle)
