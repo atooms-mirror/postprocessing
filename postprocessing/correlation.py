@@ -115,6 +115,7 @@ class Correlation(object):
         self.comments = None # can be modified by user at run time
         if isinstance(phasespace, str):
             self._phasespace = [phasespace]
+        self.value = []
         self.cbk = []
         self.cbk_args = []
         self.cbk_kwargs = []
