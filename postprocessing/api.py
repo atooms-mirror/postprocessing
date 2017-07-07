@@ -99,7 +99,7 @@ def chi4qs(input_file, tsamples=60, a=0.3, fmt=None):
         t_grid = [0.0] + func(th.timestep, time_target, tsamples)
         ids = species(th[0].particle)
         if len(ids) > 1:
-            Partial(postprocessing.Chi4SelfOverlap, ids, th, t_grid, a).do()
+            Partial(postprocessing.Chi4SelfOverlap, ids, th, t_grid, a=a).do()
         else:
-            postprocessing.Chi4SelfOverlap(th, t_grid, a).do()
+            postprocessing.Chi4SelfOverlap(th, t_grid, a=a).do()
             
