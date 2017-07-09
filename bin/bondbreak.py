@@ -37,7 +37,7 @@ def main(f, bonds=1, norigins=40):
 
         # Compute probability
         skip = adjust_skip(th, -1)
-        grid = logx_grid(0.0, th.time_total * 0.75, norigins)
+        grid = logx_grid(0.0, th.total_time * 0.75, norigins)
         discrete_tgrid = setup_t_grid(th, grid)
         grid, value = gcf_offset(func, discrete_tgrid, skip, th.steps,
                                  neighbors_list)
