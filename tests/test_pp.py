@@ -55,6 +55,7 @@ class TestRealSpace(unittest.TestCase):
                 ref_value = numpy.array([0.0, 0.220299, 2.31111, 4.37561])
             self.assertLess(deviation(p.grid, ref_grid), 4e-2)
             self.assertLess(deviation(p.value, ref_value), 4e-2)
+        ts.close()
 
     def test_msd_partial_filter(self):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
@@ -70,6 +71,7 @@ class TestRealSpace(unittest.TestCase):
                 ref_value = numpy.array([0.0, 0.220299, 2.31111, 4.37561])
             self.assertLess(deviation(p.grid, ref_grid), 4e-2)
             self.assertLess(deviation(p.value, ref_value), 4e-2)
+        ts.close()
 
     def test_gr_partial(self):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')

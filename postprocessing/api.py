@@ -33,28 +33,34 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30, norigins=-1
         if len(ids) > 1:
             Partial(postprocessing.StructureFactor, ids, th, k_grid).do()
 
-def msd(input_file, rmsd_target=-1.0, time_target=-1.0, t_samples=30,
-        norigins=50, sigma=1.0, func=linear_grid, fmt=None):
+def msd(input_file, rmsd_target=-1.0, time_target=-1.0,
+        time_target_fraction=-1.0, tsamples=30, norigins=50, sigma=1.0,
+        func=linear_grid, fmt=None):
     """Mean square displacement."""
     with Trajectory(input_file, fmt=fmt) as th:
         dt = th.timestep
         if rmsd_target > 0:
-            t_grid = [0.0] + func(dt, time_when_msd_is(th, rmsd_target**2), t_samples)
+            t_grid = [0.0] + func(dt, time_when_msd_is(th, rmsd_target**2),
+                                  tsamples)
         else:
             if time_target > 0:
-                t_grid = [0.0] + func(dt, min(th.steps[-1]*dt, time_target), t_samples)
+                t_grid = [0.0] + func(dt, min(th.total_time,
+                                              time_target), tsamples)
+            elif time_target_fraction > 0:
+                t_grid = [0.0] + func(dt, time_target_fraction*th.total_time,
+                                      tsamples)
             else:
-                t_grid = [0.0] + func(dt, th.steps[-1]*dt, t_samples)
+                t_grid = [0.0] + func(dt, th.steps[-1]*dt, tsamples)
         ids = species(th[-1].particle)
         postprocessing.MeanSquareDisplacement(th, tgrid=t_grid, norigins=norigins, sigma=sigma).do()
         if len(ids) > 1:
             Partial(postprocessing.MeanSquareDisplacement, ids,
                     th, tgrid=t_grid, norigins=norigins, sigma=sigma).do()
 
-def vacf(input_file, time_target=1.0, t_samples=30, func=linear_grid, fmt=None):
+def vacf(input_file, time_target=1.0, tsamples=30, func=linear_grid, fmt=None):
     """Velocity autocorrelation function."""
     with Trajectory(input_file, fmt=fmt) as th:
-        t_grid = [0.0] + func(th.timestep, time_target, t_samples)
+        t_grid = [0.0] + func(th.timestep, time_target, tsamples)
         postprocessing.VelocityAutocorrelation(th, t_grid).do()
         ids = species(th[-1].particle)
         if len(ids) > 1:
@@ -93,7 +99,7 @@ def chi4qs(input_file, tsamples=60, a=0.3, fmt=None):
         t_grid = [0.0] + func(th.timestep, time_target, tsamples)
         ids = species(th[0].particle)
         if len(ids) > 1:
-            Partial(postprocessing.Chi4SelfOverlap, ids, th, t_grid, a).do()
+            Partial(postprocessing.Chi4SelfOverlap, ids, th, t_grid, a=a).do()
         else:
-            postprocessing.Chi4SelfOverlap(th, t_grid, a).do()
+            postprocessing.Chi4SelfOverlap(th, t_grid, a=a).do()
             

@@ -184,23 +184,20 @@ class Chi4SelfOverlap(Correlation):
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid)
         self.skip = adjust_skip(self.trajectory, norigins)
         self.a_square = a**2
-        self.average = Correlation(trajectory, grid, 't', 'qsu',
+        self.average = Correlation(trajectory, self.grid, 't', 'qsu',
                                    'Average of self overlap not normalized')
-        self.variance = Correlation(trajectory, grid, 't', 'qs2u',
+        self.variance = Correlation(trajectory, self.grid, 't', 'qs2u',
                                     'Variance self overlap not normalized')
 
     def _compute(self):
+        # TODO: write general susceptibility
+        # At this stage, we must copy over the tags
+        self.average.tag, self.variance.tag = self.tag, self.tag
         side = self.trajectory.read(0).cell.side
         def f(x, y):
             return self_overlap(x, y, side, self.a_square).sum()
-        # TODO: write general susceptibility
-        self.value = []
+
         self.grid = []
-        # TODO: intialize grid and average on construction
-        self.average.grid = []
-        self.average.value = []
-        self.variance.grid = []
-        self.variance.value = []
         for off, i in self._discrete_tgrid:
             A, A2, cnt = 0.0, 0.0, 0
             for i0 in xrange(off, len(self._pos_unf)-i-self.skip, self.skip):
@@ -209,30 +206,27 @@ class Chi4SelfOverlap(Correlation):
                 A += w
                 cnt += 1
             dt = self.trajectory.steps[off+i] - self.trajectory.steps[off]
-            try:
-                A_av = A/cnt
-                A2_av = A2/cnt
-                # Average
-                self.average.value.append(A_av)
-                self.average.grid.append(dt * self.trajectory.timestep)
-                # Variance
-                self.variance.value.append(A2_av)
-                self.variance.grid.append(dt * self.trajectory.timestep)
-                # Susceptibility
-                self.value.append((A2_av - A_av**2) / self._pos_unf[0].shape[0])
-                self.grid.append(dt * self.trajectory.timestep)
-            except:
-                pass
+            A_av = A/cnt
+            A2_av = A2/cnt
+            self.grid.append(dt * self.trajectory.timestep)
+            self.value.append((A2_av - A_av**2) / self._pos_unf[0].shape[0])
+            self.average.value.append(A_av)
+            self.variance.value.append(A2_av)
+        self.average.grid, self.variance.grid = self.grid, self.grid
 
     def write(self):
-        # Subclass it to also write down qs2
+        # We subclass this to also write down qsu and qsu2
         super(Chi4SelfOverlap, self).write()
         self.average.write()
         self.variance.write()
 
     def analyze(self):
         from pyutils.utils import ifabsmm
-        self.results['tau_star'], self.results['chi4_star'] = ifabsmm(self.grid, self.value)[1]
+        try:
+            self.results['tau_star'], self.results['chi4_star'] = ifabsmm(self.grid, self.value)[1]
+        except ZeroDivisionError:
+            print '# warning : could not find maximum'
+            pass
 
 
 class OverlapDistribution(Correlation):
@@ -393,6 +387,13 @@ class MeanSquareDisplacement(Correlation):
         self.grid = [ti * self.trajectory.timestep for ti in self.grid]
 
     def analyze(self):
+        # Get the time when MSD equals sigma**2
+        try:
+            from pyutils.utils import feqc
+            self.results['tau_D'] = feqc(self.grid, self.value, self.sigma**2)[0]
+        except:
+            self.results['tau_D'] = None
+
         where = (numpy.array(self.value) > self.sigma**2) * \
             (numpy.array(self.value) < self.sigma_max**2)
 
