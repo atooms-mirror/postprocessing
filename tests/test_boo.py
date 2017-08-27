@@ -3,8 +3,11 @@
 import unittest
 import numpy
 from atooms.trajectory import TrajectoryNeighbors, Trajectory
-from postprocessing.boo import BondOrientationalOrder, periodic_vector
-
+try:
+    _SCIPY = True
+    from postprocessing.boo import BondOrientationalOrder, periodic_vector
+except ImportError:
+    _SCIPY = False
 
 class TestBOO(unittest.TestCase):
 
@@ -39,16 +42,18 @@ class TestBOO(unittest.TestCase):
     #     self._load('fcc')
     #     self._test()
 
+    @unittest.skipIf(not _SCIPY, 'missing scipy')
     def test_bcc(self):
         self._load('bcc')
         self._test()
 
+    @unittest.skipIf(not _SCIPY, 'missing scipy')
     def test_fluid(self):
         self._load('fluid')
         self._test()
         
 
 if __name__ == '__main__':
-    unittest.main(verbosity=0)
+    unittest.main(verbosity=1)
 
 
