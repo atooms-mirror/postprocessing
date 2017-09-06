@@ -426,16 +426,36 @@ class IntermediateScattering(FourierSpaceCorrelation):
 
 class StructureFactor(FourierSpaceCorrelation):
 
-    def __init__(self, trajectory, kgrid=None, norigins=-1, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30):
-        FourierSpaceCorrelation.__init__(self, trajectory, kgrid, 'k', 'sk', 'structure factor', ['pos'], \
-                                         nk, dk, kmin, kmax, ksamples)
+    def __init__(self, trajectory, kgrid=None, norigins=-1, nk=20,
+                 dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
+                 trajectory_field=None):
+        FourierSpaceCorrelation.__init__(self, trajectory, kgrid, 'k',
+                                         'sk', 'structure factor',
+                                         ['pos'], nk, dk, kmin,
+                                         kmax, ksamples)
         # TODO: move this up the chain?
         self.skip = adjust_skip(self.trajectory, norigins)
         self._is_cell_variable = None
+        self._field = self._add_field(trajectory_field)
+
+    def _add_field(self, trajectory_field):
+        if trajectory_field is None:
+            return None
+        else:
+            # TODO: check step consistency 06.09.2017
+            from atooms.trajectory import TrajectoryXYZ
+            with TrajectoryXYZ(trajectory_field) as th:
+                fields = []
+                # This must be a string, not a list
+                unique_field = th._read_metadata(0)['columns']
+                for s in th:
+                    fields.append(s.dump('particle.%s' % unique_field))
+            return fields
 
     def _variable_cell(self):
-        """Simple test to check if cell changes.
-        We only compare the first and last sample.
+        """
+        Simple test to check if cell changes.  We only compare the first
+        and last sample.
         """
         # This is cached for efficiency. 
         # TODO: It should be moved to trajectory helpers.
@@ -468,7 +488,15 @@ class StructureFactor(FourierSpaceCorrelation):
             for kk, knorm in enumerate(k_sorted):
                 for k in k_selected[kk]:
                     ik = self.kvec[knorm][k]
-                    rho = numpy.sum(expo[...,0,ik[0]] * expo[...,1,ik[1]] * expo[...,2,ik[2]])
+                    if not self._field:
+                        rho = numpy.sum(expo[...,0,ik[0]] *
+                                        expo[...,1,ik[1]] *
+                                        expo[...,2,ik[2]])
+                    else:
+                        rho = numpy.sum(self._field[i] *
+                                        expo[...,0,ik[0]] *
+                                        expo[...,1,ik[1]] *
+                                        expo[...,2,ik[2]])
                     rho2_av[kk] += (rho * rho.conjugate())
                     cnt[kk] += 1
 

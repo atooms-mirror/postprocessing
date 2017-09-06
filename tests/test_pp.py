@@ -162,6 +162,22 @@ class TestFourierSpace(unittest.TestCase):
         p = postprocessing.StructureFactor(t, [4, 7.3, 10, 30.0], nk=40)
         p.compute()
 
+    def test_sk_field(self):
+        """
+        Test that S(k) with a field that is 0 if id=A and 1 if id=B gives
+        the BB partial structure factor.
+        """
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        ff = os.path.join(self.reference_path, 'kalj-small-field.xyz')
+        t = trajectory.TrajectoryXYZ(f)
+        p = postprocessing.StructureFactor(t, [4, 7.3, 10], trajectory_field=ff)
+        p.compute()
+        # We multiply by x because the S(k) is normalized to 1/N
+        from atooms.system.particle import composition
+        x = composition(t[0].particle)[1] / float(len(t[0].particle))
+        ref_value = x * numpy.array([0.86716496871363735, 0.86986885176760842, 0.98112175463699136])
+        self.assertLess(deviation(p.value, ref_value), 1e-2)
+
     @unittest.skip('Broken test')
     def test_fkt_random(self):
         import random
