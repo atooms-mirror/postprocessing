@@ -436,11 +436,12 @@ class StructureFactor(FourierSpaceCorrelation):
         # TODO: move this up the chain?
         self.skip = adjust_skip(self.trajectory, norigins)
         self._is_cell_variable = None
-        self._field = self._add_field(trajectory_field)
+        self._field, tag = self._add_field(trajectory_field)
+        self.tag += tag
 
     def _add_field(self, trajectory_field):
         if trajectory_field is None:
-            return None
+            return None, ''
         else:
             # TODO: check step consistency 06.09.2017
             from atooms.trajectory import TrajectoryXYZ
@@ -450,7 +451,7 @@ class StructureFactor(FourierSpaceCorrelation):
                 unique_field = th._read_metadata(0)['columns']
                 for s in th:
                     fields.append(s.dump('particle.%s' % unique_field))
-            return fields
+            return fields, unique_field
 
     def _variable_cell(self):
         """

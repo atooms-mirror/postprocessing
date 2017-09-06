@@ -21,16 +21,18 @@ def gr(input_file, grandcanonical=False, fmt=None, show=False):
         if len(ids) > 1:
             Partial(postprocessing.RadialDistributionFunction, ids, th).do(show)
 
-def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30, norigins=-1, include_id=None,
-       grandcanonical=False, fmt=None):
+def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
+       norigins=-1, include_id=None, grandcanonical=False, fmt=None,
+       trajectory_field=None):
     """Structure factor."""    
     with Trajectory(input_file, fmt=fmt) as th:
         k_grid = linear_grid(kmin, kmax, ksamples)
         if include_id is not None:
             th.register_callback(filter_id, int(include_id))
         ids = species(th[-1].particle)
-        postprocessing.StructureFactor(th, k_grid, norigins=norigins).do()
-        if len(ids) > 1:
+        postprocessing.StructureFactor(th, k_grid, norigins=norigins,
+                                       trajectory_field=trajectory_field).do()
+        if len(ids) > 1 and trajectory_field is None:
             Partial(postprocessing.StructureFactor, ids, th, k_grid).do()
 
 def msd(input_file, rmsd_target=-1.0, time_target=-1.0,
