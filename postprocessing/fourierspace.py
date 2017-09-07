@@ -155,8 +155,8 @@ class FourierSpaceCorrelation(Correlation):
                             kvec_centered[ki].append((ix, iy, iz))
                             break
 
-        if len(kvec.keys()) != len(kgrid):
-            warnings.warn('some k points could not be found')
+        # if len(kvec.keys()) != len(kgrid):
+        #     _log.info('some k points could not be found')
 
         return kvec, kvec_centered
 
