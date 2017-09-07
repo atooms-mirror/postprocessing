@@ -477,6 +477,7 @@ class StructureFactor(FourierSpaceCorrelation):
         k_sorted, k_selected = self._decimate_k()
         kmax = max(self.kvec.keys()) + self.dk
         cnt = [0 for k in k_sorted]
+        rho_av = [complex(0.,0.) for k in k_sorted]
         rho2_av = [complex(0.,0.) for k in k_sorted]
         for i in range(0, nsteps, self.skip):
             # If cell changes we have to update
@@ -489,6 +490,7 @@ class StructureFactor(FourierSpaceCorrelation):
             for kk, knorm in enumerate(k_sorted):
                 for k in k_selected[kk]:
                     ik = self.kvec[knorm][k]
+                    # In the absence of a microscopic field, rho_av = (0, 0)
                     if not self._field:
                         rho = numpy.sum(expo[...,0,ik[0]] *
                                         expo[...,1,ik[1]] *
@@ -498,14 +500,18 @@ class StructureFactor(FourierSpaceCorrelation):
                                         expo[...,0,ik[0]] *
                                         expo[...,1,ik[1]] *
                                         expo[...,2,ik[2]])
+                        rho_av[kk] += rho
                     rho2_av[kk] += (rho * rho.conjugate())
                     cnt[kk] += 1
 
-        # Normalization
+        # Normalization.
         npart = sum([p.shape[0] for p in self._pos]) / float(len(self._pos))
         self.grid = k_sorted
-        self.value = [rho2_av[kk].real / (cnt[kk]*npart) for kk in range(len(self.grid))]
-        self.value_nonorm = [rho2_av[kk].real / (cnt[kk]) for kk in range(len(self.grid))]
+        self.value = [(rho2_av[kk] / cnt[kk] -
+                       rho_av[kk]*rho_av[kk].conjugate() / cnt[kk]**2).real / npart
+                       for kk in range(len(self.grid))]
+        self.value_nonorm = [rho2_av[kk].real / cnt[kk] 
+                             for kk in range(len(self.grid))]
 
 
 class StructureFactorStats(FourierSpaceCorrelation):
