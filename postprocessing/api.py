@@ -24,17 +24,32 @@ def gr(input_file, grandcanonical=False, fmt=None, show=False):
 def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
        norigins=-1, include_id=None, grandcanonical=False, fmt=None,
        trajectory_field=None):
-    """Structure factor."""    
+    """Structure factor."""
     with Trajectory(input_file, fmt=fmt) as th:
         if include_id is not None:
             th.register_callback(filter_id, int(include_id))
         ids = species(th[-1].particle)
         postprocessing.StructureFactor(th, None, norigins=norigins,
                                        trajectory_field=trajectory_field,
-                                       kmin=kmin, kmax=kmax,
+                                       kmin=kmin, kmax=kmax, nk=nk,
                                        ksamples=ksamples).do()
         if len(ids) > 1 and trajectory_field is None:
             Partial(postprocessing.StructureFactor, ids, th, k_grid).do()
+
+def ik(input_file, trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0,
+       kmax=15.0, ksamples=30, norigins=-1, include_id=None,
+       grandcanonical=False, fmt=None):
+    """Spectral density,"""
+    if trajectory_radius is None:
+        trajectory_radius = input_file
+    with Trajectory(input_file, fmt=fmt) as th:
+        if include_id is not None:
+            th.register_callback(filter_id, int(include_id))
+        ids = species(th[-1].particle)
+        postprocessing.SpectralDensity(th, trajectory_radius,
+                                       kgrid=None, norigins=norigins,
+                                       kmin=kmin, kmax=kmax, nk=nk,
+                                       ksamples=ksamples).do()
 
 def msd(input_file, rmsd_target=-1.0, time_target=-1.0,
         time_target_fraction=-1.0, tsamples=30, norigins=50, sigma=1.0,
@@ -105,4 +120,3 @@ def chi4qs(input_file, tsamples=60, a=0.3, fmt=None):
             Partial(postprocessing.Chi4SelfOverlap, ids, th, t_grid, a=a).do()
         else:
             postprocessing.Chi4SelfOverlap(th, t_grid, a=a).do()
-            
