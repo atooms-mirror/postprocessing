@@ -2,29 +2,29 @@
 
 import sys
 import os
+import random
 import unittest
 import numpy
 from atooms import trajectory
 import postprocessing
 from postprocessing.helpers import filter_species
 
-def filter_id(t, s, id):
+def filter_id(s, id):
     # TODO: should we do a copy or modify the system in place? Looks like modify it's ok
     nop = [p for p in s.particle if p.id != id]
     for n in nop:
         s.particle.remove(n)
     return s
 
-def filter_random(t, s, n):
+def filter_random(s, n):
     """Keep only n particles"""
-    import random
     ids = random.sample(xrange(len(s.particle)), len(s.particle)-n)
     nop = [s.particle[i] for i in ids]
     for p in nop:
         s.particle.remove(p)
     return s
 
-def filter_selected_ids(t, s, ids):
+def filter_selected_ids(s, ids):
     """Keep only selected ids of particles"""
     nop = [s.particle[i] for i in ids]
     for p in nop:
@@ -42,43 +42,38 @@ class TestRealSpace(unittest.TestCase):
             self.reference_path = os.path.join(os.path.dirname(sys.argv[0]), '../data')
 
     def test_msd_partial(self):
+        ref_grid = numpy.array([0, 3.0, 45.0, 90.0])
+        ref_value = {1: numpy.array([0.0, 0.126669, 1.21207, 2.16563]),
+                     2: numpy.array([0.0, 0.220299, 2.31111, 4.37561])}
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
-        ts = trajectory.Sliced(trajectory.TrajectoryXYZ(f), slice(0,1000,1))
         for i in [1, 2]:
-            t = trajectory.Filter(ts, filter_id, i)
-            p = postprocessing.MeanSquareDisplacement(t, [0.0, 3.0, 45.0, 90])
-            p.compute()            
-            ref_grid = numpy.array([0, 3.0, 45.0, 90.0])
-            if i == 1:
-                ref_value = numpy.array([0.0, 0.126669, 1.21207, 2.16563])
-            else:
-                ref_value = numpy.array([0.0, 0.220299, 2.31111, 4.37561])
-            self.assertLess(deviation(p.grid, ref_grid), 4e-2)
-            self.assertLess(deviation(p.value, ref_value), 4e-2)
-        ts.close()
+            with trajectory.Sliced(trajectory.TrajectoryXYZ(f), slice(0, 1000, 1)) as t:
+                t.add_callback(filter_id, i)
+                p = postprocessing.MeanSquareDisplacement(t, [0.0, 3.0, 45.0, 90])
+                p.compute()            
+                self.assertLess(deviation(p.grid, ref_grid), 4e-2)
+                self.assertLess(deviation(p.value, ref_value[i]), 4e-2)
 
     def test_msd_partial_filter(self):
+        ref_grid = numpy.array([0, 3.0, 45.0, 90.0])
+        ref_value = {1: numpy.array([0.0, 0.126669, 1.21207, 2.16563]),
+                     2: numpy.array([0.0, 0.220299, 2.31111, 4.37561])}
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
-        ts = trajectory.Sliced(trajectory.TrajectoryXYZ(f), slice(0,1000,1))
+        ts = trajectory.Sliced(trajectory.TrajectoryXYZ(f), slice(0, 1000, 1))
         for i in [1, 2]:
             p = postprocessing.MeanSquareDisplacement(ts, [0.0, 3.0, 45.0, 90])
             p.add_filter(filter_species, i)
             p.compute()
-            ref_grid = numpy.array([0, 3.0, 45.0, 90.0])
-            if i == 1:
-                ref_value = numpy.array([0.0, 0.126669, 1.21207, 2.16563])
-            else:
-                ref_value = numpy.array([0.0, 0.220299, 2.31111, 4.37561])
             self.assertLess(deviation(p.grid, ref_grid), 4e-2)
-            self.assertLess(deviation(p.value, ref_value), 4e-2)
+            self.assertLess(deviation(p.value, ref_value[i]), 4e-2)
         ts.close()
 
     def test_gr_partial(self):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         ts = trajectory.TrajectoryXYZ(f)
         ref = {}
-        ref[(1,1)] = numpy.array([ 0.,          0.00675382,  0.27087136,  1.51486318])
-        ref[(2,2)] = numpy.array([ 0.31065645,  0.51329066,  0.67485665,  0.78039485])
+        ref[(1, 1)] = numpy.array([ 0.,          0.00675382,  0.27087136,  1.51486318])
+        ref[(2, 2)] = numpy.array([ 0.31065645,  0.51329066,  0.67485665,  0.78039485])
         ref[(1,2)] = numpy.array([ 4.25950671,  3.86572027,  2.70020052,  1.78935426])
         for i in [1, 2]:
             p = postprocessing.RadialDistributionFunction(ts)
@@ -109,7 +104,6 @@ class TestRealSpace(unittest.TestCase):
 class TestFourierSpace(unittest.TestCase):
 
     def setUp(self):
-        import random
         random.seed(10)
         self.reference_path = 'data'
         if not os.path.exists(self.reference_path):
@@ -132,33 +126,41 @@ class TestFourierSpace(unittest.TestCase):
         self.assertLess(deviation(p.value, ref_value), 0.04)
 
     def test_sk_variable_cell(self):
+        # TODO: this test has no assertion
+        def deformation(s, scale=0.01):
+            # Note this random scaling changes every time read is called,
+            # even for the same sample
+            x = 1 + (random.random()-0.5) * scale
+            s.cell.side *= x
+            for p in s.particle:
+                p.position *= x
+            return s
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
-        ts = trajectory.TrajectoryXYZ(f)
-        p = postprocessing.StructureFactor(ts, range(1,10))
-        p.compute()
-        t = trajectory.AffineDeformation(ts, 1e-3)
-        p1 = postprocessing.StructureFactor(t, range(1,10))
-        p1.compute()
+        with trajectory.TrajectoryXYZ(f) as t:
+            p = postprocessing.StructureFactor(t, range(1,10))
+            p.compute()
+        with trajectory.TrajectoryXYZ(f) as t:
+            t.add_callback(deformation, 1e-3)
+            p = postprocessing.StructureFactor(t, range(1,10))
+            p.compute()
         # for x, y, z, w in zip(p.grid, p1.grid, p.value, p1.value):
         #     print x, y, z, w
 
     def test_sk_partial(self):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
-        ts = trajectory.TrajectoryXYZ(f)
+        ref_value = {1: numpy.array([0.078218, 2.896436, 0.543363]),
+                     2: numpy.array([0.867164, 0.869868, 0.981121])}
         for i in [1, 2]:
-            t = trajectory.Filter(ts, filter_id, i)
-            p = postprocessing.StructureFactor(t, [4, 7.3, 10])
-            p.compute()
-            if i == 1:
-                ref_value = numpy.array([0.078218154990600072, 2.8964366727431656, 0.54336352118808429])
-            else:
-                ref_value = numpy.array([0.86716496871363735, 0.86986885176760842, 0.98112175463699136])
-            self.assertLess(deviation(p.value, ref_value), 1e-2)
+            with trajectory.TrajectoryXYZ(f) as t:
+                t.add_callback(filter_id, i)
+                p = postprocessing.StructureFactor(t, [4, 7.3, 10])
+                p.compute()
+                self.assertLess(deviation(p.value, ref_value[i]), 1e-2)
 
     def test_sk_random(self):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
-        ts = trajectory.TrajectoryXYZ(f)
-        t = trajectory.Filter(ts, filter_random, 75)
+        t = trajectory.TrajectoryXYZ(f)
+        t.add_callback(filter_random, 75)
         p = postprocessing.StructureFactor(t, [4, 7.3, 10, 30.0], nk=40)
         p.compute()
 
@@ -180,16 +182,13 @@ class TestFourierSpace(unittest.TestCase):
 
     @unittest.skip('Broken test')
     def test_fkt_random(self):
-        import random
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
-        ts = trajectory.TrajectoryXYZ(f)
-        s = ts[0]
-        ids = random.sample(xrange(len(s.particle)), len(s.particle))
-        t = trajectory.Filter(ts, filter_selected_ids, ids)
-        p = postprocessing.IntermediateScattering(t, [4, 7.3, 10], nk=40)
-        p.compute()
-        ps = postprocessing.IntermediateScattering(ts, [4, 7.3, 10], nk=40)
-        ps.compute()
+        with trajectory.TrajectoryXYZ(f) as t:
+            s = t[0]
+            ids = random.sample(xrange(len(s.particle)), len(s.particle))
+            t.add_callback(filter_selected_ids, ids)
+            p = postprocessing.IntermediateScattering(t, [4, 7.3, 10], nk=40)
+            p.compute()
 
     def test_fkt_partial(self):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
