@@ -9,12 +9,12 @@ from atooms import trajectory
 import postprocessing
 from postprocessing.helpers import filter_species
 
-def filter_id(s, id):
-    # TODO: should we do a copy or modify the system in place? Looks like modify it's ok
-    nop = [p for p in s.particle if p.id != id]
-    for n in nop:
-        s.particle.remove(n)
-    return s
+# def filter_id(s, id):
+#     # TODO: should we do a copy or modify the system in place? Looks like modify it's ok
+#     nop = [p for p in s.particle if p.species != id]
+#     for n in nop:
+#         s.particle.remove(n)
+#     return s
 
 def filter_random(s, n):
     """Keep only n particles"""
@@ -43,12 +43,12 @@ class TestRealSpace(unittest.TestCase):
 
     def test_msd_partial(self):
         ref_grid = numpy.array([0, 3.0, 45.0, 90.0])
-        ref_value = {1: numpy.array([0.0, 0.126669, 1.21207, 2.16563]),
-                     2: numpy.array([0.0, 0.220299, 2.31111, 4.37561])}
+        ref_value = {'A': numpy.array([0.0, 0.126669, 1.21207, 2.16563]),
+                     'B': numpy.array([0.0, 0.220299, 2.31111, 4.37561])}
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
-        for i in [1, 2]:
+        for i in ['A', 'B']:
             with trajectory.Sliced(trajectory.TrajectoryXYZ(f), slice(0, 1000, 1)) as t:
-                t.add_callback(filter_id, i)
+                t.add_callback(filter_species, i)
                 p = postprocessing.MeanSquareDisplacement(t, [0.0, 3.0, 45.0, 90])
                 p.compute()            
                 self.assertLess(deviation(p.grid, ref_grid), 4e-2)
@@ -56,11 +56,11 @@ class TestRealSpace(unittest.TestCase):
 
     def test_msd_partial_filter(self):
         ref_grid = numpy.array([0, 3.0, 45.0, 90.0])
-        ref_value = {1: numpy.array([0.0, 0.126669, 1.21207, 2.16563]),
-                     2: numpy.array([0.0, 0.220299, 2.31111, 4.37561])}
+        ref_value = {'A': numpy.array([0.0, 0.126669, 1.21207, 2.16563]),
+                     'B': numpy.array([0.0, 0.220299, 2.31111, 4.37561])}
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         ts = trajectory.Sliced(trajectory.TrajectoryXYZ(f), slice(0, 1000, 1))
-        for i in [1, 2]:
+        for i in ['A', 'B']:
             p = postprocessing.MeanSquareDisplacement(ts, [0.0, 3.0, 45.0, 90])
             p.add_filter(filter_species, i)
             p.compute()
@@ -72,33 +72,33 @@ class TestRealSpace(unittest.TestCase):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         ts = trajectory.TrajectoryXYZ(f)
         ref = {}
-        ref[(1, 1)] = numpy.array([ 0.,          0.00675382,  0.27087136,  1.51486318])
-        ref[(2, 2)] = numpy.array([ 0.31065645,  0.51329066,  0.67485665,  0.78039485])
-        ref[(1,2)] = numpy.array([ 4.25950671,  3.86572027,  2.70020052,  1.78935426])
-        for i in [1, 2]:
+        ref[('A', 'A')] = numpy.array([ 0.,          0.00675382,  0.27087136,  1.51486318])
+        ref[('B', 'B')] = numpy.array([ 0.31065645,  0.51329066,  0.67485665,  0.78039485])
+        ref[('A', 'B')] = numpy.array([ 4.25950671,  3.86572027,  2.70020052,  1.78935426])
+        for i in ['A', 'B']:
             p = postprocessing.RadialDistributionFunction(ts)
             p.add_filter(filter_species, i)
             r, gr = p.compute()
-            self.assertLess(deviation(gr[21:25], ref[(i,i)]), 4e-2)
+            self.assertLess(deviation(gr[21:25], ref[(i, i)]), 4e-2)
 
         p = postprocessing.RadialDistributionFunction(ts)
-        p.add_filter(filter_species, 1)
-        p.add_filter(filter_species, 2)
+        p.add_filter(filter_species, 'A')
+        p.add_filter(filter_species, 'B')
         r, gr = p.compute()
-        self.assertLess(deviation(gr[21:25], ref[(1,2)]), 4e-2)
+        self.assertLess(deviation(gr[21:25], ref[('A', 'B')]), 4e-2)
 
     def test_gr_partial_2(self):
         from postprocessing.partial import Partial
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         ts = trajectory.TrajectoryXYZ(f)
         ref = {}
-        ref[(1,1)] = numpy.array([ 0.,          0.00675382,  0.27087136,  1.51486318])
-        ref[(2,2)] = numpy.array([ 0.31065645,  0.51329066,  0.67485665,  0.78039485])
-        ref[(1,2)] = numpy.array([ 4.25950671,  3.86572027,  2.70020052,  1.78935426])
+        ref[('A', 'A')] = numpy.array([ 0.,          0.00675382,  0.27087136,  1.51486318])
+        ref[('B', 'B')] = numpy.array([ 0.31065645,  0.51329066,  0.67485665,  0.78039485])
+        ref[('A', 'B')] = numpy.array([ 4.25950671,  3.86572027,  2.70020052,  1.78935426])
         
-        gr = Partial(postprocessing.RadialDistributionFunction, [1,2], ts)
+        gr = Partial(postprocessing.RadialDistributionFunction, ['A', 'B'], ts)
         gr.compute()
-        for ab in [(1,1), (1,2), (2,2)]:
+        for ab in [('A', 'A'), ('A', 'B'), ('B', 'B')]:
             self.assertLess(deviation(gr.partial[ab].value[21:25], ref[ab]), 4e-2)
 
 class TestFourierSpace(unittest.TestCase):
@@ -148,11 +148,11 @@ class TestFourierSpace(unittest.TestCase):
 
     def test_sk_partial(self):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
-        ref_value = {1: numpy.array([0.078218, 2.896436, 0.543363]),
-                     2: numpy.array([0.867164, 0.869868, 0.981121])}
-        for i in [1, 2]:
+        ref_value = {'A': numpy.array([0.078218, 2.896436, 0.543363]),
+                     'B': numpy.array([0.867164, 0.869868, 0.981121])}
+        for i in ['A', 'B']:
             with trajectory.TrajectoryXYZ(f) as t:
-                t.add_callback(filter_id, i)
+                t.add_callback(filter_species, i)
                 p = postprocessing.StructureFactor(t, [4, 7.3, 10])
                 p.compute()
                 self.assertLess(deviation(p.value, ref_value[i]), 1e-2)
@@ -194,7 +194,7 @@ class TestFourierSpace(unittest.TestCase):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         t = trajectory.TrajectoryXYZ(f)
         p = postprocessing.IntermediateScattering(t, [4, 7.3, 10], nk=40)
-        p.add_filter(filter_species, 1)
+        p.add_filter(filter_species, 'A')
         p.compute()
 
 if __name__ == '__main__':
