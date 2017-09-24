@@ -176,7 +176,7 @@ class TestFourierSpace(unittest.TestCase):
         p.compute()
         # We multiply by x because the S(k) is normalized to 1/N
         from atooms.system.particle import composition
-        x = composition(t[0].particle)[1] / float(len(t[0].particle))
+        x = composition(t[0].particle)['B'] / float(len(t[0].particle))
         ref_value = x * numpy.array([0.86716496871363735, 0.86986885176760842, 0.98112175463699136])
         self.assertLess(deviation(p.value, ref_value), 1e-2)
 
