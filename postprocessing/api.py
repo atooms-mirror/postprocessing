@@ -4,7 +4,7 @@ import postprocessing
 from postprocessing.partial import Partial
 from atooms.utils import setup_logging
 from atooms.trajectory import Trajectory
-from atooms.trajectory.decorators import filter_id
+from atooms.trajectory.decorators import filter_species
 from atooms.trajectory.utils import time_when_msd_is
 from atooms.system.particle import species
 from .helpers import linear_grid, logx_grid
@@ -22,12 +22,12 @@ def gr(input_file, grandcanonical=False, fmt=None, show=False):
             Partial(postprocessing.RadialDistributionFunction, ids, th).do(show)
 
 def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
-       norigins=-1, include_id=None, grandcanonical=False, fmt=None,
+       norigins=-1, species=None, grandcanonical=False, fmt=None,
        trajectory_field=None):
     """Structure factor."""
     with Trajectory(input_file, fmt=fmt) as th:
-        if include_id is not None:
-            th.register_callback(filter_id, int(include_id))
+        if species is not None:
+            th.register_callback(filter_species, int(species))
         ids = species(th[-1].particle)
         postprocessing.StructureFactor(th, None, norigins=norigins,
                                        trajectory_field=trajectory_field,
@@ -37,14 +37,14 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
             Partial(postprocessing.StructureFactor, ids, th, k_grid).do()
 
 def ik(input_file, trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0,
-       kmax=15.0, ksamples=30, norigins=-1, include_id=None,
+       kmax=15.0, ksamples=30, norigins=-1, species=None,
        grandcanonical=False, fmt=None):
     """Spectral density,"""
     if trajectory_radius is None:
         trajectory_radius = input_file
     with Trajectory(input_file, fmt=fmt) as th:
-        if include_id is not None:
-            th.register_callback(filter_id, int(include_id))
+        if species is not None:
+            th.register_callback(filter_species, int(species))
         ids = species(th[-1].particle)
         postprocessing.SpectralDensity(th, trajectory_radius,
                                        kgrid=None, norigins=norigins,
