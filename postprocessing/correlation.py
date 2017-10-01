@@ -218,7 +218,7 @@ class Correlation(object):
             log.info('skip %s (%s) for %s' % (self.short_name, self.tag, self.trajectory.filename))
             return
         
-        from atooms.utils import Timer
+        from atooms.core.utils import Timer
         t = Timer()
         t.start()
         self._setup_arrays()
