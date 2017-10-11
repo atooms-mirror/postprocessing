@@ -475,7 +475,6 @@ class StructureFactor(FourierSpaceCorrelation):
                 L1 = self.trajectory[sample].cell.side
                 if L0[0] != L1[0] or L0[1] != L1[1] or L0[2] != L1[2]:
                     self._is_cell_variable = True
-                    print '# note: cell is variable'
                     break
         return self._is_cell_variable
 
