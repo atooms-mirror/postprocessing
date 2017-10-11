@@ -515,8 +515,9 @@ class StructureFactor(FourierSpaceCorrelation):
         npart = sum([p.shape[0] for p in self._pos]) / float(len(self._pos))
         self.grid = k_sorted
         self.value = [(rho2_av[kk] / cnt[kk] -
-                       rho_av[kk]*rho_av[kk].conjugate() / cnt[kk]**2).real / npart
-                       for kk in range(len(self.grid))]
+                       rho_av[kk]*rho_av[kk].conjugate() /
+                       cnt[kk]**2).real / npart for kk in
+                      range(len(self.grid))]
         self.value_nonorm = [rho2_av[kk].real / cnt[kk]
                              for kk in range(len(self.grid))]
 
