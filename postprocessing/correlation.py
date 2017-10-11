@@ -10,7 +10,10 @@ import random
 import warnings
 import logging
 from collections import defaultdict
+from metadepy import metadata
+from .core import __version__
 from atooms.trajectory.decorators import Unfolded
+
 
 log = logging.getLogger(__name__)
 
@@ -269,11 +272,13 @@ class Correlation(object):
             dump = numpy.transpose(numpy.array([self.grid, self.value]))
 
         # Comment line
-        if len(self.tag) > 0:
-            comments = '# title: %s %s\n' % (self.description.lower(), self.tag)
-        else:
-            comments = '# title: %s\n' % self.description
-        comments += '# columns: %s, %s\n' % (self.name, self.short_name)
+        comments = metadata.dump(self._output_file, title='%s %s' %
+                                 (self.description.lower(), self.tag),
+                                 columns=(self.name, self.short_name),
+                                 command='pp.py', version=__version__,
+                                 description=None, note=None,
+                                 parents=self.trajectory.filename,
+                                 inline=False) + '\n'
         if not self.comments is None:
             comments += self.comments
 
