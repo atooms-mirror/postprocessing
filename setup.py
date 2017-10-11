@@ -14,7 +14,7 @@ args = dict(name='postprocessing',
             url='http://www.coulomb.univ-montp2.fr/perso/daniele.coslovich/',
             packages=['postprocessing'],
             scripts=glob.glob(os.path.join('bin', '*.py')),
-            install_requires=['numpy', 'scipy', 'argh'],
+            install_requires=['atooms>=1', 'numpy', 'scipy', 'argh'],
             ext_modules=[Extension('postprocessing.neighbors_wrap', 
                                    sources=['postprocessing/neighbors.f90'])]
 )

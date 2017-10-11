@@ -2,7 +2,7 @@
 
 import postprocessing
 from postprocessing.partial import Partial
-from atooms.utils import setup_logging
+from atooms.core.utils import setup_logging
 from atooms.trajectory import Trajectory
 from atooms.trajectory.decorators import filter_species
 from atooms.trajectory.utils import time_when_msd_is

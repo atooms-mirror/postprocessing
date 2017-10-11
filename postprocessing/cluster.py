@@ -5,7 +5,7 @@ import sys
 import argparse
 import numpy
 from atooms import trajectory
-from atooms.utils import add_first_last_skip, fractional_slice
+from atooms.core.utils import add_first_last_skip, fractional_slice
 
 
 def get_clusters(neighbors, clusters=[]):    
