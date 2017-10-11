@@ -426,7 +426,12 @@ class StructureFactor(FourierSpaceCorrelation):
 
     def __init__(self, trajectory, kgrid=None, norigins=-1, nk=20,
                  dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
-                 trajectory_field=None):
+                 trajectory_field=None, field=None):
+        """
+        If `trajectory_field` is not None, the field is read from the last
+        column of this trajectory file, unless the `field` string is
+        provided.
+        """
         FourierSpaceCorrelation.__init__(self, trajectory, kgrid, 'k',
                                          'sk', 'structure factor',
                                          ['pos'], nk, dk, kmin,
@@ -434,10 +439,10 @@ class StructureFactor(FourierSpaceCorrelation):
         # TODO: move this up the chain?
         self.skip = adjust_skip(self.trajectory, norigins)
         self._is_cell_variable = None
-        self._field, tag = self._add_field(trajectory_field)
+        self._field, tag = self._add_field(trajectory_field, field)
         self.tag += tag
 
-    def _add_field(self, trajectory_field):
+    def _add_field(self, trajectory_field, field):
         if trajectory_field is None:
             return None, ''
         else:
@@ -448,7 +453,10 @@ class StructureFactor(FourierSpaceCorrelation):
                 # This must be a string, not a list
                 unique_field = th._read_metadata(0)['columns']
                 if isinstance(unique_field, list):
-                    unique_field = unique_field[-1]
+                    if field is None:
+                        unique_field = unique_field[-1]
+                    else:
+                        unique_field = field
                 for s in th:
                     fields.append(s.dump('particle.%s' % unique_field))
             return fields, unique_field

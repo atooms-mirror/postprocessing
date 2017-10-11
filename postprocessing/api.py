@@ -23,7 +23,7 @@ def gr(input_file, grandcanonical=False, fmt=None, show=False):
 
 def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
        norigins=-1, species=None, grandcanonical=False, fmt=None,
-       trajectory_field=None):
+       trajectory_field=None, field=None):
     """Structure factor."""
     with Trajectory(input_file, fmt=fmt) as th:
         if species is not None:
@@ -31,7 +31,8 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
         ids = distinct_species(th[-1].particle)
         postprocessing.StructureFactor(th, None, norigins=norigins,
                                        trajectory_field=trajectory_field,
-                                       kmin=kmin, kmax=kmax, nk=nk,
+                                       field=field, kmin=kmin,
+                                       kmax=kmax, nk=nk,
                                        ksamples=ksamples).do()
         if len(ids) > 1 and trajectory_field is None:
             Partial(postprocessing.StructureFactor, ids, th, k_grid).do()
