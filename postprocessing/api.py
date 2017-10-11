@@ -6,7 +6,7 @@ from atooms.core.utils import setup_logging
 from atooms.trajectory import Trajectory
 from atooms.trajectory.decorators import filter_species
 from atooms.trajectory.utils import time_when_msd_is
-from atooms.system.particle import species
+from atooms.system.particle import distinct_species
 from .helpers import linear_grid, logx_grid
 
 setup_logging('postprocessing', level=20)
@@ -17,7 +17,7 @@ def gr(input_file, grandcanonical=False, fmt=None, show=False):
     with Trajectory(input_file, fmt=fmt) as th:
         th._grandcanonical = grandcanonical
         postprocessing.RadialDistributionFunction(th).do(show)
-        ids = species(th[-1].particle)
+        ids = distinct_species(th[-1].particle)
         if len(ids) > 1:
             Partial(postprocessing.RadialDistributionFunction, ids, th).do(show)
 
@@ -28,7 +28,7 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
     with Trajectory(input_file, fmt=fmt) as th:
         if species is not None:
             th.register_callback(filter_species, int(species))
-        ids = species(th[-1].particle)
+        ids = distinct_species(th[-1].particle)
         postprocessing.StructureFactor(th, None, norigins=norigins,
                                        trajectory_field=trajectory_field,
                                        kmin=kmin, kmax=kmax, nk=nk,
@@ -45,7 +45,7 @@ def ik(input_file, trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0,
     with Trajectory(input_file, fmt=fmt) as th:
         if species is not None:
             th.register_callback(filter_species, int(species))
-        ids = species(th[-1].particle)
+        ids = distinct_species(th[-1].particle)
         postprocessing.SpectralDensity(th, trajectory_radius,
                                        kgrid=None, norigins=norigins,
                                        kmin=kmin, kmax=kmax, nk=nk,
@@ -69,7 +69,7 @@ def msd(input_file, rmsd_target=-1.0, time_target=-1.0,
                                       tsamples)
             else:
                 t_grid = [0.0] + func(dt, th.steps[-1]*dt, tsamples)
-        ids = species(th[-1].particle)
+        ids = distinct_species(th[-1].particle)
         postprocessing.MeanSquareDisplacement(th, tgrid=t_grid, norigins=norigins, sigma=sigma).do()
         if len(ids) > 1:
             Partial(postprocessing.MeanSquareDisplacement, ids,
@@ -80,7 +80,7 @@ def vacf(input_file, time_target=1.0, tsamples=30, func=linear_grid, fmt=None):
     with Trajectory(input_file, fmt=fmt) as th:
         t_grid = [0.0] + func(th.timestep, time_target, tsamples)
         postprocessing.VelocityAutocorrelation(th, t_grid).do()
-        ids = species(th[-1].particle)
+        ids = distinct_species(th[-1].particle)
         if len(ids) > 1:
             Partial(postprocessing.VelocityAutocorrelation, ids, th, t_grid).do()
 
@@ -90,7 +90,7 @@ def fkt(input_file, time_target=1e9, tsamples=60, kmin=7.0, kmax=7.0,
     with Trajectory(input_file, fmt=fmt) as th:
         t_grid = [0.0] + func(th.timestep, time_target, tsamples)
         k_grid = linear_grid(kmin, kmax, ksamples)
-        ids = species(th[0].particle)
+        ids = distinct_species(th[0].particle)
         if len(ids) > 1:
             Partial(postprocessing.IntermediateScattering, ids, th, k_grid, t_grid).do()
 
@@ -105,7 +105,7 @@ def fskt(input_file, time_target=1e9, tsamples=60, kmin=7.0, kmax=8.0,
             t_grid = [th.timestep*i for i in th.steps]
         k_grid = linear_grid(kmin, kmax, ksamples)
         postprocessing.SelfIntermediateScattering(th, k_grid, t_grid, nk, dk=dk, skip=skip).do()
-        ids = species(th[-1].particle)
+        ids = distinct_species(th[-1].particle)
         if len(ids) > 1:
             Partial(postprocessing.SelfIntermediateScattering, ids, th, k_grid, t_grid, nk, dk=dk, skip=skip).do()
 
@@ -115,7 +115,7 @@ def chi4qs(input_file, tsamples=60, a=0.3, fmt=None):
         func = logx_grid
         time_target = th.total_time * 0.75
         t_grid = [0.0] + func(th.timestep, time_target, tsamples)
-        ids = species(th[0].particle)
+        ids = distinct_species(th[0].particle)
         if len(ids) > 1:
             Partial(postprocessing.Chi4SelfOverlap, ids, th, t_grid, a=a).do()
         else:
