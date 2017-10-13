@@ -10,7 +10,7 @@ import random
 import warnings
 import logging
 from collections import defaultdict
-from metadepy import metadata
+from medepy import metadata
 from .core import __version__
 from atooms.trajectory.decorators import Unfolded
 
