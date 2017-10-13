@@ -272,7 +272,7 @@ class Correlation(object):
             dump = numpy.transpose(numpy.array([self.grid, self.value]))
 
         # Comment line
-        comments = metadata.dump(self._output_file, title='%s %s' %
+        comments = metadata.dump(title='%s %s' %
                                  (self.description.lower(), self.tag),
                                  columns=(self.name, self.short_name),
                                  command='pp.py', version=__version__,
