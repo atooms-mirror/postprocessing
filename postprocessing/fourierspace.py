@@ -494,6 +494,8 @@ class StructureFactor(FourierSpaceCorrelation):
                 kmax = max(self.kvec.keys()) + self.dk
 
             expo = expo_sphere(self.k0, kmax, self._pos[i])
+
+            av = self._field[i].mean()
             for kk, knorm in enumerate(k_sorted):
                 for k in k_selected[kk]:
                     ik = self.kvec[knorm][k]
@@ -503,7 +505,7 @@ class StructureFactor(FourierSpaceCorrelation):
                                         expo[...,1,ik[1]] *
                                         expo[...,2,ik[2]])
                     else:
-                        rho = numpy.sum(self._field[i] *
+                        rho = numpy.sum((self._field[i] - av) *
                                         expo[...,0,ik[0]] *
                                         expo[...,1,ik[1]] *
                                         expo[...,2,ik[2]])
