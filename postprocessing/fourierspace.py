@@ -495,7 +495,8 @@ class StructureFactor(FourierSpaceCorrelation):
 
             expo = expo_sphere(self.k0, kmax, self._pos[i])
 
-            av = self._field[i].mean()
+            if self._field:
+                av = self._field[i].mean()
             for kk, knorm in enumerate(k_sorted):
                 for k in k_selected[kk]:
                     ik = self.kvec[knorm][k]
@@ -515,6 +516,7 @@ class StructureFactor(FourierSpaceCorrelation):
 
         # Normalization.
         npart = sum([p.shape[0] for p in self._pos]) / float(len(self._pos))
+        print npart
         self.grid = k_sorted
         self.value = [(rho2_av[kk] / cnt[kk] -
                        rho_av[kk]*rho_av[kk].conjugate() /
