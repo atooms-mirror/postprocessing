@@ -516,7 +516,6 @@ class StructureFactor(FourierSpaceCorrelation):
 
         # Normalization.
         npart = sum([p.shape[0] for p in self._pos]) / float(len(self._pos))
-        print npart
         self.grid = k_sorted
         self.value = [(rho2_av[kk] / cnt[kk] -
                        rho_av[kk]*rho_av[kk].conjugate() /
