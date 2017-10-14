@@ -495,8 +495,6 @@ class StructureFactor(FourierSpaceCorrelation):
 
             expo = expo_sphere(self.k0, kmax, self._pos[i])
 
-            if self._field:
-                av = self._field[i].mean()
             for kk, knorm in enumerate(k_sorted):
                 for k in k_selected[kk]:
                     ik = self.kvec[knorm][k]
@@ -506,7 +504,7 @@ class StructureFactor(FourierSpaceCorrelation):
                                         expo[...,1,ik[1]] *
                                         expo[...,2,ik[2]])
                     else:
-                        rho = numpy.sum((self._field[i] - av) *
+                        rho = numpy.sum(self._field[i] *
                                         expo[...,0,ik[0]] *
                                         expo[...,1,ik[1]] *
                                         expo[...,2,ik[2]])
@@ -522,6 +520,7 @@ class StructureFactor(FourierSpaceCorrelation):
                       npart for kk in range(len(self.grid))]
         self.value_nonorm = [rho2_av[kk].real / cnt[kk]
                              for kk in range(len(self.grid))]
+
 
 class SpectralDensity(FourierSpaceCorrelation):
 
