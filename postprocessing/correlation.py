@@ -278,7 +278,7 @@ class Correlation(object):
                                  command='pp.py', version=__version__,
                                  description=None, note=None,
                                  parents=self.trajectory.filename,
-                                 inline=False) + '\n'
+                                 inline=False)
         if not self.comments is None:
             comments += self.comments
 
