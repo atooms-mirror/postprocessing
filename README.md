@@ -29,8 +29,8 @@ $ pp.py gr data/trajectory.xyz
 ```
 
 The results will be stored in the file `data/trajectory.xyz.pp.gr`. If
-multiple chemical species are present, the program will create files
-named `trajectory.xyz.pp.gr.1-1`, `trajectory.xyz.pp.gr.2-2` and so on.
+multiple chemical species are present, say A and B, the program will create additional files for
+partial correlations, named `trajectory.xyz.pp.gr.A-A`, `trajectory.xyz.pp.gr.B-B` and `trajectory.xyz.pp.gr.A-B`.
 
 The same kind of calculation can be done from python:
 
