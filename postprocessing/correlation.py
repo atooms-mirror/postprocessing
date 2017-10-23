@@ -10,7 +10,10 @@ import random
 import warnings
 import logging
 from collections import defaultdict
-from medepy import metadata
+try:
+    from medepy.metadata import dump as _dump
+except ImportError:
+    from .helpers import _dump
 from .core import __version__
 from atooms.trajectory.decorators import Unfolded
 
@@ -272,13 +275,13 @@ class Correlation(object):
             dump = numpy.transpose(numpy.array([self.grid, self.value]))
 
         # Comment line
-        comments = metadata.dump(title='%s %s' %
-                                 (self.description.lower(), self.tag),
-                                 columns=(self.name, self.short_name),
-                                 command='pp.py', version=__version__,
-                                 description=None, note=None,
-                                 parents=self.trajectory.filename,
-                                 inline=False)
+        comments = _dump(title='%s %s' %
+                         (self.description.lower(), self.tag),
+                         columns=(self.name, self.short_name),
+                         command='pp.py', version=__version__,
+                         description=None, note=None,
+                         parents=self.trajectory.filename,
+                         inline=False)
         if not self.comments is None:
             comments += self.comments
 

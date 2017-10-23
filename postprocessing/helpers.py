@@ -15,7 +15,7 @@ def linear_grid(min,max,delta):
 
 def logx_grid(x1, x2, n):
     """Create a list of n numbers in logx scale from x1 to x2."""
-    # the shape if a*x^n. if n=0 => a=x1, if n=N => x1*x^N=x2 
+    # the shape if a*x^n. if n=0 => a=x1, if n=N => x1*x^N=x2
     if x1 > 0:
         xx = (x2/x1)**(1.0/n)
         return [x1] + [x1 * xx**(i+1) for i in range(1,n)]
@@ -83,3 +83,68 @@ def setup_t_grid(trajectory, t_grid):
     #         check.append(trajectory.steps[i0+i] - trajectory.steps[i0])
     # print sorted(set(check)), sorted(dt)
     return offsets
+
+
+# Add dump() from medepy for portability.
+# This should be dropped in the future.
+def _dump(title, columns=None, command=None, version=None,
+          description=None, note=None, parents=None, inline=False,
+          comment='# ', extra_fields=None):
+    """
+    Return a string of comments filled with metadata.
+    """
+    import md5
+    import datetime
+    import os
+    date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    if columns is not None:
+        columns_string  = ', '.join(columns)
+
+    try:
+        author = os.getlogin()
+    except OSError:
+        author = None
+
+    # Checksums of parent files
+    if parents is not None:
+        # Make sure parents is list
+        if not hasattr(parents, '__iter__'):
+            parents = [parents]
+        # Compute checksum
+        checksums = []
+        size_limit = 1e9
+        if max([os.path.getsize(f) for f in parents]) < size_limit:
+            for parentpath in parents:
+                tag = md5.md5(open(parentpath).read()).hexdigest()
+                checksums.append(tag)
+            checksums = ', '.join(checksums)
+        else:
+            checksums = None
+        # Convert to string
+        parents = ', '.join([os.path.basename(p) for p in parents])
+
+    metadata = [('title', title),
+                ('columns', columns_string),
+                ('date', date),
+                ('author', author),
+                ('command', command),
+                ('version', version),
+                ('parents', parents),
+                ('checksums', checksums),
+                ('description', description),
+                ('note', note)]
+
+    if extra_fields is not None:
+        metadata += extra_fields
+
+    if inline:
+        fmt = '{}: {};'
+        txt = comment + ' '.join([fmt.format(key, value) for key,
+                                  value in metadata if value is not None])
+    else:
+        txt = ''
+        for key, value in metadata:
+            if value is not None:
+                txt += comment + '{}: {}\n'.format(key, value)
+    return txt
