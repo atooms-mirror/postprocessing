@@ -5,7 +5,7 @@ reference
 
 # Ignore version file in package.
 # It will be updated upon build/install
-atooms/_version.py
+postprocessing/_commit.py
 
 dist
 build
