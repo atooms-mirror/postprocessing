@@ -35,7 +35,10 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
                                        kmax=kmax, nk=nk,
                                        ksamples=ksamples).do()
         if len(ids) > 1 and trajectory_field is None:
-            Partial(postprocessing.StructureFactor, ids, th, k_grid).do()
+            Partial(postprocessing.StructureFactor, ids, th, None,
+                    norigins=norigins, kmin=kmin,
+                    kmax=kmax, nk=nk,
+                    ksamples=ksamples).do()
 
 def ik(input_file, trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0,
        kmax=15.0, ksamples=30, norigins=-1, species=None,
