@@ -149,7 +149,8 @@ class TestFourierSpace(unittest.TestCase):
     def test_sk_partial(self):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         ref_value = {'A': numpy.array([0.078218, 2.896436, 0.543363]),
-                     'B': numpy.array([0.867164, 0.869868, 0.981121])}
+                     'B': numpy.array([0.867164, 0.869868, 0.981121]),
+                     'AB': numpy.array([-0.1907, 0.399360, 0.050480])}
         for species in ['A', 'B']:
             with trajectory.TrajectoryXYZ(f) as t:
                 t.add_callback(filter_species, species)
@@ -162,6 +163,7 @@ class TestFourierSpace(unittest.TestCase):
             sk.compute()
             self.assertLess(deviation(sk.partial[('A', 'A')].value, ref_value['A']), 1e-2)
             self.assertLess(deviation(sk.partial[('B', 'B')].value, ref_value['B']), 1e-2)
+            self.assertLess(deviation(sk.partial[('A', 'B')].value, ref_value['AB']), 1e-2)
 
     def test_sk_random(self):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
