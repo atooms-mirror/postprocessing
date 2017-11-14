@@ -160,8 +160,8 @@ class TestFourierSpace(unittest.TestCase):
         with trajectory.TrajectoryXYZ(f) as t:
             sk = postprocessing.Partial(postprocessing.StructureFactor, ['A', 'B'], t, [4, 7.3, 10])
             sk.compute()
-            self.assertLess(deviation(sk.partial['A'].value, ref_value['A']), 1e-2)
-            self.assertLess(deviation(sk.partial['B'].value, ref_value['B']), 1e-2)
+            self.assertLess(deviation(sk.partial[('A', 'A')].value, ref_value['A']), 1e-2)
+            self.assertLess(deviation(sk.partial[('B', 'B')].value, ref_value['B']), 1e-2)
 
     def test_sk_random(self):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')

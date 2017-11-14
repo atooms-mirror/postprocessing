@@ -12,11 +12,11 @@ from .helpers import linear_grid, logx_grid
 setup_logging('postprocessing', level=20)
 setup_logging('atooms', level=20)
 
-def gr(input_file, grandcanonical=False, fmt=None, show=False):
+def gr(input_file, grandcanonical=False, fmt=None, show=False, norigins=-1):
     """Radial distribution function."""
     with Trajectory(input_file, fmt=fmt) as th:
         th._grandcanonical = grandcanonical
-        postprocessing.RadialDistributionFunction(th).do(show)
+        postprocessing.RadialDistributionFunction(th, norigins=norigins).do(show)
         ids = distinct_species(th[-1].particle)
         if len(ids) > 1:
             Partial(postprocessing.RadialDistributionFunction, ids, th).do(show)

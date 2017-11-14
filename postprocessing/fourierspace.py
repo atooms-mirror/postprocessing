@@ -424,6 +424,8 @@ class IntermediateScattering(FourierSpaceCorrelation):
 
 class StructureFactor(FourierSpaceCorrelation):
 
+    nbodies = 2
+
     def __init__(self, trajectory, kgrid=None, norigins=-1, nk=20,
                  dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
                  trajectory_field=None, field=None):
@@ -463,7 +465,7 @@ class StructureFactor(FourierSpaceCorrelation):
 
     def _compute(self):
         from atooms.trajectory.utils import is_cell_variable
-        nsteps = len(self._pos)
+        nsteps = len(self._pos_0)
         # Setup k vectors and tabulate rho
         k_sorted, k_selected = self._decimate_k()
         kmax = max(self.kvec.keys()) + self.dk
@@ -479,31 +481,53 @@ class StructureFactor(FourierSpaceCorrelation):
                 kmax = max(self.kvec.keys()) + self.dk
 
             # Tabulate exponentials
-            expo = expo_sphere(self.k0, kmax, self._pos[i])
+            if self._pos_0[i] is self._pos_1[i]:
+                # Identical species
+                expo_0 = expo_sphere(self.k0, kmax, self._pos_0[i])
+                expo_1 = expo_0
+            else:
+                # Cross correlation
+                expo_0 = expo_sphere(self.k0, kmax, self._pos_0[i])
+                expo_1 = expo_sphere(self.k0, kmax, self._pos_1[i])
 
             for kk, knorm in enumerate(k_sorted):
                 for k in k_selected[kk]:
                     ik = self.kvec[knorm][k]
                     # In the absence of a microscopic field, rho_av = (0, 0)
                     if not self._field:
-                        rho = numpy.sum(expo[...,0,ik[0]] *
-                                        expo[...,1,ik[1]] *
-                                        expo[...,2,ik[2]])
+                        if expo_0 is expo_1:
+                            # Identical species
+                            rho_0 = numpy.sum(expo_0[...,0,ik[0]] *
+                                              expo_0[...,1,ik[1]] *
+                                              expo_0[...,2,ik[2]])
+                            rho_1 = rho_0
+                        else:
+                            # Cross correlation
+                            rho_0 = numpy.sum(expo_0[...,0,ik[0]] *
+                                              expo_0[...,1,ik[1]] *
+                                              expo_0[...,2,ik[2]])
+                            rho_1 = numpy.sum(expo_1[...,0,ik[0]] *
+                                              expo_1[...,1,ik[1]] *
+                                              expo_1[...,2,ik[2]])
                     else:
-                        rho = numpy.sum(self._field[i] *
-                                        expo[...,0,ik[0]] *
-                                        expo[...,1,ik[1]] *
-                                        expo[...,2,ik[2]])
-                        rho_av[kk] += rho
-                    rho2_av[kk] += (rho * rho.conjugate())
+                        # We have a field as a weight
+                        rho_0 = numpy.sum(self._field[i] *
+                                          expo_0[...,0,ik[0]] *
+                                          expo_0[...,1,ik[1]] *
+                                          expo_0[...,2,ik[2]])
+                        rho_1 = rho_0
+                        rho_av[kk] += rho_0
+
+                    rho2_av[kk] += (rho_0 * rho_1.conjugate())
                     cnt[kk] += 1
 
         # Normalization.
-        npart = sum([p.shape[0] for p in self._pos]) / float(len(self._pos))
+        npart_0 = sum([p.shape[0] for p in self._pos_0]) / float(len(self._pos_0))
+        npart_1 = sum([p.shape[0] for p in self._pos_1]) / float(len(self._pos_1))
         self.grid = k_sorted
         self.value = [(rho2_av[kk] / cnt[kk] -
                        rho_av[kk]*rho_av[kk].conjugate() / cnt[kk]**2).real / 
-                      npart for kk in range(len(self.grid))]
+                      float(npart_0*npart_1)**0.5 for kk in range(len(self.grid))]
         self.value_nonorm = [rho2_av[kk].real / cnt[kk]
                              for kk in range(len(self.grid))]
 
