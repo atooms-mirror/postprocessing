@@ -50,7 +50,9 @@ class TestRealSpace(unittest.TestCase):
             with trajectory.Sliced(trajectory.TrajectoryXYZ(f), slice(0, 1000, 1)) as t:
                 t.add_callback(filter_species, i)
                 p = postprocessing.MeanSquareDisplacement(t, [0.0, 3.0, 45.0, 90])
-                p.compute()            
+                import warnings
+                warnings.simplefilter('ignore', RuntimeWarning)
+                p.compute()
                 self.assertLess(deviation(p.grid, ref_grid), 4e-2)
                 self.assertLess(deviation(p.value, ref_value[i]), 4e-2)
 
