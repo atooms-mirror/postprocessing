@@ -525,11 +525,12 @@ class StructureFactor(FourierSpaceCorrelation):
         npart_0 = sum([p.shape[0] for p in self._pos_0]) / float(len(self._pos_0))
         npart_1 = sum([p.shape[0] for p in self._pos_1]) / float(len(self._pos_1))
         self.grid = k_sorted
-        self.value = [(rho2_av[kk] / cnt[kk] -
-                       rho_av[kk]*rho_av[kk].conjugate() / cnt[kk]**2).real / 
-                      float(npart_0*npart_1)**0.5 for kk in range(len(self.grid))]
-        self.value_nonorm = [rho2_av[kk].real / cnt[kk]
-                             for kk in range(len(self.grid))]
+        self.value, self.value_nonorm = [], []
+        for kk in range(len(self.grid)):
+            norm = float(npart_0 * npart_1)**0.5
+            value = (rho2_av[kk] / cnt[kk] - rho_av[kk]*rho_av[kk].conjugate() / cnt[kk]**2).real            
+            self.value.append(value / norm)
+            self.value_nonorm.append(value)
 
 
 class SpectralDensity(FourierSpaceCorrelation):
