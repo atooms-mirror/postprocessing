@@ -275,6 +275,10 @@ class Correlation(object):
             dump = numpy.transpose(numpy.array([self.grid, self.value]))
 
         # Comment line
+        if isinstance(self.name, tuple) or isinstance(self.name, list):
+            columns = list(self.name) + [self.short_name]
+        else:
+            columns = [self.name] + [self.short_name]
         comments = _dump(title='%s %s' %
                          (self.description.lower(), self.tag),
                          columns=(self.name, self.short_name),
