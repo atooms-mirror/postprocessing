@@ -281,7 +281,7 @@ class Correlation(object):
             columns = [self.name] + [self.short_name]
         comments = _dump(title='%s %s' %
                          (self.description.lower(), self.tag),
-                         columns=(self.name, self.short_name),
+                         columns=columns,
                          command='pp.py', version=__version__,
                          description=None, note=None,
                          parents=self.trajectory.filename,
