@@ -170,7 +170,7 @@ class Correlation(object):
         # Dump unfolded positions if requested
         self._pos_unf = []
         if 'pos-unf' in self._phasespace:
-            for s in Unfolded(self.trajectory):
+            for s in Unfolded(self.trajectory, fixed_cm=True):
                 # Apply filter if there is one
                 if len(self.cbk) > 0:
                     s = self.cbk[0](s, *self.cbk_args[0], **self.cbk_kwargs[0])

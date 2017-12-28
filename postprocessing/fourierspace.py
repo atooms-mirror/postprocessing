@@ -205,7 +205,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
                  dk=0.1, kmin=1.0, kmax=10.0, ksamples=10, skip=1):
         FourierSpaceCorrelation.__init__(self, trajectory, [kgrid, tgrid], ('k', 't'), \
                                          'fkt.self', 'Self intermediate scattering function',
-                                         'pos', nk, dk, kmin, kmax, ksamples)
+                                         'pos-unf', nk, dk, kmin, kmax, ksamples)
         # Setup time grid
         # Before setting up the time grid, we need to check periodicity over blocks
         check_block_size(self.trajectory.steps, self.trajectory.block_size)
@@ -223,6 +223,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
     def _compute(self):
         # Throw everything into a big numpy array
         # TODO: remove this redundancy
+        self._pos = self._pos_unf
         pos = numpy.ndarray((len(self._pos), ) + self._pos[0].shape)
         for i in range(len(self._pos)):
             pos[i, :, :] = self._pos[i]
