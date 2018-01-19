@@ -12,6 +12,9 @@ test:	version
 	python -m unittest discover -s tests
 
 install: version
+	python setup.py config_fc --opt '-O3 -funroll-loops' install
+
+user: version
 	python setup.py config_fc --opt '-O3 -funroll-loops' install --user
 
 # This does not work with distutils
