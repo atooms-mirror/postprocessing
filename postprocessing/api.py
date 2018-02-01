@@ -9,8 +9,8 @@ from atooms.trajectory.utils import time_when_msd_is
 from atooms.system.particle import distinct_species
 from .helpers import linear_grid, logx_grid
 
-setup_logging('postprocessing', level=20)
-setup_logging('atooms', level=20)
+setup_logging('postprocessing', level=40)
+setup_logging('atooms', level=40)
 
 def gr(input_file, grandcanonical=False, fmt=None, show=False, norigins=-1):
     """Radial distribution function."""
@@ -99,7 +99,7 @@ def fkt(input_file, time_target=1e9, tsamples=60, kmin=7.0, kmax=7.0,
             Partial(postprocessing.IntermediateScattering, ids, th, k_grid, t_grid).do()
 
 def fskt(input_file, time_target=1e9, tsamples=60, kmin=7.0, kmax=8.0,
-         ksamples=1, dk=0.1, nk=8, skip=1, tag_by_name=False, func=None, fmt=None):
+         ksamples=1, dk=0.1, nk=8, norigins=-1, tag_by_name=False, func=None, fmt=None):
     """Self intermediate scattering function."""
     with Trajectory(input_file, fmt=fmt) as th:
         if func is None:
@@ -108,7 +108,7 @@ def fskt(input_file, time_target=1e9, tsamples=60, kmin=7.0, kmax=8.0,
         else:
             t_grid = [th.timestep*i for i in th.steps]
         k_grid = linear_grid(kmin, kmax, ksamples)
-        postprocessing.SelfIntermediateScattering(th, k_grid, t_grid, nk, dk=dk, skip=skip).do()
+        postprocessing.SelfIntermediateScattering(th, k_grid, t_grid, nk, dk=dk, norigins=norigins).do()
         ids = distinct_species(th[-1].particle)
         if len(ids) > 1:
             Partial(postprocessing.SelfIntermediateScattering, ids, th, k_grid, t_grid, nk, dk=dk, skip=skip).do()
