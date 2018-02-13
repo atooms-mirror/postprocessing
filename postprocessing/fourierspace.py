@@ -270,7 +270,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
 
     def analyze(self):
         try:
-            from pyutils.utils import feqc
+            from .helpers import feqc
         except ImportError:
             return
 
@@ -388,7 +388,7 @@ class IntermediateScattering(FourierSpaceCorrelation):
 
     def analyze(self):
         try:
-            from pyutils.utils import feqc
+            from .helpers import feqc
         except ImportError:
             return
         self.tau = {}

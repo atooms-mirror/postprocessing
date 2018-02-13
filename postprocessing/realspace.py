@@ -166,7 +166,7 @@ class SelfOverlap(Correlation):
 
     def analyze(self):
         try:
-            from pyutils.utils import feqc
+            from .helpers import feqc
             self.results['tau'] = feqc(self.grid, self.value, 1/numpy.exp(1.0))[0]
         except:
             self.results['tau'] = None
@@ -223,7 +223,7 @@ class Chi4SelfOverlap(Correlation):
         self.variance.write()
 
     def analyze(self):
-        from pyutils.utils import ifabsmm
+        from .helpers import ifabsmm
         try:
             self.results['tau_star'], self.results['chi4_star'] = ifabsmm(self.grid, self.value)[1]
         except ZeroDivisionError:
@@ -391,7 +391,7 @@ class MeanSquareDisplacement(Correlation):
     def analyze(self):
         # Get the time when MSD equals sigma**2
         try:
-            from pyutils.utils import feqc
+            from .helpers import feqc
             self.results['tau_D'] = feqc(self.grid, self.value, self.sigma**2)[0]
         except:
             self.results['tau_D'] = None
@@ -404,7 +404,7 @@ class MeanSquareDisplacement(Correlation):
             return
 
         try:
-            from pyutils.fit import linear_fit
+            from .helpers import linear_fit
         except ImportError as e:
             log.warn('could not fit MSD: missing fitting modules')
             return
@@ -440,7 +440,7 @@ class NonGaussianParameter(Correlation):
 
     def analyze(self):
         try:
-            from pyutils.utils import ifabsmm
+            from .helpers import ifabsmm
             self.results['t_star'], self.results['a2_star'] = ifabsmm(self.grid, self.value)[1]
         except:
             pass

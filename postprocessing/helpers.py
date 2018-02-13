@@ -1,5 +1,6 @@
 import copy
 
+
 def linear_grid(min,max,delta):
     """Linear grid."""
     if type(delta) is int:
@@ -13,6 +14,7 @@ def linear_grid(min,max,delta):
     list = [min+i*delta for i in range(n)]
     return list
 
+
 def logx_grid(x1, x2, n):
     """Create a list of n numbers in logx scale from x1 to x2."""
     # the shape if a*x^n. if n=0 => a=x1, if n=N => x1*x^N=x2
@@ -22,6 +24,78 @@ def logx_grid(x1, x2, n):
     else:
         xx = (x2)**(1.0/n)
         return [x1] + [xx**(i+1)-1 for i in range(1,n)]
+
+
+def ifabsmm(x, f):
+    """Interpolated absolute maximum."""
+
+    def _vertex_parabola(a,b,c):
+        """Returns the vertex (x,y) of a parabola of the type a*x**2 + b*x + c."""
+        return -b/(2*a), - (b**2 - 4*a*c) / (4*a)
+
+    def _parabola_3points(x1,y1,x2,y2,x3,y3):
+        """Parabola through 3 points."""
+        delta = (x1 - x2)*(x1 - x3)*(x2 - x3)
+        a     = (x3 * (y2 - y1) + x2 * (y1 - y3) + x1 * (y3 - y2)) / delta
+        b     = (x3**2 * (y1 - y2) + x2**2 * (y3 - y1) + x1**2 * (y2 - y3)) / delta
+        c     = (x2 * x3 * (x2 - x3) * y1 + x3 * x1 * (x3 - x1) * y2 + x1 * x2 * (x1 - x2) * y3) / delta
+        return a, b, c
+
+    # First uninterpolated minima and maxima 
+    imin, imax = f.index(min(f)), f.index(max(f))
+    # Then perform parabolic interpolation
+    ii = []
+    for i in [imin, imax]:
+        i1 = i-1
+        i2 = i
+        i3 = i+1
+        a, b, c = _parabola_3points(x[i1], f[i1], x[i2], f[i2], x[i3], f[i3])
+        ii.append(_vertex_parabola(a, b, c))
+    return ii[0], ii[1]
+
+
+def linear_fit(xdata, ydata):    
+    """
+    Linear regression.
+
+    Expressions as in Wikipedia (https://en.wikipedia.org/wiki/Simple_linear_regression)
+    """
+    n = len(ydata)
+    dof = n - 2
+    sx = np.sum(xdata)
+    sy = np.sum(ydata)
+    sxy = sum(xdata * ydata)
+    sxx = sum(xdata ** 2)
+    syy = sum(ydata ** 2)
+
+    a = (n * sxy - sx * sy) / (n * sxx - sx**2)
+    b = sy / n - a * sx / n
+    s = (n*syy - sy**2 - a**2 * (n*sxx - sx**2)) / (n*dof)
+    sa = n * s / (n*sxx - sx**2)
+    sb = sa * sxx / n
+
+    return a, b, sqrt(sa), sqrt(sb)
+
+
+def feqc(x, f, fstar):
+    """
+    Find first root of f=f(x) for data sets.
+
+    Given two lists x and f, it returns the value of xstar for which
+    f(xstar) = fstar. Raises an ValueError if no root is found.
+    """
+    s = f[0] - fstar
+    for i in range(min(len(x), len(f))):
+        if (f[i] - fstar) * s < 0.0:
+            # Linear interpolation
+            dxf   = (f[i] - f[i-1]) / (x[i] - x[i-1])
+            xstar = x[i-1] + (fstar - f[i-1]) / dxf
+            istar = i
+            return xstar, istar
+
+    # We get to the end and cannot find the root
+    return None, None
+
 
 def filter_species(system, species):
     """Callback to filter particles by species.
