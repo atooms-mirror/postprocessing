@@ -156,7 +156,7 @@ def map_boo(f, args):
                 q6 = b.ql(6)
 
             # Dump q4,q6 map
-            fmap.write('#\n' % step)
+            fmap.write('#\n')
             fmap.write('# step:%d neighbors: %s\n' % (step, ''))
             for i, j in zip(q4, q6):
                 fmap.write('%g %g\n' % (i, j))

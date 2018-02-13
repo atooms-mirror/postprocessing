@@ -120,6 +120,8 @@ def self_overlap(r0, r1, side, a_square):
 
 class CollectiveOverlap(Correlation):
 
+    # TODO: why dont we use PBCed distance here?!
+
     def __init__(self, trajectory, grid=None, nsamples=60, a=0.3,
                  norigins=-1):
         Correlation.__init__(self, trajectory, grid, 't', 'qt',

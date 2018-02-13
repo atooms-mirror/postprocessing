@@ -202,7 +202,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
 
     #TODO: xyz files are 2 slower than hdf5 where
     def __init__(self, trajectory, kgrid=None, tgrid=None, nk=8, tsamples=60,
-                 dk=0.1, kmin=1.0, kmax=10.0, ksamples=10, skip=1):
+                 dk=0.1, kmin=1.0, kmax=10.0, ksamples=10, norigins=-1):
         FourierSpaceCorrelation.__init__(self, trajectory, [kgrid, tgrid], ('k', 't'), \
                                          'fkt.self', 'Self intermediate scattering function',
                                          'pos-unf', nk, dk, kmin, kmax, ksamples)
@@ -213,7 +213,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
             self.grid[1] = [0.0] + logx_grid(trajectory.timestep,
                                              trajectory.total_time * 0.75, tsamples)
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid[1])
-        self.skip = skip
+        self.skip = adjust_skip(trajectory, norigins)
 
         # TODO: Can this be moved up?
         self.k_sorted, self.k_selected = self._decimate_k()
