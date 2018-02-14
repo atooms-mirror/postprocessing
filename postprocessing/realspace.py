@@ -409,13 +409,8 @@ class MeanSquareDisplacement(Correlation):
             log.warn('could not fit MSD: missing fitting modules')
             return
 
-        if not self.var is None:
-            diffusion = linear_fit(numpy.array(self.grid)[where],
-                                   numpy.array(self.value)[where],
-                                   numpy.array(self.var)[where])
-        else:
-            diffusion = linear_fit(numpy.array(self.grid)[where],
-                                   numpy.array(self.value)[where])
+        diffusion = linear_fit(numpy.array(self.grid)[where],
+                               numpy.array(self.value)[where])
         ndim = self.trajectory.read(0).number_of_dimensions
         self.results['diffusion coefficient D'] = diffusion[0] / (2*ndim)
 
