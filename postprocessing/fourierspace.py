@@ -79,13 +79,13 @@ def k_norm(ik, k0):
 
 class FourierSpaceCorrelation(Correlation):
 
-    def __init__(self, trajectory, grid, name, short_name,
+    def __init__(self, trajectory, grid, variables, short_name, 
                  description, phasespace, nk=8, dk=0.1, kmin=-1, kmax=10,
                  ksamples=20):
         # grid and name variables can be lists or tuples, ex. ['k', 't'] or ['k', 'w']
         # TODO: the time grid is not used here
         super(FourierSpaceCorrelation, self).__init__(trajectory,
-                                                      grid, name, short_name,
+                                                      grid, variables, short_name,
                                                       description, phasespace)
         if not self._need_update:
             return
@@ -99,8 +99,8 @@ class FourierSpaceCorrelation(Correlation):
         self.ksamples = ksamples
 
         # Find k grid. It will be copied over to self.grid at end
-        if type(name) is list or type(name) is tuple:
-            self.kgrid = grid[name.index('k')]
+        if type(variables) is list or type(variables) is tuple:
+            self.kgrid = grid[self.variables.index('k')]
         else:
             self.kgrid = grid
 
@@ -204,7 +204,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
     def __init__(self, trajectory, kgrid=None, tgrid=None, nk=8, tsamples=60,
                  dk=0.1, kmin=1.0, kmax=10.0, ksamples=10, norigins=-1):
         FourierSpaceCorrelation.__init__(self, trajectory, [kgrid, tgrid], ('k', 't'), \
-                                         'fkt.self', 'Self intermediate scattering function',
+                                         'fkt.self', 'self intermediate scattering function F_s(k,t)',
                                          'pos-unf', nk, dk, kmin, kmax, ksamples)
         # Setup time grid
         # Before setting up the time grid, we need to check periodicity over blocks
@@ -310,7 +310,7 @@ class IntermediateScattering(FourierSpaceCorrelation):
     def __init__(self, trajectory, kgrid=None, tgrid=None, nk=100, dk=0.1, tsamples=60,
                  kmin=1.0, kmax=10.0, ksamples=10):
         FourierSpaceCorrelation.__init__(self, trajectory, [kgrid, tgrid], ('k', 't'),
-                                         'fkt.total', 'Intermediate scattering function',
+                                         'fkt.total', 'intermediate scattering function F(k,t)',
                                          'pos', nk, dk, kmin, kmax, ksamples)
         # Setup time grid
         check_block_size(self.trajectory.steps, self.trajectory.block_size)
@@ -436,26 +436,31 @@ class StructureFactor(FourierSpaceCorrelation):
         provided.
         """
         FourierSpaceCorrelation.__init__(self, trajectory, kgrid, 'k',
-                                         'sk', 'structure factor',
+                                         'sk', 'structure factor S(k)',
                                          ['pos'], nk, dk, kmin,
                                          kmax, ksamples)
         # TODO: move this up the chain?
         self.skip = adjust_skip(self.trajectory, norigins)
         self._is_cell_variable = None
         self._field, tag = self._add_field(trajectory_field, field)
-        self.tag += tag
+        if tag is not None:
+            self.tag = tag
+            self.tag_description += '%s field' % tag.replace('_', ' ')
 
     def _add_field(self, trajectory_field, field):
         if trajectory_field is None:
-            return None, ''
+            return None, None
         else:
             # TODO: check step consistency 06.09.2017
-            from atooms.trajectory import TrajectoryXYZ
+            from atooms.trajectory import TrajectoryXYZ            
             with TrajectoryXYZ(trajectory_field) as th:
+                if th.steps != self.trajectory.steps:
+                    raise ValueError('field and traectory are not synced (%s, %s)' % (len(th), len(self.trajectory)))
                 fields = []
                 # This must be a string, not a list
                 unique_field = th._read_metadata(0)['columns']
                 if isinstance(unique_field, list):
+                    # If field is not given, get the last column
                     if field is None:
                         unique_field = unique_field[-1]
                     else:
@@ -546,7 +551,7 @@ class SpectralDensity(FourierSpaceCorrelation):
                  norigins=-1, nk=20, dk=0.1, kmin=-1.0, kmax=15.0,
                  ksamples=30):
         FourierSpaceCorrelation.__init__(self, trajectory, kgrid, 'k',
-                                         'ik', 'spectral density',
+                                         'ik', 'spectral density I(k)',
                                          ['pos'], nk, dk, kmin,
                                          kmax, ksamples)
         # TODO: move this up the chain?
@@ -596,7 +601,8 @@ class SpectralDensity(FourierSpaceCorrelation):
 class StructureFactorStats(FourierSpaceCorrelation):
 
     def __init__(self, trajectory, kgrid=None, norigins=-1, nk=1000, dk=1.0, kmin=7.0):
-        FourierSpaceCorrelation.__init__(self, trajectory, kgrid, 'k', 'skstats', 'structure factor stats', ['pos'], \
+        FourierSpaceCorrelation.__init__(self, trajectory, kgrid, 'k', 'skstats', 
+                                         'structure factor statistics', ['pos'], \
                                          nk, dk, kmin, kmin, 1)
         # TODO: move this up the chain?
         self.skip = adjust_skip(self.trajectory, norigins)
@@ -643,8 +649,8 @@ class S4ktOverlap(FourierSpaceCorrelation):
     # TODO: should we drop this instead and rely on F(k,t) with grandcanonical
 
     def __init__(self, trajectory, tgrid, kgrid=None, norigins=-1, nk=20, dk=0.1, a=0.3, kmin=1.0, kmax=10.0, ksamples=10):
-        FourierSpaceCorrelation.__init__(self, trajectory, [tgrid, kgrid], ('t', 'k'), 's4kt', \
-                                         '4-point dynamic structure factor', ['pos','pos-unf'], \
+        FourierSpaceCorrelation.__init__(self, trajectory, [tgrid, kgrid], ('t', 'k'), 's4kt',
+                                         '4-point dynamic structure factor S_4(k,t)', ['pos', 'pos-unf'],
                                          nk, dk, kmin, kmax, ksamples)
         # Setup time grid
         self._discrete_tgrid = setup_t_grid(trajectory, tgrid)
