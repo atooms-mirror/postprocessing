@@ -103,11 +103,17 @@ class Correlation(object):
 
     nbodies = 1
 
-    def __init__(self, trj, grid, name="", short_name="", description="", phasespace=None):
+    def __init__(self, trj, grid, variables='', short_name='', description='', phasespace=None):
         # TODO: we could force trajectory cast if a string is passed
+        # self.variables = ('k', 't')
+        # self.short_name = 'fskt'
+        # self.description = 'Self intermediate scattering function F_s(k,t)'
+        # self.tag_description = 'of particles A'  # 'of radius field'
+        # self.tag = 'A'
+
         self.trajectory = trj
         self.grid = grid
-        self.name = name
+        self.variables = variables
         self.short_name = short_name
         self.description = description
         self.results = {}
@@ -118,6 +124,7 @@ class Correlation(object):
             self._phasespace = phasespace
         self.prefix = 'pp'
         self.tag = ''
+        self.tag_description = ''
         self.comments = None # can be modified by user at run time
         if isinstance(phasespace, str):
             self._phasespace = [phasespace]
@@ -275,12 +282,11 @@ class Correlation(object):
             dump = numpy.transpose(numpy.array([self.grid, self.value]))
 
         # Comment line
-        if isinstance(self.name, tuple) or isinstance(self.name, list):
-            columns = list(self.name) + [self.short_name]
+        if isinstance(self.variables, tuple) or isinstance(self.variables, list):
+            columns = list(self.variables) + [self.description]
         else:
-            columns = [self.name] + [self.short_name]
-        comments = _dump(title='%s %s' %
-                         (self.description.lower(), self.tag),
+            columns = [self.variables] + [self.description]
+        comments = _dump(title='%s of %s' % (self.description, self.tag_description),
                          columns=columns,
                          command='pp.py', version=__version__,
                          description=None, note=None,
@@ -289,7 +295,7 @@ class Correlation(object):
         if not self.comments is None:
             comments += self.comments
 
-        # Analysis results
+        # Analyze results
         analysis = ""
         for x, f in self.results.iteritems():
             if f is not None:
@@ -322,16 +328,3 @@ class Correlation(object):
         self.do()
 
 
-class CorrelationTemplate(Correlation):
-
-    def __init__(self, trajectory, grid, name, description=""):
-        super(CorrelationTemplate).__init__(self, trajectory, grid, 't', '')
-
-    def compute(self):
-        pass
-
-    def analyze(self):
-        pass
-
-    def write(self):
-        pass

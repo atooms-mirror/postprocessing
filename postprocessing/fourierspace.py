@@ -140,15 +140,21 @@ class FourierSpaceCorrelation(Correlation):
         kmax = kgrid[-1] + dk[-1]
         kbin_max = 1 + int(kmax / min(k0))
         # TODO: it would be more elegant to define an iterator over ix, iy, iz for sphere, hemisphere, ... unless kmax is very high it might be more efficient to operate on a 3d grid to construct the vectors
+        kmax_sq = kmax**2
         for ix in xrange(-kbin_max, kbin_max+1):
             for iy in xrange(-kbin_max, kbin_max+1):
                 for iz in xrange(-kbin_max, kbin_max+1):
-                    ksq = sum([(x*y)**2 for x, y in zip(k0, [ix, iy, iz])])
-                    if ksq > kmax**2:
+                    # Slightly faster and more explicit than
+                    #   ksq = sum([(x*y)**2 for x, y in zip(k0, [ix, iy, iz])])
+                    ksq = ((k0[0]*ix)**2 + (k0[1]*iy)**2 + (k0[2]*iz)**2)
+                    if ksq > kmax_sq:
                         continue
                     # beware: numpy.sqrt is x5 slower than math one!
                     knorm = math.sqrt(ksq)
-                    # look for a shell in which the vector could fit
+                    # Look for a shell of vectors in which the vector could fit.
+                    # This expression is general and allows arbitrary k grids
+                    # However, searching for the shell like this is not fast
+                    # (it costs about as much as the above)
                     for ki, dki in zip(kgrid, dk):
                         if abs(knorm - ki) < dki:
                             kvec[ki].append((ix+kbin_max, iy+kbin_max, iz+kbin_max))
@@ -487,6 +493,7 @@ class StructureFactor(FourierSpaceCorrelation):
                 kmax = max(self.kvec.keys()) + self.dk
 
             # Tabulate exponentials
+            # Note: tabulating and computing takes about the same time
             if self._pos_0[i] is self._pos_1[i]:
                 # Identical species
                 expo_0 = expo_sphere(self.k0, kmax, self._pos_0[i])

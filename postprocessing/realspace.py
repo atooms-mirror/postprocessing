@@ -125,7 +125,7 @@ class CollectiveOverlap(Correlation):
     def __init__(self, trajectory, grid=None, nsamples=60, a=0.3,
                  norigins=-1):
         Correlation.__init__(self, trajectory, grid, 't', 'qt',
-                             'Collective overlap', 'pos')
+                             'collective overlap Q(t)', 'pos')
         self.a_square = a**2
         self.skip = adjust_skip(self.trajectory, norigins)
         if grid is None:
@@ -146,8 +146,7 @@ class SelfOverlap(Correlation):
     def __init__(self, trajectory, grid=None, norigins=-1, a=0.3,
                  nsamples=60):
         Correlation.__init__(self, trajectory, grid, 't', 'qst',
-                             'Self overlap', 'pos-unf')
-        # TODO: find a way to cache everything that does not need to be done on construction. How to encapsulate this check?
+                             'self overlap Q_s(t)', 'pos-unf')
         if not self._need_update:
             return
         if grid is None:
@@ -178,7 +177,7 @@ class Chi4SelfOverlap(Correlation):
     def __init__(self, trajectory, grid=None, norigins=-1, a=0.3,
                  nsamples=60):
         Correlation.__init__(self, trajectory, grid, 't', 'chi4qs',
-                             'Chi4 self overlap', 'pos-unf')
+                             'dynamic scusceptibility of self overlap chi_4(t)', 'pos-unf')
         if not self._need_update:
             return
         if grid is None:
@@ -238,7 +237,7 @@ class OverlapDistribution(Correlation):
 
     def __init__(self, trajectory, grid, skip=1, a=0.3):
         Correlation.__init__(self, trajectory, grid, 'q', 'P_q',
-                             'Overlap distribution', 'pos')
+                             'overlap distribution P(q)', 'pos')
         self.skip = skip
         self.a = a
         self.a_square = a**2
@@ -288,7 +287,7 @@ class RadialDistributionFunction(Correlation):
 
     def __init__(self, trajectory, grid=None, norigins=-1, dr=0.04):
         Correlation.__init__(self, trajectory, grid, 'r', 'gr',
-                             'Radial distribution function', 'pos')
+                             'radial distribution function g(r)', 'pos')
         self.skip = adjust_skip(trajectory, norigins)
         self.side = self.trajectory.read(0).cell.side
         if grid is not None:
@@ -343,7 +342,7 @@ class MeanSquareDisplacement(Correlation):
         self.var = None
 
         Correlation.__init__(self, trajectory, tgrid, 't', 'msd',
-                             "Mean square displacement", ['pos-unf'])
+                             'mean square displacement dr^2(t)', ['pos-unf'])
         if not self._need_update:
             return
         # TODO: subtrajectories should behave well when sampling is logarithmic
@@ -419,7 +418,7 @@ class NonGaussianParameter(Correlation):
 
     def __init__(self, trajectory, tgrid=None, norigins=50, nsamples=30):
         Correlation.__init__(self, trajectory, tgrid, 't', 'alpha2',
-                             "Non Gaussian parameter", ['pos-unf'])
+                             "non-Gaussian parameter alpha_2(t)", ['pos-unf'])
         if not self._need_update:
             return
         if self.grid is None:
@@ -445,7 +444,7 @@ class VelocityAutocorrelation(Correlation):
 
     def __init__(self, trajectory, tgrid):
         Correlation.__init__(self, trajectory, tgrid, 't', 'vacf',
-                             "Velocity autocorrelation", ['vel'])
+                             'velocity autocorrelation Z(t)', ['vel'])
         self._discrete_tgrid = setup_t_grid(trajectory, tgrid)
 
     def _compute(self):

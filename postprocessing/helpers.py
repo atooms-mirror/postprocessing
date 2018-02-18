@@ -60,13 +60,15 @@ def linear_fit(xdata, ydata):
 
     Expressions as in Wikipedia (https://en.wikipedia.org/wiki/Simple_linear_regression)
     """
+    import numpy
+    from math import sqrt
     n = len(ydata)
     dof = n - 2
-    sx = np.sum(xdata)
-    sy = np.sum(ydata)
+    sx = numpy.sum(xdata)
+    sy = numpy.sum(ydata)
     sxy = sum(xdata * ydata)
-    sxx = sum(xdata ** 2)
-    syy = sum(ydata ** 2)
+    sxx = sum(xdata**2)
+    syy = sum(ydata**2)
 
     a = (n * sxy - sx * sy) / (n * sxx - sx**2)
     b = sy / n - a * sx / n

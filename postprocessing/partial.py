@@ -33,6 +33,7 @@ class Partial(object):
             self.partial[isp] = self._corr_cls(*self._args, **self._kwargs)
             self.partial[isp].add_filter(filter_species, isp)
             self.partial[isp].tag = str(isp)
+            self.partial[isp].tag_description = 'species %s' % isp
             self.partial[isp].compute()
 
     def _compute_two_body(self):
