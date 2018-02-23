@@ -7,4 +7,3 @@ logging.getLogger(__name__).addHandler(logging.NullHandler())
 from .partial import *
 from .realspace import *
 from .fourierspace import *
-

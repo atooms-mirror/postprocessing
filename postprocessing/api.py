@@ -12,6 +12,25 @@ from .helpers import linear_grid, logx_grid
 setup_logging('postprocessing', level=40)
 setup_logging('atooms', level=40)
 
+
+def test_sk():
+    import numpy
+    import postprocessing.fourierspace_wrap
+    #from postprocessing.fourierspace_wrap import fourierspace_module import sk_one
+    from postprocessing.fourierspace_wrap import fourierspace_module
+    nk = 10
+    ndim, N = 3, 10
+    pos = numpy.zeros((ndim, N))
+    k0 = 1.0
+    ikvec = numpy.ones((ndim, nk), dtype=numpy.int32)
+    ikbin = numpy.ones(nk, dtype=numpy.int32)
+    #sk = numpy.zeros(max(ikbin), dtype=numpy.complex64)
+    sk = numpy.zeros(10)  #max(ikbin))
+    kmax = 10
+    fourierspace_module.sk_one(pos, k0, kmax, ikvec, ikbin, sk)
+    print sk
+
+
 def gr(grandcanonical=False, fmt=None, show=False, norigins=-1, *input_files):
     """Radial distribution function."""
     for input_file in input_files:
@@ -32,6 +51,26 @@ def sk(nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
                 th.register_callback(filter_species, int(species))
             ids = distinct_species(th[-1].particle)
             postprocessing.StructureFactor(th, None, norigins=norigins,
+                                           trajectory_field=trajectory_field,
+                                           field=field, kmin=kmin,
+                                           kmax=kmax, nk=nk,
+                                           ksamples=ksamples).do()
+            if len(ids) > 1 and trajectory_field is None:
+                Partial(postprocessing.StructureFactor, ids, th, None,
+                        norigins=norigins, kmin=kmin,
+                        kmax=kmax, nk=nk,
+                        ksamples=ksamples).do()
+
+def skopti(nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
+       norigins=-1, species=None, grandcanonical=False, fmt=None,
+       trajectory_field=None, field=None, *input_files):
+    """Structure factor."""
+    for input_file in input_files:
+        with Trajectory(input_file, fmt=fmt) as th:
+            if species is not None:
+                th.register_callback(filter_species, int(species))
+            ids = distinct_species(th[-1].particle)
+            postprocessing.StructureFactorOptimized(th, None, norigins=norigins,
                                            trajectory_field=trajectory_field,
                                            field=field, kmin=kmin,
                                            kmax=kmax, nk=nk,
