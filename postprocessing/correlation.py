@@ -286,7 +286,9 @@ class Correlation(object):
             columns = list(self.variables) + [self.description]
         else:
             columns = [self.variables] + [self.description]
-        comments = _dump(title='%s of %s' % (self.description, self.tag_description),
+        if len(self.tag_description) > 0:
+            conj = 'of'
+        comments = _dump(title='%s %s %s' % (self.description, conj, self.tag_description),
                          columns=columns,
                          command='pp.py', version=__version__,
                          description=None, note=None,
