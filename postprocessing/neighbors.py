@@ -4,23 +4,12 @@ import os
 import sys
 import numpy
 import atooms.trajectory as trj
+from atooms.trajectory import TrajectoryNeighbors
 
 
 class PrettyList(list):
     def __str__(self):
         return ' '.join([str(x) for x in self])
-
-
-class TrajectoryNeighbors(trj.TrajectoryXYZ):
-
-    """Neighbors trajectory."""
-
-    def __init__(self, filename, mode='r', offset=1):
-        super(TrajectoryNeighbors, self).__init__(filename, mode=mode)
-        self._offset = offset # neighbors produced by voronoi are indexed from 1
-        self.fields = ['neighbors']
-        # This is necessary to format integer numpy array correctly
-        self._fields_float = False
 
 
 def get_neighbors(fileinp, fileout, args, fmt=None):
@@ -52,7 +41,7 @@ def compute_neighbors(system, rcut):
     neigh = numpy.zeros((npart, nmax), dtype=numpy.int32, order='F')
     rcut = numpy.asarray(rcut)
     pos = system.dump('pos').transpose() # copy is not needed, order not needed.
-    ids = [p.id for p in system.particle]
+    ids = [p.species for p in system.particle]
     box = system.cell.side
     neighbors_wrap.neighbors(box, pos, ids, rcut, nn, neigh)
     for j, p in enumerate(system.particle):
@@ -62,8 +51,10 @@ def compute_neighbors(system, rcut):
 def write_neighbors(fileinp, rcut, fileout='/dev/stdout', fmt=None):
     import copy
     import neighbors_wrap
+    from atooms.trajectory.decorators import change_species    
     with trj.Trajectory(fileinp, fmt=fmt) as t, \
-         TrajectoryNeighbors(fileout, 'w') as tout:
+         TrajectoryNeighbors(fileout, 'w', fields=['neighbors']) as tout:
+        t.add_callback(change_species, 'F')  # it must F not C
         tout.timestep = t.timestep
         for i, s in enumerate(t):
             s = compute_neighbors(s, rcut)

@@ -19,8 +19,9 @@ import argparse
 import numpy
 from collections import defaultdict
 
-from atooms.trajectory import Trajectory, TrajectoryField
-from atooms.utils import add_first_last_skip, fractional_slice, mkdir
+from atooms.trajectory import Trajectory, TrajectoryXYZ
+from atooms.trajectory.decorators import change_species
+from atooms.core.utils import add_first_last_skip, fractional_slice, mkdir
 from postprocessing.neighbors import get_neighbors
 
 def cna(particle, neighbors):
@@ -77,6 +78,7 @@ def main(args):
     for finp in args.files:
         # We need to open the trajectory here anyway, we should we do that again in get_neighbors()?
         t = Trajectory(finp, fmt=args.fmt)
+        t.add_callback(change_species, 'F')  # it must F not C
         # We write neighbors to a tmp file
         import tempfile
         dirtmp = os.path.dirname(finp)
@@ -102,14 +104,17 @@ def main(args):
         # Dump CNA bonds
         if args.dump:
             fout = fbase + '.cna%s' % args.tag
-            fh_dump = TrajectoryField(fout, 'w')
+            fh_dump = TrajectoryXYZ(fout, 'w', fields=['cna'])
 
         # Loop over samples
         hist = defaultdict(int)
         for i, s in enumerate(t):
             if t.steps[i] in tn.steps:
                 ii = tn.steps.index(t.steps[i])
-                data = cna(t[i].particle, tn[ii].neighbors)
+                data = cna(s.particle, tn[ii].neighbors)
+                # Store CNA in particle
+                for cna_value, p in zip(data, s.particle):
+                    p.cna = cna_value
                 # Dump signature
                 if args.signature is not None:
                     for sign in args.signature:
@@ -120,7 +125,7 @@ def main(args):
                     hist[d]+=1
                 # Dump
                 if args.dump:
-                    fh_dump.write_sample(data, t.steps[i])
+                    fh_dump.write_sample(s, t.steps[i])
 
         # Write histogram
         with open(fbase + '.cna%s.hist' % args.tag, 'w') as fhhist:
