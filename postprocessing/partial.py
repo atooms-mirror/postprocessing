@@ -51,6 +51,7 @@ class Partial(object):
                 if isp != jsp:
                     self.partial[(isp, jsp)].add_filter(filter_species, jsp)
                 self.partial[(isp, jsp)].tag = '%s-%s' % (isp, jsp)
+                self.partial[(isp, jsp)].tag_description = 'species pair %s-%s' % (isp, jsp)
                 self.partial[(isp, jsp)].compute()
 
     def do(self, show=False):
