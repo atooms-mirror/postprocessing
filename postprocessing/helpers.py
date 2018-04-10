@@ -177,11 +177,6 @@ def _dump(title, columns=None, command=None, version=None,
     if columns is not None:
         columns_string  = ', '.join(columns)
 
-    try:
-        author = os.getlogin()
-    except OSError:
-        author = None
-
     # Checksums of parent files
     if parents is not None:
         # Make sure parents is list
@@ -203,7 +198,6 @@ def _dump(title, columns=None, command=None, version=None,
     metadata = [('title', title),
                 ('columns', columns_string),
                 ('date', date),
-                ('author', author),
                 ('command', command),
                 ('version', version),
                 ('parents', parents),
