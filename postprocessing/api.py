@@ -31,11 +31,13 @@ def test_sk():
     print sk
 
 
-def gr(grandcanonical=False, fmt=None, show=False, norigins=-1, verbose=False, *input_files):
+def gr(grandcanonical=False, fmt=None, species_layout=None, show=False, norigins=-1, verbose=False, *input_files):
     """Radial distribution function."""
     if verbose: setup_logging('postprocessing', level=20)
     for input_file in input_files:
         with Trajectory(input_file, fmt=fmt) as th:
+            if species_layout is not None:
+                th.register_callback(change_species, species_layout)
             th._grandcanonical = grandcanonical
             postprocessing.RadialDistributionFunction(th, norigins=norigins).do(show)
             ids = distinct_species(th[-1].particle)
@@ -49,6 +51,8 @@ def sk(nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
     if verbose: setup_logging('postprocessing', level=20)
     for input_file in input_files:
         with Trajectory(input_file, fmt=fmt) as th:
+            if species_layout is not None:
+                th.register_callback(change_species, species_layout)
             if species is not None:
                 th.register_callback(filter_species, int(species))
             ids = distinct_species(th[-1].particle)
@@ -70,6 +74,8 @@ def skopti(nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
     if verbose: setup_logging('postprocessing', level=20)
     for input_file in input_files:
         with Trajectory(input_file, fmt=fmt) as th:
+            if species_layout is not None:
+                th.register_callback(change_species, species_layout)
             if species is not None:
                 th.register_callback(filter_species, int(species))
             ids = distinct_species(th[-1].particle)
@@ -86,13 +92,15 @@ def skopti(nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
 
 def ik(trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0,
        kmax=15.0, ksamples=30, norigins=-1, species=None, verbose=False,
-       grandcanonical=False, fmt=None, *input_files):
+       grandcanonical=False, fmt=None, species_layout=None, *input_files):
     """Spectral density,"""
     if verbose: setup_logging('postprocessing', level=20)
     for input_file in input_files:
         if trajectory_radius is None:
             trajectory_radius = input_file
         with Trajectory(input_file, fmt=fmt) as th:
+            if species_layout is not None:
+                th.register_callback(change_species, species_layout)
             if species is not None:
                 th.register_callback(filter_species, int(species))
             ids = distinct_species(th[-1].particle)
@@ -103,11 +111,13 @@ def ik(trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0,
 
 def msd(rmsd_target=-1.0, time_target=-1.0,
         time_target_fraction=-1.0, tsamples=30, norigins=50, sigma=1.0,
-        func=linear_grid, verbose=False, fmt=None, *input_files):
+        func=linear_grid, verbose=False, fmt=None, species_layout=None, *input_files):
     """Mean square displacement."""
     if verbose: setup_logging('postprocessing', level=20)
     for input_file in input_files:
         with Trajectory(input_file, fmt=fmt) as th:
+            if species_layout is not None:
+                th.register_callback(change_species, species_layout)
             dt = th.timestep
             if rmsd_target > 0:
                 t_grid = [0.0] + func(dt, time_when_msd_is(th, rmsd_target**2),
@@ -127,11 +137,13 @@ def msd(rmsd_target=-1.0, time_target=-1.0,
                 Partial(postprocessing.MeanSquareDisplacement, ids,
                         th, tgrid=t_grid, norigins=norigins, sigma=sigma).do()
 
-def vacf(time_target=1.0, tsamples=30, func=linear_grid, verbose=False, fmt=None, *input_files):
+def vacf(time_target=1.0, tsamples=30, func=linear_grid, verbose=False, fmt=None, species_layout=None, *input_files):
     """Velocity autocorrelation function."""
     if verbose: setup_logging('postprocessing', level=20)
     for input_file in input_files:
         with Trajectory(input_file, fmt=fmt) as th:
+            if species_layout is not None:
+                th.register_callback(change_species, species_layout)
             t_grid = [0.0] + func(th.timestep, time_target, tsamples)
             postprocessing.VelocityAutocorrelation(th, t_grid).do()
             ids = distinct_species(th[-1].particle)
@@ -139,11 +151,13 @@ def vacf(time_target=1.0, tsamples=30, func=linear_grid, verbose=False, fmt=None
                 Partial(postprocessing.VelocityAutocorrelation, ids, th, t_grid).do()
 
 def fkt(time_target=1e9, tsamples=60, kmin=7.0, kmax=7.0,
-        ksamples=1, dk=0.1, tag_by_name=False, func=logx_grid, verbose=False, fmt=None, *input_files):
+        ksamples=1, dk=0.1, tag_by_name=False, func=logx_grid, verbose=False, fmt=None, species_layout=None, *input_files):
     """Total intermediate scattering function."""
     if verbose: setup_logging('postprocessing', level=20)
     for input_file in input_files:
         with Trajectory(input_file, fmt=fmt) as th:
+            if species_layout is not None:
+                th.register_callback(change_species, species_layout)
             t_grid = [0.0] + func(th.timestep, time_target, tsamples)
             k_grid = linear_grid(kmin, kmax, ksamples)
             ids = distinct_species(th[0].particle)
@@ -152,11 +166,13 @@ def fkt(time_target=1e9, tsamples=60, kmin=7.0, kmax=7.0,
 
 def fskt(time_target=1e9, tsamples=60, kmin=7.0, kmax=8.0, ksamples=1,
          dk=0.1, nk=8, norigins=-1, tag_by_name=False, func=None,
-         fmt=None, verbose=False, *input_files):
+         fmt=None, species_layout=None, verbose=False, *input_files):
     """Self intermediate scattering function."""
     if verbose: setup_logging('postprocessing', level=20)
     for input_file in input_files:
         with Trajectory(input_file, fmt=fmt) as th:
+            if species_layout is not None:
+                th.register_callback(change_species, species_layout)
             if func is None:
                 func = logx_grid
                 t_grid = [0.0] + func(th.timestep, min(th.times[-1], time_target), tsamples)
