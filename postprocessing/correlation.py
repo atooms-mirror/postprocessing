@@ -110,7 +110,6 @@ class Correlation(object):
         # self.description = 'Self intermediate scattering function F_s(k,t)'
         # self.tag_description = 'of particles A'  # 'of radius field'
         # self.tag = 'A'
-
         self.trajectory = trj
         self.grid = grid
         self.variables = variables
@@ -132,6 +131,7 @@ class Correlation(object):
         self.cbk = []
         self.cbk_args = []
         self.cbk_kwargs = []
+        log.debug('%s for %s' % (self.description, self.trajectory.filename))
 
         # If update mode is on, we will only do the calculation if the trajectory
         # file is newer than any of the provided files
@@ -231,14 +231,20 @@ class Correlation(object):
             log.info('skip %s (%s) for %s' % (self.short_name, self.tag, self.trajectory.filename))
             return
         
+        log.debug('setup')
         from atooms.core.utils import Timer
-        t = Timer()
-        t.start()
+        t = [Timer(), Timer()]
+        t[0].start()
         self._setup_arrays()
+        t[0].stop()
+        log.debug('compute')
+        t[1].start()
         self._compute()
-        t.stop()
-        log.info('computed %s %s for %s in %.1f sec', self.short_name,
-                 self.tag, self.trajectory.filename, t.wall_time)
+        t[1].stop()
+        log.info('computed %s %s for %s in %.1f sec [setup:%.0f%%, compute: %.0f%%]', self.description,
+                 self.tag_description, self.trajectory.filename, t[0].wall_time + t[1].wall_time,
+                 t[0].wall_time / (t[0].wall_time + t[1].wall_time) * 100,
+                 t[1].wall_time / (t[0].wall_time + t[1].wall_time) * 100)
         try:
             self.analyze()
         except ImportError as e:

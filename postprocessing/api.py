@@ -4,7 +4,7 @@ import postprocessing
 from postprocessing.partial import Partial
 from atooms.core.utils import setup_logging
 from atooms.trajectory import Trajectory
-from atooms.trajectory.decorators import filter_species
+from atooms.trajectory.decorators import filter_species, change_species
 from atooms.trajectory.utils import time_when_msd_is
 from atooms.system.particle import distinct_species
 from .helpers import linear_grid, logx_grid
@@ -33,6 +33,7 @@ def test_sk():
 
 def gr(grandcanonical=False, fmt=None, show=False, norigins=-1, *input_files):
     """Radial distribution function."""
+    if verbose: setup_logging('postprocessing', level=20)
     for input_file in input_files:
         with Trajectory(input_file, fmt=fmt) as th:
             th._grandcanonical = grandcanonical
@@ -45,6 +46,7 @@ def sk(nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
        norigins=-1, species=None, grandcanonical=False, fmt=None,
        trajectory_field=None, field=None, *input_files):
     """Structure factor."""
+    if verbose: setup_logging('postprocessing', level=20)
     for input_file in input_files:
         with Trajectory(input_file, fmt=fmt) as th:
             if species is not None:
@@ -65,6 +67,7 @@ def skopti(nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
        norigins=-1, species=None, grandcanonical=False, fmt=None,
        trajectory_field=None, field=None, *input_files):
     """Structure factor."""
+    if verbose: setup_logging('postprocessing', level=20)
     for input_file in input_files:
         with Trajectory(input_file, fmt=fmt) as th:
             if species is not None:
@@ -85,6 +88,7 @@ def ik(trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0,
        kmax=15.0, ksamples=30, norigins=-1, species=None,
        grandcanonical=False, fmt=None, *input_files):
     """Spectral density,"""
+    if verbose: setup_logging('postprocessing', level=20)
     for input_file in input_files:
         if trajectory_radius is None:
             trajectory_radius = input_file
@@ -101,6 +105,7 @@ def msd(rmsd_target=-1.0, time_target=-1.0,
         time_target_fraction=-1.0, tsamples=30, norigins=50, sigma=1.0,
         func=linear_grid, fmt=None, *input_files):
     """Mean square displacement."""
+    if verbose: setup_logging('postprocessing', level=20)
     for input_file in input_files:
         with Trajectory(input_file, fmt=fmt) as th:
             dt = th.timestep
@@ -124,6 +129,7 @@ def msd(rmsd_target=-1.0, time_target=-1.0,
 
 def vacf(time_target=1.0, tsamples=30, func=linear_grid, fmt=None, *input_files):
     """Velocity autocorrelation function."""
+    if verbose: setup_logging('postprocessing', level=20)
     for input_file in input_files:
         with Trajectory(input_file, fmt=fmt) as th:
             t_grid = [0.0] + func(th.timestep, time_target, tsamples)
@@ -135,6 +141,7 @@ def vacf(time_target=1.0, tsamples=30, func=linear_grid, fmt=None, *input_files)
 def fkt(time_target=1e9, tsamples=60, kmin=7.0, kmax=7.0,
         ksamples=1, dk=0.1, tag_by_name=False, func=logx_grid, fmt=None, *input_files):
     """Total intermediate scattering function."""
+    if verbose: setup_logging('postprocessing', level=20)
     for input_file in input_files:
         with Trajectory(input_file, fmt=fmt) as th:
             t_grid = [0.0] + func(th.timestep, time_target, tsamples)
@@ -143,9 +150,11 @@ def fkt(time_target=1e9, tsamples=60, kmin=7.0, kmax=7.0,
             if len(ids) > 1:
                 Partial(postprocessing.IntermediateScattering, ids, th, k_grid, t_grid).do()
 
-def fskt(time_target=1e9, tsamples=60, kmin=7.0, kmax=8.0,
-         ksamples=1, dk=0.1, nk=8, norigins=-1, tag_by_name=False, func=None, fmt=None, *input_files):
+def fskt(time_target=1e9, tsamples=60, kmin=7.0, kmax=8.0, ksamples=1,
+         dk=0.1, nk=8, norigins=-1, tag_by_name=False, func=None,
+         fmt=None, verbose=False, *input_files):
     """Self intermediate scattering function."""
+    if verbose: setup_logging('postprocessing', level=20)
     for input_file in input_files:
         with Trajectory(input_file, fmt=fmt) as th:
             if func is None:
@@ -159,15 +168,33 @@ def fskt(time_target=1e9, tsamples=60, kmin=7.0, kmax=8.0,
             if len(ids) > 1:
                 Partial(postprocessing.SelfIntermediateScattering, ids, th, k_grid, t_grid, nk, dk=dk, norigins=norigins).do()
 
-def chi4qs(tsamples=60, a=0.3, fmt=None, *input_files):
+def chi4qs(tsamples=60, a=0.3, fmt=None, species_layout=None, total=False, *input_files):
     """Dynamic susceptibility of self overlap."""
+    if verbose: setup_logging('postprocessing', level=20)
     for input_file in input_files:
         with Trajectory(input_file, fmt=fmt) as th:
+            if species_layout is not None:
+                th.register_callback(change_species, species_layout)
             func = logx_grid
             time_target = th.total_time * 0.75
             t_grid = [0.0] + func(th.timestep, time_target, tsamples)
+            if total:
+                postprocessing.Chi4SelfOverlap(th, t_grid, a=a).do()
+            ids = distinct_species(th[0].particle)
+            if not total and len(ids) > 1:
+                Partial(postprocessing.Chi4SelfOverlap, ids, th, t_grid, a=a).do()
+
+def chi4qs_opti(tsamples=60, a=0.3, fmt=None, species_layout=None, *input_files):
+    """Dynamic susceptibility of self overlap."""
+    if verbose: setup_logging('postprocessing', level=20)
+    for input_file in input_files:
+        with Trajectory(input_file, fmt=fmt) as th:
+            if species_layout is not None:
+                th.register_callback(change_species, species_layout)
+            func = logx_grid
+            time_target = th.total_time * 0.75
+            t_grid = [0.0] + func(th.timestep, time_target, tsamples)
+            postprocessing.Chi4SelfOverlapOpti(th, t_grid, a=a).do()
             ids = distinct_species(th[0].particle)
             if len(ids) > 1:
-                Partial(postprocessing.Chi4SelfOverlap, ids, th, t_grid, a=a).do()
-            else:
-                postprocessing.Chi4SelfOverlap(th, t_grid, a=a).do()
+                Partial(postprocessing.Chi4SelfOverlapOpti, ids, th, t_grid, a=a).do()
