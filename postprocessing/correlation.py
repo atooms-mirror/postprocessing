@@ -98,12 +98,15 @@ def gcf_offset(f, grid, skip, t, x):
 
 
 UPDATE = False
+OUTPUT_PATH = '{trajectory.filename}.pp.{short_name}.{tag}'
 
 class Correlation(object):
 
     nbodies = 1
 
-    def __init__(self, trj, grid, variables='', short_name='', description='', phasespace=None):
+    def __init__(self, trj, grid, variables='', short_name='',
+                 description='', phasespace=None,
+                 output_path=None):
         # TODO: we could force trajectory cast if a string is passed
         # self.variables = ('k', 't')
         # self.short_name = 'fskt'
@@ -121,7 +124,7 @@ class Correlation(object):
             self._phasespace = []
         else:
             self._phasespace = phasespace
-        self.prefix = 'pp'
+        self.output_path = output_path if output_path is not None else OUTPUT_PATH
         self.tag = ''
         self.tag_description = ''
         self.comments = None # can be modified by user at run time
@@ -137,7 +140,7 @@ class Correlation(object):
         # file is newer than any of the provided files
         self._need_update = True
         if UPDATE:
-            if os.path.exists(self._output_file):
+            if os.path.exists(self._output_file) and self._output_file == '/dev/stdout':
                 if os.path.getmtime(self.trajectory.filename) < \
                    os.path.getmtime(self._output_file):
                     self._need_update = False
@@ -259,9 +262,15 @@ class Correlation(object):
 
     @property
     def _output_file(self):
-        filename = '.'.join([e for e in [self.trajectory.filename,
-                                         self.prefix, self.short_name,
-                                         self.tag] if len(e) > 0])
+        # Interpolate the output path string
+        if self.output_path is not None:
+            # Add self. prefix to all attributes
+            self.output_path.replace('{', '{self.')
+            filename = self.output_path.format(self)
+            # Strip unpleasant punctuation
+            for punct in ['.', '_', '-']:
+                filename = filename.replace(punct*2, punct)
+                filename = filename.strip(punct)
         return filename
 
     def read(self):
@@ -298,7 +307,7 @@ class Correlation(object):
             conj = ''
         comments = _dump(title='%s %s %s' % (self.description, conj, self.tag_description),
                          columns=columns,
-                         command='pp.py', version=__version__,
+                         command='atooms-pp', version=__version__,
                          description=None, note=None,
                          parents=self.trajectory.filename,
                          inline=False)
@@ -317,11 +326,9 @@ class Correlation(object):
             if len(analysis) > 0:
                 fh.write(analysis)
             numpy.savetxt(fh, dump, fmt="%g")
+            fh.flush()
 
-        # Keep a copy to show
-        self.results = open(self._output_file).read()
-
-    def do(self, show=False):
+    def do(self):
         if not self._need_update:
             return
         self.compute()
@@ -331,8 +338,6 @@ class Correlation(object):
             print 'Could not analyze due to missing modules, continuing...'
             print e.message
         self.write()
-        if show:
-            print self.results
 
     def __call__(self):
         self.do()

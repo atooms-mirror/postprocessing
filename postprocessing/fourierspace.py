@@ -289,13 +289,10 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
 
     def write(self):
         Correlation.write(self)
-        # TODO: refactor
-        filename = '.'.join([e for e in [self.trajectory.filename, 'pp', self.short_name, self.tag] if len(e)>0])
-        fileinfo = filename + '.tau'
-        if not self.output is sys.stdout:
-            out = open(fileinfo, 'w')
-        else:
+        if self._output_file == '/dev/stdout/':
             out = sys.stdout
+        else:
+            out = open(self._output_file + '.tau', 'w')
 
         # some header
         # custom writing of taus (could be refactored)

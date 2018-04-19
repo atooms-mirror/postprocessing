@@ -287,7 +287,7 @@ class Chi4SelfOverlapOpti(Correlation):
     def analyze(self):
         from .helpers import ifabsmm
         try:
-            self.results['tau_star'], self.results['chi4_star'] = ifabsmm(self.grid, self.value)[1]
+            self.results['peak time tau_star'], self.results['peal value chi4_star'] = ifabsmm(self.grid, self.value)[1]
         except ZeroDivisionError:
             print '# warning : could not find maximum'
             pass
@@ -454,9 +454,9 @@ class MeanSquareDisplacement(Correlation):
         # Get the time when MSD equals sigma**2
         try:
             from .helpers import feqc
-            self.results['tau_D'] = feqc(self.grid, self.value, self.sigma**2)[0]
+            self.results['diffusive time tau_D'] = feqc(self.grid, self.value, self.sigma**2)[0]
         except:
-            self.results['tau_D'] = None
+            self.results['diffusive time tau_D'] = None
 
         where = (numpy.array(self.value) > self.sigma**2) * \
             (numpy.array(self.value) < self.sigma_max**2)
