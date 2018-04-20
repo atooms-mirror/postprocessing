@@ -224,7 +224,7 @@ class Chi4SelfOverlap(Correlation):
     def analyze(self):
         from .helpers import ifabsmm
         try:
-            self.results['tau_star'], self.results['chi4_star'] = ifabsmm(self.grid, self.value)[1]
+            self.results['peak time tau_star'], self.results['peak height chi4_star'] = ifabsmm(self.grid, self.value)[1]
         except ZeroDivisionError:
             print '# warning : could not find maximum'
             pass
