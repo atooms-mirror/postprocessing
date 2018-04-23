@@ -207,8 +207,12 @@ class Chi4SelfOverlap(Correlation):
                 A += w
                 cnt += 1
             dt = self.trajectory.steps[off+i] - self.trajectory.steps[off]
-            A_av = A/cnt
-            A2_av = A2/cnt
+            if cnt > 0:
+                A_av = A/cnt
+                A2_av = A2/cnt
+            else:
+                A_av = 0
+                A2_av = 0
             self.grid.append(dt * self.trajectory.timestep)
             self.value.append((A2_av - A_av**2) / self._pos_unf[0].shape[0])
             self.average.value.append(A_av)

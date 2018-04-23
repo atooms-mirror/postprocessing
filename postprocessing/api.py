@@ -178,12 +178,15 @@ def fskt(time_target=1e9, tsamples=60, kmin=7.0, kmax=8.0, ksamples=1,
             Partial(postprocessing.SelfIntermediateScattering, ids,
                     th, k_grid, t_grid, nk, dk=dk, norigins=norigins).do()
 
-def chi4qs(tsamples=60, a=0.3, fmt=None, species_layout=None, total=False, *input_files, **global_args):
+def chi4qs(tsamples=60, a=0.3, time_target=-1.0, fmt=None, species_layout=None, total=False, *input_files, **global_args):
     """Dynamic susceptibility of self overlap."""
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
     for th in _get_trajectories(input_files, global_args):
         func = logx_grid
-        time_target = th.total_time * 0.75
+        if time_target > 0:
+            time_target = min(th.total_time, time_target)
+        else:
+            time_target = th.total_time * 0.75
         t_grid = [0.0] + func(th.timestep, time_target, tsamples)
         if total:
             postprocessing.Chi4SelfOverlap(th, t_grid, a=a).do()
