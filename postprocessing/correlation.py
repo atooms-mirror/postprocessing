@@ -263,10 +263,16 @@ class Correlation(object):
     @property
     def _output_file(self):
         # Interpolate the output path string
-        if self.output_path is not None:
+        if self.output_path is None:
+            filename = None
+        else:
             # Add self. prefix to all attributes
-            self.output_path = self.output_path.replace('{', '{0.')
-            filename = self.output_path.format(self)
+            path = self.output_path.replace('{', '{0.')
+            try:
+                filename = path.format(self)
+            except:
+                print path
+                raise
             # Strip unpleasant punctuation
             for punct in ['.', '_', '-']:
                 filename = filename.replace(punct*2, punct)

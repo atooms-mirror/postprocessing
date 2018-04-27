@@ -161,7 +161,7 @@ def fkt(time_target=1e9, tsamples=60, kmin=7.0, kmax=7.0, ksamples=1,
 
 def fskt(time_target=1e9, tsamples=60, kmin=7.0, kmax=8.0, ksamples=1,
          dk=0.1, nk=8, norigins=-1, tag_by_name=False, func=None,
-         fmt=None, species_layout=None, *input_files, **global_args):
+         fmt=None, species_layout=None, total=False, *input_files, **global_args):
     """Self intermediate scattering function."""
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
     for th in _get_trajectories(input_files, global_args):
@@ -171,8 +171,9 @@ def fskt(time_target=1e9, tsamples=60, kmin=7.0, kmax=8.0, ksamples=1,
         else:
             t_grid = [th.timestep*i for i in th.steps]
         k_grid = linear_grid(kmin, kmax, ksamples)
-        postprocessing.SelfIntermediateScattering(th, k_grid, t_grid,
-                                                  nk, dk=dk, norigins=norigins).do()
+        if total:
+            postprocessing.SelfIntermediateScattering(th, k_grid, t_grid,
+                                                      nk, dk=dk, norigins=norigins).do()
         ids = distinct_species(th[-1].particle)
         if len(ids) > 1:
             Partial(postprocessing.SelfIntermediateScattering, ids,
