@@ -624,7 +624,6 @@ class StructureFactorOptimized(FourierSpaceCorrelation):
                 i = 0
                 for k in k_selected[kk]:
                     ikvec[:, i] = self.kvec[knorm][k]
-                    ikvec[:, i] += 1
                     i += 1
                 rho = numpy.zeros(ikvec.shape[1], dtype=numpy.complex128)
                 fourierspace_module.sk_bare(expo_0, ikvec, rho)
