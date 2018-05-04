@@ -59,7 +59,7 @@ def gr(grandcanonical=False, fmt=None, species_layout=None,
         if len(ids) > 1:
             Partial(postprocessing.RadialDistributionFunction, ids, th).do()
 
-def sk(nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
+def sk(nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30, species_layout=None,
        norigins=-1, grandcanonical=False, fmt=None,
        trajectory_field=None, field=None, *input_files, **global_args):
     """Structure factor."""
@@ -77,7 +77,7 @@ def sk(nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
                     kmax=kmax, nk=nk,
                     ksamples=ksamples).do()
 
-def skopti(nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
+def skopti(nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30, species_layout=None,
        norigins=-1, species=None, grandcanonical=False, fmt=None,
        trajectory_field=None, field=None, *input_files, **global_args):
     """Structure factor."""
