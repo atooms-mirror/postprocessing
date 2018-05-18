@@ -43,7 +43,7 @@ def compute_neighbors(system, rcut):
     pos = system.dump('pos').transpose() # copy is not needed, order not needed.
     ids = [p.species for p in system.particle]
     box = system.cell.side
-    neighbors_wrap.neighbors(box, pos, ids, rcut, nn, neigh)
+    neighbors_wrap.neighbors('F', box, pos, ids, rcut, nn, neigh)
     for j, p in enumerate(system.particle):
         p.neighbors = neigh[j, 0:nn[j]]
     return system
@@ -53,11 +53,15 @@ def write_neighbors(fileinp, rcut, fileout='/dev/stdout', fmt=None):
     import neighbors_wrap
     from atooms.trajectory.decorators import change_species    
     with trj.Trajectory(fileinp, fmt=fmt) as t, \
-         TrajectoryNeighbors(fileout, 'w', fields=['neighbors']) as tout:
+         TrajectoryNeighbors(fileout, 'w') as tout:
+        tout.fields = ['id', 'pos', 'neighbors']
         t.add_callback(change_species, 'F')  # it must F not C
         tout.timestep = t.timestep
         for i, s in enumerate(t):
             s = compute_neighbors(s, rcut)
+            # This takes some time but otherwise the neighbors are not comma separated
+            for p in s.particle:
+                p.neighbors = ','.join([str(_) for _ in p.neighbors])
             tout.write_sample(s, t.steps[i])
 
 def all_neighbors(s):
