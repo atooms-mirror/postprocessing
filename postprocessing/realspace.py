@@ -377,6 +377,9 @@ class RadialDistributionFunction(Correlation):
         gr_all = []
         _, r = numpy.histogram([], bins=self.grid)
         for i in range(0, ncfg, self.skip):
+            self.side = self.trajectory.read(i).cell.side
+            if len(self._pos_0[i])==0 or len(self._pos_1[i])==0:
+                continue
             if self._pos_0 is self._pos_1:
                 gr = pairs_newton_hist(gr_kernel, self._pos_0[i], self._pos_1[i],
                                        self.side, r)
