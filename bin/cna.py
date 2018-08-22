@@ -24,17 +24,18 @@ from atooms.trajectory.decorators import change_species
 from atooms.core.utils import add_first_last_skip, fractional_slice, mkdir
 from postprocessing.neighbors import get_neighbors
 
-def cna(particle, neighbors):
-    # Add neighbor list to particles as sets
-    for p, n in zip(particle, neighbors):
-        p.neighbors = set(n)
-
+def cna(particle): #, neighbors):
     # For all i-j pairs find mutual CNA index
     data = []
     for i in range(len(particle)):
         ni = particle[i].neighbors
-        for j in ni:
-            if j<=i: continue
+        # for j in ni:
+        for j in range(i+1, len(particle)):
+            if j in ni:
+                bond = 1
+            else:
+                bond = 2
+            #if j<=i: continue
             nj = particle[j].neighbors
             # Mutual neighbors of i-j pair
             common = ni & nj
@@ -47,7 +48,8 @@ def cna(particle, neighbors):
                         bonds+=1
             # Accumulate CNA index
             #print 'cna (%s,%s): %d_%d_%d' % (i,j,1,len(common),bonds)
-            data.append('%d_%d_%d' % (1,len(common),bonds))
+            if not (len(common) == 0 and bonds == 0):
+                data.append('%d_%d_%d' % (bond, len(common), bonds))
     return data
 
 def main(args):
@@ -111,7 +113,9 @@ def main(args):
         for i, s in enumerate(t):
             if t.steps[i] in tn.steps:
                 ii = tn.steps.index(t.steps[i])
-                data = cna(s.particle, tn[ii].neighbors)
+                for p, pn in zip(s.particle, tn[ii].particle):
+                    p.neighbors = set(pn.neighbors)
+                data = cna(s.particle) #, tn[ii].neighbors)
                 # Store CNA in particle
                 for cna_value, p in zip(data, s.particle):
                     p.cna = cna_value
