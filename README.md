@@ -6,8 +6,6 @@ Python analysis tools for particle-based simulations.
 - Static and time-dependent correlation functions
   - real space: radial distribution function, mean square displacement, time-dependent overlap, ...
   - Fourier space: structure factor, intermediate scattering function, dynamic susceptibility, ...
-- Bond-orientational order
-- Common neighbors analysis
 
 This package relies on [atooms](https://gitlab.info-ufr.univ-montp2.fr/atooms/postprocessing.git) to read trajectory files.
 
@@ -47,7 +45,6 @@ Requirements
 ------------
 - numpy
 - [atooms](https://gitlab.info-ufr.univ-montp2.fr/atooms/postprocessing.git)
-- scipy (optional, for bond-orientational order calculations)
 
 Installation
 ------------

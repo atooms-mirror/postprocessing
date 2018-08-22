@@ -6,8 +6,8 @@ import random
 import unittest
 import numpy
 from atooms import trajectory
-import postprocessing
-from postprocessing.helpers import filter_species
+import atooms.postprocessing as postprocessing
+from atooms.postprocessing.helpers import filter_species
 
 # def filter_id(s, id):
 #     # TODO: should we do a copy or modify the system in place? Looks like modify it's ok

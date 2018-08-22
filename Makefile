@@ -1,4 +1,4 @@
-PROJECT = postprocessing
+PROJECT = atooms/postprocessing
 COMMIT = $$(git describe --abbrev=6 --always 2>/dev/null || echo 0)
 COMMIT_DIRTY = $$(git describe --abbrev=6 --dirty --always 2>/dev/null || echo 0)
 DATE=$$(git show -s --format=%ci $(COMMIT) | cut -d ' ' -f 1)
