@@ -61,40 +61,47 @@ def gcf(f, grid, skip, t, x):
     dt = sorted(acf.keys())
     return dt, [acf[t] / cnt[t] for t in dt], [cnt[t] for t in dt]
 
-def gcf_offset(f, grid, skip, t, x):
-    """Generalized correlation function.
-    Pass a function to apply to the data.
+def gcf_offset(f, grid, skip, t, x, mask=None):
+    """
+    Generalized correlation function
+
+    Pass a function `f` to apply to the data `x`.
+
+    Optionnally, filter the entries at time `t[i0]` according to `mask[i0]`.
+
     Exemple: mean square displacement.
     """
     # Calculate the correlation between time t(i0) and t(i0+i)
     # for all possible pairs (i0,i) provided by grid
-    acf = defaultdict(float)
-    cnt = defaultdict(int)
-    for off, i in grid:
-        for i0 in xrange(off, len(x)-i-skip, skip):
-            # Get the actual time difference
-            dt = t[i0+i] - t[i0]
-            acf[dt] += f(x[i0+i], x[i0])
-            cnt[dt] += 1
+    if mask is None:
+        acf = defaultdict(float)
+        cnt = defaultdict(int)
+        # Standard calculation
+        for off, i in grid:
+            for i0 in xrange(off, len(x)-i-skip, skip):
+                # Get the actual time difference
+                dt = t[i0+i] - t[i0]
+                acf[dt] += f(x[i0+i], x[i0])
+                cnt[dt] += 1
 
-    # Return the ACF with the time differences sorted
-    dt = sorted(acf.keys())
-    return dt, [acf[t] / cnt[t] for t in dt] #, [cnt[t] for t in dt]
+        # Return the ACF with the time differences sorted
+        dt = sorted(acf.keys())
+        return dt, [acf[t] / cnt[t] for t in dt] #, [cnt[t] for t in dt]
 
-# TODO: drop this dead code
-# def gcf_offset_bin(f, grid, skip, t, x):
-#     """Generalized correlation function.
-#     Pass a function to apply to the data.
-#     Exemple: mean square displacement.
-#     """
-#     # Calculate the correlation between time t(i0) and t(i0+i)
-#     # for all possible pairs (i0,i) provided by grid
-#     from pyutils.histogram import Histogram
-#     acf = Histogram()
-#     for off, i in grid:
-#         for i0 in xrange(off, len(x)-i-skip, skip):
-#             acf.add([(t[i0+i] - t[i0], f(x[i0+i], x[i0]) / 0.1)])
-#     return acf.grid, acf.value
+    else:
+        acf = defaultdict(float)
+        cnt = defaultdict(list)
+        # Filter data at time t_0 according to boolean mask
+        for off, i in grid:
+            for i0 in xrange(off, len(x)-i-skip, skip):
+                # Get the actual time difference
+                dt = t[i0+i] - t[i0]
+                acf[dt] += f(x[i0+i][mask[i0]], x[i0][mask[i0]])
+                cnt[dt].append(1)  #len(mask[i0]))
+
+        # Return the ACF with the time differences sorted
+        dt = sorted(acf.keys())
+        return dt, [acf[t] / sum([cnt[t] for t in dt])] #, [cnt[t] for t in dt]
 
 
 UPDATE = False
@@ -191,7 +198,8 @@ class Correlation(object):
         for data in [self._pos]:
             if len(data) > 0:
                 if 0 in [len(p) for p in self._pos]:
-                    raise ValueError('cannot handle null samples in GC trajectory')
+                    pass
+                    #raise ValueError('cannot handle null samples in GC trajectory')
 
     def _setup_arrays_twobody(self):
         if len(self.cbk) <= 1:
@@ -226,7 +234,8 @@ class Correlation(object):
         # have non-zero particles and raise an exception.
         for data in [self._pos_0, self._pos_1]:
             if 0 in [len(p) for p in data]:
-                raise ValueError('cannot handle null samples in GC trajectory')
+                #raise ValueError('cannot handle null samples in GC trajectory')
+                pass
 
     def compute(self):
         # Log
