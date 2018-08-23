@@ -148,7 +148,7 @@ def vacf(time_target=1.0, tsamples=30, func=linear_grid, fmt=None,
             Partial(postprocessing.VelocityAutocorrelation, ids, th, t_grid).do()
 
 def fkt(time_target=1e9, tsamples=60, kmin=7.0, kmax=7.0, ksamples=1,
-        dk=0.1, tag_by_name=False, func=logx_grid, fmt=None,
+        dk=0.1, nk=100, norigins=-1, tag_by_name=False, func=logx_grid, fmt=None,
         species_layout=None, *input_files, **global_args):
     """Total intermediate scattering function."""
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
@@ -157,7 +157,8 @@ def fkt(time_target=1e9, tsamples=60, kmin=7.0, kmax=7.0, ksamples=1,
         k_grid = linear_grid(kmin, kmax, ksamples)
         ids = distinct_species(th[0].particle)
         if len(ids) > 1:
-            Partial(postprocessing.IntermediateScattering, ids, th, k_grid, t_grid).do()
+            Partial(postprocessing.IntermediateScattering, ids, th, k_grid, t_grid,
+                    nk=nk, dk=dk).do()
 
 def fskt(time_target=1e9, tsamples=60, kmin=7.0, kmax=8.0, ksamples=1,
          dk=0.1, nk=8, norigins=-1, tag_by_name=False, func=None,
@@ -169,7 +170,7 @@ def fskt(time_target=1e9, tsamples=60, kmin=7.0, kmax=8.0, ksamples=1,
             func = logx_grid
             t_grid = [0.0] + func(th.timestep, min(th.times[-1], time_target), tsamples)
         else:
-            t_grid = [th.timestep*i for i in th.steps]
+            t_grid = [th.timestep*i for i in th.steps]        
         k_grid = linear_grid(kmin, kmax, ksamples)
         if total:
             postprocessing.SelfIntermediateScattering(th, k_grid, t_grid,
