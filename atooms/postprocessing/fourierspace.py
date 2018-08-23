@@ -169,7 +169,7 @@ class FourierSpaceCorrelation(Correlation):
     def _decimate_k(self):
         """
         Pick up a random, unique set of nk vectors out ot the avilable
-        ones # without exceeding maximum number of vectors in shell
+        ones without exceeding maximum number of vectors in shell
         nkmax.
         """
         # Setting the seed here once so as to get the same set
