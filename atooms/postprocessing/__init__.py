@@ -14,4 +14,8 @@ from .msd import *
 from .qt import *
 from .vacf import *
 
-from .fourierspace import *
+# Real space correlation functions
+from .fkt import *
+from .ik import *
+from .s4kt import *
+from .sk import *
