@@ -5,5 +5,13 @@ import logging
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 from .partial import *
-from .realspace import *
+
+# Real space correlation functions
+from .alpha2 import *
+from .chi4t import *
+from .gr import *
+from .msd import *
+from .qt import *
+from .vacf import *
+
 from .fourierspace import *
