@@ -51,7 +51,7 @@ def gcf(f, grid, skip, t, x):
     cnt = defaultdict(int)
     for i in grid:
         # Note: len(x) gives x.shape[0]
-        for i0 in xrange(0, len(x)-i-1, skip):
+        for i0 in range(0, len(x)-i-1, skip):
             # Get the actual time difference
             dt = t[i0+i] - t[i0]
             acf[dt] += f(x[i0+i], x[i0])
@@ -78,7 +78,7 @@ def gcf_offset(f, grid, skip, t, x, mask=None):
         cnt = defaultdict(int)
         # Standard calculation
         for off, i in grid:
-            for i0 in xrange(off, len(x)-i-skip, skip):
+            for i0 in range(off, len(x)-i-skip, skip):
                 # Get the actual time difference
                 dt = t[i0+i] - t[i0]
                 acf[dt] += f(x[i0+i], x[i0])
@@ -93,7 +93,7 @@ def gcf_offset(f, grid, skip, t, x, mask=None):
         cnt = defaultdict(list)
         # Filter data at time t_0 according to boolean mask
         for off, i in grid:
-            for i0 in xrange(off, len(x)-i-skip, skip):
+            for i0 in range(off, len(x)-i-skip, skip):
                 # Get the actual time difference
                 dt = t[i0+i] - t[i0]
                 acf[dt] += f(x[i0+i][mask[i0]], x[i0][mask[i0]])
@@ -280,7 +280,7 @@ class Correlation(object):
             try:
                 filename = path.format(self)
             except:
-                print path
+                print(path)
                 raise
             # Strip unpleasant punctuation
             for punct in ['.', '_', '-']:
@@ -302,10 +302,16 @@ class Correlation(object):
         inp.close()
 
     def write(self):
+        def is_iterable(maybe_iterable):
+            try:
+                iter(maybe_iterable)
+            except TypeError:
+                return False
+            else:
+                return True
+
         # TODO: it is probably the compute method that should be responsible for dumping grids appropriately
-        if (isinstance(self.grid[0], list) or \
-            isinstance(self.grid[0], numpy.ndarray)) and \
-            len(self.grid) == 2:
+        if is_iterable(self.grid[0]) and len(self.grid) == 2:
             x = numpy.array(self.grid[0]).repeat(len(self.value[0]))
             y = numpy.array(self.grid[1] * len(self.grid[0]))
             z = numpy.array(self.value).flatten()
@@ -333,7 +339,7 @@ class Correlation(object):
 
         # Analyze results
         analysis = ""
-        for x, f in self.results.iteritems():
+        for x, f in self.results.items():
             if f is not None:
                 analysis += '# %s: %s\n' % (x, f)
 
@@ -352,8 +358,8 @@ class Correlation(object):
         try:
             self.analyze()
         except ImportError as e:
-            print 'Could not analyze due to missing modules, continuing...'
-            print e.message
+            print('Could not analyze due to missing modules, continuing...')
+            print(e.message)
         self.write()
 
     def __call__(self):
