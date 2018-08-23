@@ -1,7 +1,7 @@
 """Post processing API."""
 
-import postprocessing
-from postprocessing.partial import Partial
+import atooms.postprocessing as postprocessing
+from atooms.postprocessing.partial import Partial
 from atooms.trajectory import Trajectory
 from atooms.trajectory.decorators import filter_species, change_species
 from atooms.trajectory.utils import time_when_msd_is

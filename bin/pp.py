@@ -6,8 +6,8 @@ import argh
 import argparse
 from atooms.core.utils import setup_logging
 from atooms.core.utils import add_first_last_skip
-import postprocessing
-from postprocessing.api import msd, vacf, fkt, fskt, gr, sk, skopti, chi4qs, ik, chi4qs_opti
+import atooms.postprocessing as postprocessing
+from atooms.postprocessing.api import msd, vacf, fkt, fskt, gr, sk, skopti, chi4qs, ik, chi4qs_opti
 
 
 # We add some global some flags. For backward compatibility, we keep

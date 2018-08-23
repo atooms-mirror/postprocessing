@@ -2,8 +2,8 @@
 
 import sys
 import numpy
-import postprocessing
-from postprocessing.helpers import linear_grid, logx_grid
+import atooms.postprocessing
+from atooms.postprocessing.helpers import linear_grid, logx_grid
 
 def main(fname):
     x = numpy.loadtxt(sys.stdin if fname=='-' else fname, unpack=True)
