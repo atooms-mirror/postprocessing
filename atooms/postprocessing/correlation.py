@@ -302,8 +302,10 @@ class Correlation(object):
         inp.close()
 
     def write(self):
-        # TODO: it is probably the compute method that should be responsible for dumping grids appropriately, this would make the work here easier. Grouping with \n\n can be done with bash group
-        if len(self.grid) == 2:
+        # TODO: it is probably the compute method that should be responsible for dumping grids appropriately
+        if (isinstance(self.grid[0], list) or \
+            isinstance(self.grid[0], numpy.ndarray)) and \
+            len(self.grid) == 2:
             x = numpy.array(self.grid[0]).repeat(len(self.value[0]))
             y = numpy.array(self.grid[1] * len(self.grid[0]))
             z = numpy.array(self.value).flatten()
