@@ -90,7 +90,7 @@ class TestRealSpace(unittest.TestCase):
         self.assertLess(deviation(gr[21:25], ref[('A', 'B')]), 4e-2)
 
     def test_gr_partial_2(self):
-        from postprocessing.partial import Partial
+        from atooms.postprocessing.partial import Partial
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         ts = trajectory.TrajectoryXYZ(f)
         ref = {}
