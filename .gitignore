@@ -1,11 +1,9 @@
 # Ignore compilation objects
 *.pyc
 
-reference
-
 # Ignore version file in package.
 # It will be updated upon build/install
-postprocessing/_commit.py
+atooms/postprocessing/_commit.py
 
 dist
 build
@@ -14,3 +12,5 @@ MANIFEST
 
 *.so
 data/*.pp.*
+.tox/
+
