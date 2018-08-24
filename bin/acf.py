@@ -7,11 +7,11 @@ from atooms.postprocessing.helpers import linear_grid, logx_grid
 
 def main(fname):
     x = numpy.loadtxt(sys.stdin if fname=='-' else fname, unpack=True)
-    t_grid = range(0, len(x), 10)
-    t = range(len(x))
+    t_grid = list(range(0, len(x), 10))
+    t = list(range(len(x)))
     x, y, z = postprocessing.correlation.acf(t_grid, 1, t, x)
     for xi, yi in zip(x, y):
-        print xi, yi
+        print(xi, yi)
 
 if __name__ == '__main__':
 

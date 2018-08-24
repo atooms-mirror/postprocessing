@@ -68,7 +68,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
                 for kkk in self.k_selected[kk]:
                     ik = self.kvec[knorm][kkk]
                     for off, i in self._discrete_tgrid:
-                        for i0 in xrange(off, x.shape[0]-i, skip):
+                        for i0 in range(off, x.shape[0]-i, skip):
                             # Get the actual time difference. steps must be accessed efficiently (cached!)
                             # TODO: fix x.shape[0] in loop and x.shape[1] in normalization everywhere!
                             dt = self.trajectory.steps[i0+i] - self.trajectory.steps[i0]
@@ -174,7 +174,7 @@ class IntermediateScattering(FourierSpaceCorrelation):
             for j in k_selected[kk]:
                 ik = self.kvec[knorm][j]
                 for off, i in self._discrete_tgrid:
-                    for i0 in xrange(off, len(rho_0)-i, skip):
+                    for i0 in range(off, len(rho_0)-i, skip):
                         # Get the actual time difference
                         # TODO: It looks like the order of i0 and ik lopps should be swapped
                         dt = self.trajectory.steps[i0+i] - self.trajectory.steps[i0]

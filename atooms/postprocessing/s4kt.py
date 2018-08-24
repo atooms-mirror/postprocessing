@@ -38,7 +38,7 @@ class S4ktOverlap(FourierSpaceCorrelation):
         nsteps = len(self._pos)
         side = self.trajectory[0].cell.side
         kmax = max(self.kvec.keys()) + self.dk
-        nt = xrange(t_off, len(self._pos)-t, skip)
+        nt = range(t_off, len(self._pos)-t, skip)
         W = {}
         for i_0, t_0 in enumerate(nt):
             expo = expo_sphere(self.k0, kmax, self._pos[t_0])

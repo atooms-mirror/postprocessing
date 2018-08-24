@@ -17,7 +17,7 @@ def pairs_numpy(f, x, y, L):
     array of f values.
     """
     fxy = numpy.ndarray((len(y), len(x)))
-    for i in xrange(fxy.shape[0]):
+    for i in range(fxy.shape[0]):
         fxy[i, :] = f(x[:], y[i], L)
     return fxy
 

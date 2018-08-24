@@ -278,7 +278,7 @@ class StructureFactorStats(FourierSpaceCorrelation):
         nsteps = len(self._pos)
         kmax = max(self.kvec.keys()) + self.dk
         self._mean = []; self._var = []; self._skew = []
-        self.grid = range(0, nsteps, self.skip)
+        self.grid = list(range(0, nsteps, self.skip))
         for i in range(0, nsteps, self.skip):
             cnt = 0
             sk = []
@@ -302,4 +302,4 @@ class StructureFactorStats(FourierSpaceCorrelation):
 """ % (numpy.average(self._mean), numpy.average(self._var), numpy.average(self._skew))
         with open(self._output_file, 'w') as fh:
             fh.write(comments)
-            numpy.savetxt(fh, numpy.array(zip(self.grid, self._var, self._skew)), fmt="%g")
+            numpy.savetxt(fh, numpy.array(list(zip(self.grid, self._var, self._skew))), fmt="%g")

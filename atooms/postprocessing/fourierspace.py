@@ -13,7 +13,8 @@ from collections import defaultdict
 from atooms.trajectory.utils import check_block_size, is_cell_variable
 from .helpers import linear_grid, logx_grid, adjust_skip, setup_t_grid
 from .correlation import Correlation
-from .realspace import self_overlap
+from .qt import self_overlap
+
 
 def expo_sphere(k0, kmax, pos):
 
@@ -35,13 +36,13 @@ def expo_sphere(k0, kmax, pos):
     expo = numpy.ndarray((len(pos), ) + pos[0].shape + (2*nk_max+1, ), numpy.complex)
     expo[..., nk_max] = numpy.complex(1.0, 0.0)
     # First fill positive k
-    for j in xrange(pos[0].shape[-1]):
+    for j in range(pos[0].shape[-1]):
         expo[..., j, nk_max+1] = numpy.exp(im * k0[j] * pos[..., j])
         expo[..., j, nk_max-1] = expo[..., j, nk_max+1].conjugate()
-        for i in xrange(2, nk_max):
+        for i in range(2, nk_max):
             expo[..., j, nk_max+i] = expo[..., j, nk_max+i-1] * expo[..., j, nk_max+1]
     # Then take complex conj for negative ones
-    for i in xrange(2, nk_max+1):
+    for i in range(2, nk_max+1):
         expo[..., nk_max+i] = expo[..., nk_max+i-1] * expo[..., nk_max+1]
         expo[..., nk_max-i] = expo[..., nk_max+i].conjugate()
 
@@ -58,13 +59,13 @@ def expo_sphere_safe(k0, kmax, pos):
     expo = numpy.ndarray(pos.shape + (2*nk_max+1, ), numpy.complex)
     expo[:, :, :, nk_max] = numpy.complex(1.0, 0.0)
 
-    for j in xrange(ndims):
+    for j in range(ndims):
         expo[:, :, j, nk_max+1] = numpy.exp(im*k0[j]*pos[:, :, j])
         expo[:, :, j, nk_max-1] = expo[:, :, j, nk_max+1].conjugate()
-        for i in xrange(2, nk_max):
+        for i in range(2, nk_max):
             expo[:, :, j, nk_max+i] = expo[:, :, j, nk_max+i-1] * expo[:, :, j, nk_max+1]
 
-    for i in xrange(2, nk_max+1):
+    for i in range(2, nk_max+1):
         expo[:, :, :, nk_max+i] = expo[:, :, :, nk_max+i-1] * expo[:, :, :, nk_max+1]
         expo[:, :, :, nk_max-i] = expo[:, :, :, nk_max+i].conjugate()
 
@@ -141,9 +142,9 @@ class FourierSpaceCorrelation(Correlation):
         kbin_max = 1 + int(kmax / min(k0))
         # TODO: it would be more elegant to define an iterator over ix, iy, iz for sphere, hemisphere, ... unless kmax is very high it might be more efficient to operate on a 3d grid to construct the vectors
         kmax_sq = kmax**2
-        for ix in xrange(-kbin_max, kbin_max+1):
-            for iy in xrange(-kbin_max, kbin_max+1):
-                for iz in xrange(-kbin_max, kbin_max+1):
+        for ix in range(-kbin_max, kbin_max+1):
+            for iy in range(-kbin_max, kbin_max+1):
+                for iz in range(-kbin_max, kbin_max+1):
                     # Slightly faster and more explicit than
                     #   ksq = sum([(x*y)**2 for x, y in zip(k0, [ix, iy, iz])])
                     ksq = ((k0[0]*ix)**2 + (k0[1]*iy)**2 + (k0[2]*iz)**2)
@@ -179,7 +180,7 @@ class FourierSpaceCorrelation(Correlation):
         k_selected = []
         for knorm in k_sorted:
             nkmax = len(self.kvec[knorm])
-            k_selected.append(random.sample(range(nkmax), min(self.nk, nkmax)))
+            k_selected.append(random.sample(list(range(nkmax)), min(self.nk, nkmax)))
         return k_sorted, k_selected
 
     def report(self, k_sorted, k_selected):

@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 
 
 def partition(inp, nbl):
-    nel = len(inp) / nbl
+    nel = len(inp) // nbl
     a = []
     for i in range(nbl):
         a.append(slice(i * nel, (i+1) * nel))

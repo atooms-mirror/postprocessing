@@ -36,7 +36,7 @@ def pairs_newton_hist(f, x, y, L, bins):
     for ib in range(0, len(y)-1, bl):
         fxy = []
         # batch must never exceed len(y)-1
-        for i in xrange(ib, min(ib+bl, len(y)-1)):
+        for i in range(ib, min(ib+bl, len(y)-1)):
             for value in f(x[i+1:], y[i], L):
                 fxy.append(value)
         hist_tmp, bins = numpy.histogram(fxy, bins)
@@ -48,7 +48,7 @@ def pairs_hist(f, x, y, L, bins):
     |hist| histogram using the |bins| bin edges.
     """
     hist, bins = numpy.histogram([], bins)
-    for i in xrange(len(y)):
+    for i in range(len(y)):
         fxy = f(x[:], y[i], L)
         hist_tmp, bins = numpy.histogram(fxy, bins)
         hist += hist_tmp

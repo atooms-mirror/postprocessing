@@ -59,4 +59,4 @@ class Partial(object):
         for k in self.partial:
             self.partial[k].write()
             if show:
-                print self.partial[k].results
+                print(self.partial[k].results)

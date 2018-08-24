@@ -18,7 +18,7 @@ from atooms.postprocessing.helpers import filter_species
 
 def filter_random(s, n):
     """Keep only n particles"""
-    ids = random.sample(xrange(len(s.particle)), len(s.particle)-n)
+    ids = random.sample(range(len(s.particle)), len(s.particle)-n)
     nop = [s.particle[i] for i in ids]
     for p in nop:
         s.particle.remove(p)
@@ -120,6 +120,7 @@ class TestFourierSpace(unittest.TestCase):
         self.assertLess(deviation(p.value, ref_value), 0.04)
 
     def test_sk_fixgrid(self):
+        # TODO: this test fails with python 3 (small deviations)
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         t = trajectory.TrajectoryXYZ(f)
         p = postprocessing.StructureFactor(t, [4, 7.3, 10])
@@ -139,16 +140,17 @@ class TestFourierSpace(unittest.TestCase):
             return s
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         with trajectory.TrajectoryXYZ(f) as t:
-            p = postprocessing.StructureFactor(t, range(1,10))
+            p = postprocessing.StructureFactor(t, list(range(1,10)))
             p.compute()
         with trajectory.TrajectoryXYZ(f) as t:
             t.add_callback(deformation, 1e-3)
-            p = postprocessing.StructureFactor(t, range(1,10))
+            p = postprocessing.StructureFactor(t, list(range(1,10)))
             p.compute()
         # for x, y, z, w in zip(p.grid, p1.grid, p.value, p1.value):
         #     print x, y, z, w
 
     def test_sk_partial(self):
+        # TODO: this test fails with python 3 (small deviations)
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         ref_value = {'A': numpy.array([0.078218, 2.896436, 0.543363]),
                      'B': numpy.array([0.867164, 0.869868, 0.981121]),
@@ -179,6 +181,7 @@ class TestFourierSpace(unittest.TestCase):
         Test that S(k) with a field that is 0 if id=A and 1 if id=B gives
         the BB partial structure factor.
         """
+        # TODO: this test fails with python 3 because of a weird issue with xyz trajectory in atooms (_fallback)
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         ff = os.path.join(self.reference_path, 'kalj-small-field.xyz')
         t = trajectory.TrajectoryXYZ(f)
@@ -195,7 +198,7 @@ class TestFourierSpace(unittest.TestCase):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         with trajectory.TrajectoryXYZ(f) as t:
             s = t[0]
-            ids = random.sample(xrange(len(s.particle)), len(s.particle))
+            ids = random.sample(range(len(s.particle)), len(s.particle))
             t.add_callback(filter_selected_ids, ids)
             p = postprocessing.IntermediateScattering(t, [4, 7.3, 10], nk=40)
             p.compute()

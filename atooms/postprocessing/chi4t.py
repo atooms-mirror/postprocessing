@@ -43,7 +43,7 @@ class Chi4SelfOverlap(Correlation):
         self.grid = []
         for off, i in self._discrete_tgrid:
             A, A2, cnt = 0.0, 0.0, 0
-            for i0 in xrange(off, len(self._pos_unf)-i-self.skip, self.skip):
+            for i0 in range(off, len(self._pos_unf)-i-self.skip, self.skip):
                 w = f(self._pos_unf[i0], self._pos_unf[i0+i])
                 A2 += w**2
                 A += w
@@ -72,7 +72,7 @@ class Chi4SelfOverlap(Correlation):
         try:
             self.results['peak time tau_star'], self.results['peak height chi4_star'] = ifabsmm(self.grid, self.value)[1]
         except ZeroDivisionError:
-            print '# warning : could not find maximum'
+            print('# warning : could not find maximum')
             pass
 
 
@@ -96,7 +96,6 @@ class Chi4SelfOverlapOpti(Correlation):
                                     'Variance self overlap not normalized')
 
     def _compute(self):
-        print 'compute', self
         # TODO: write general susceptibility
         # At this stage, we must copy over the tags
         self.average.tag, self.variance.tag = self.tag, self.tag
@@ -110,7 +109,7 @@ class Chi4SelfOverlapOpti(Correlation):
         self.grid = []
         for off, i in self._discrete_tgrid:
             A, A2, cnt = 0.0, 0.0, 0
-            for i0 in xrange(off, len(self._pos_unf)-i-self.skip, self.skip):
+            for i0 in range(off, len(self._pos_unf)-i-self.skip, self.skip):
                 w = f(self._pos_unf[i0], self._pos_unf[i0+i])
                 A2 += w**2
                 A += w
@@ -123,7 +122,6 @@ class Chi4SelfOverlapOpti(Correlation):
             self.average.value.append(A_av)
             self.variance.value.append(A2_av)
         self.average.grid, self.variance.grid = self.grid, self.grid
-        print 'done!'
 
     def write(self):
         # We subclass this to also write down qsu and qsu2
@@ -136,5 +134,5 @@ class Chi4SelfOverlapOpti(Correlation):
         try:
             self.results['peak time tau_star'], self.results['peal value chi4_star'] = ifabsmm(self.grid, self.value)[1]
         except ZeroDivisionError:
-            print '# warning : could not find maximum'
+            print('# warning : could not find maximum')
             pass
