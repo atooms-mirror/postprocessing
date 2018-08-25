@@ -189,4 +189,4 @@ def chi4qs_opti(tsamples=60, a=0.3, fmt=None, species_layout=None, *input_files,
         postprocessing.Chi4SelfOverlapOpti(th, t_grid, a=a).do()
         ids = distinct_species(th[0].particle)
         if len(ids) > 1:
-            Partial(postprocessing.Chi4SelfOverlapOpti, ids, th, t_grid, a=a).do()
+            Partial(postprocessing.Chi4SelfOverlapOptimized, ids, th, t_grid, a=a).do()

@@ -10,7 +10,7 @@ from .correlation import Correlation
 from .helpers import adjust_skip, setup_t_grid
 from .qt import self_overlap
 
-__all__ = ['Chi4SelfOverlap', 'Chi4SelfOverlapOpti']
+__all__ = ['Chi4SelfOverlap', 'Chi4SelfOverlapOptimized']
 
 
 class Chi4SelfOverlap(Correlation):
@@ -81,7 +81,7 @@ class Chi4SelfOverlap(Correlation):
             pass
 
 
-class Chi4SelfOverlapOpti(Correlation):
+class Chi4SelfOverlapOptimized(Correlation):
 
     """
     Four-point dynamic susceptibility from the time-dependent self
@@ -137,7 +137,7 @@ class Chi4SelfOverlapOpti(Correlation):
 
     def write(self):
         # We subclass this to also write down qsu and qsu2
-        super(Chi4SelfOverlapOpti, self).write()
+        super(Chi4SelfOverlapOptimized, self).write()
         self.average.write()
         self.variance.write()
 
