@@ -1,7 +1,7 @@
 # This file is part of atooms
 # Copyright 2010-2018, Daniele Coslovich
 
-""" """
+"""Non-Gaussian parameter."""
 
 import numpy
 
@@ -22,6 +22,8 @@ def non_gaussian_parameter(x, y):
 
 
 class NonGaussianParameter(Correlation):
+
+    """Non-Gaussian parameter."""
 
     def __init__(self, trajectory, tgrid=None, norigins=50, nsamples=30):
         Correlation.__init__(self, trajectory, tgrid, 't', 'alpha2',

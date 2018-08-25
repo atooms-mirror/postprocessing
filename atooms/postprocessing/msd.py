@@ -1,7 +1,7 @@
 # This file is part of atooms
 # Copyright 2010-2018, Daniele Coslovich
 
-""" """
+"""Mean square displacement."""
 
 import numpy
 import logging
@@ -24,6 +24,8 @@ def partition(inp, nbl):
 
 
 class MeanSquareDisplacement(Correlation):
+
+    """Mean square displacement."""
 
     def __init__(self, trajectory, tgrid=None, sigma=1.0, norigins=50,
                  nsamples=30, sigma_max=1e100, nblocks=1):

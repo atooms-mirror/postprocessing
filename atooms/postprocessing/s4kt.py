@@ -1,7 +1,7 @@
 # This file is part of atooms
 # Copyright 2010-2018, Daniele Coslovich
 
-""" """
+"""Four-point dynamic structure factor."""
 
 import numpy
 
@@ -13,6 +13,8 @@ __all__ = ['S4ktOverlap']
 
 
 class S4ktOverlap(FourierSpaceCorrelation):
+
+    """Four-point dynamic structure factor from time-dependent self overlap."""
 
     # TODO: refactor a S4k base correlation that forces to implement tabulat method (e.g. overlap, Q_6, voronoi ...)
     # TODO: should we drop this instead and rely on F(k,t) with grandcanonical

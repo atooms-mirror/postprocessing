@@ -1,7 +1,7 @@
 # This file is part of atooms
 # Copyright 2010-2018, Daniele Coslovich
 
-""" """
+"""Intermediate scattering function."""
 
 import sys
 import numpy
@@ -16,6 +16,8 @@ __all__ = ['SelfIntermediateScattering', 'IntermediateScattering']
 
 
 class SelfIntermediateScattering(FourierSpaceCorrelation):
+
+    """Self part of the intermediate scattering function."""
 
     #TODO: xyz files are 2 slower than hdf5 where
     def __init__(self, trajectory, kgrid=None, tgrid=None, nk=8, tsamples=60,
@@ -116,6 +118,8 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
 
 
 class IntermediateScattering(FourierSpaceCorrelation):
+
+    """Coherent intermediate scattering function."""
 
     nbodies = 2
 

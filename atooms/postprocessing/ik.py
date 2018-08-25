@@ -1,7 +1,7 @@
 # This file is part of atooms
 # Copyright 2010-2018, Daniele Coslovich
 
-""" """
+"""Free volume spectral density."""
 
 import numpy
 

@@ -1,7 +1,7 @@
 # This file is part of atooms
 # Copyright 2010-2018, Daniele Coslovich
 
-""" """
+"""Radial distribution function."""
 
 import numpy
 import math
@@ -56,6 +56,8 @@ def pairs_hist(f, x, y, L, bins):
 
 
 class RadialDistributionFunction(Correlation):
+
+    """Radial distribution function."""
 
     nbodies = 2
 

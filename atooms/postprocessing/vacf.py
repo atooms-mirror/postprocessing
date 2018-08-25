@@ -1,7 +1,7 @@
 # This file is part of atooms
 # Copyright 2010-2018, Daniele Coslovich
 
-""" """
+"""Velocity autocorrelation function."""
 
 import numpy
 
@@ -12,6 +12,8 @@ __all__ = ['VelocityAutocorrelation']
 
 
 class VelocityAutocorrelation(Correlation):
+
+    """Velocity autocorrelation function."""
 
     def __init__(self, trajectory, tgrid):
         Correlation.__init__(self, trajectory, tgrid, 't', 'vacf',

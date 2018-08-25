@@ -1,7 +1,7 @@
 # This file is part of atooms
 # Copyright 2010-2018, Daniele Coslovich
 
-""" """
+"""Time-dependent overlap."""
 
 import numpy
 
@@ -36,6 +36,8 @@ def self_overlap(r0, r1, side, a_square):
 
 class CollectiveOverlap(Correlation):
 
+    """Time-dependent collective overlap."""
+
     # TODO: why dont we use PBCed distance here?!
 
     def __init__(self, trajectory, grid=None, nsamples=60, a=0.3,
@@ -58,6 +60,8 @@ class CollectiveOverlap(Correlation):
 
 
 class SelfOverlap(Correlation):
+
+    """Time-dependent self overlap."""
 
     def __init__(self, trajectory, grid=None, norigins=-1, a=0.3,
                  nsamples=60):

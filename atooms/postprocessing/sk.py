@@ -1,7 +1,7 @@
 # This file is part of atooms
 # Copyright 2010-2018, Daniele Coslovich
 
-""" """
+"""Structure factor."""
 
 import numpy
 
@@ -12,6 +12,8 @@ __all__ = ['StructureFactor', 'StructureFactorOptimized', 'StructureFactorStats'
 
 
 class StructureFactor(FourierSpaceCorrelation):
+
+    """Structure factor."""
 
     nbodies = 2
 
@@ -129,6 +131,12 @@ class StructureFactor(FourierSpaceCorrelation):
 
 
 class StructureFactorOptimized(FourierSpaceCorrelation):
+
+    """
+    Optimized structure factor.
+
+    It uses a fortran 90 extension.
+    """
 
     nbodies = 2
 
@@ -261,6 +269,8 @@ class StructureFactorOptimized(FourierSpaceCorrelation):
 
 
 class StructureFactorStats(FourierSpaceCorrelation):
+
+    """Wave-vector dependent statistics of structure factor."""
 
     def __init__(self, trajectory, kgrid=None, norigins=-1, nk=1000, dk=1.0, kmin=7.0):
         FourierSpaceCorrelation.__init__(self, trajectory, kgrid, 'k', 'skstats',

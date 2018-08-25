@@ -1,7 +1,7 @@
 # This file is part of atooms
 # Copyright 2010-2018, Daniele Coslovich
 
-""" """
+"""Four-point dynamic susceptibility."""
 
 import numpy
 
@@ -14,6 +14,11 @@ __all__ = ['Chi4SelfOverlap', 'Chi4SelfOverlapOpti']
 
 
 class Chi4SelfOverlap(Correlation):
+
+    """
+    Four-point dynamic susceptibility from the time-dependent self
+    overlap function.
+    """
 
     # TODO: refactor correlation init via class variables??
     def __init__(self, trajectory, grid=None, norigins=-1, a=0.3,
@@ -77,6 +82,13 @@ class Chi4SelfOverlap(Correlation):
 
 
 class Chi4SelfOverlapOpti(Correlation):
+
+    """
+    Four-point dynamic susceptibility from the time-dependent self
+    overlap function.
+
+    Optimized version using fortran 90 extension.
+    """
 
     # TODO: refactor correlation init via class variables??
     def __init__(self, trajectory, grid=None, norigins=-1, a=0.3,
