@@ -41,7 +41,7 @@ def ifabsmm(x, f):
         c     = (x2 * x3 * (x2 - x3) * y1 + x3 * x1 * (x3 - x1) * y2 + x1 * x2 * (x1 - x2) * y3) / delta
         return a, b, c
 
-    # First uninterpolated minima and maxima 
+    # First uninterpolated minima and maxima
     imin, imax = f.index(min(f)), f.index(max(f))
     # Then perform parabolic interpolation
     ii = []
@@ -54,7 +54,7 @@ def ifabsmm(x, f):
     return ii[0], ii[1]
 
 
-def linear_fit(xdata, ydata):    
+def linear_fit(xdata, ydata):
     """
     Linear regression.
 

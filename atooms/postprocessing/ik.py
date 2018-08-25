@@ -69,5 +69,3 @@ class SpectralDensity(FourierSpaceCorrelation):
                        for kk in range(len(self.grid))]
         self.value_nonorm = [rho2_av[kk].real / cnt[kk]
                              for kk in range(len(self.grid))]
-
-

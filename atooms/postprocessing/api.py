@@ -153,7 +153,7 @@ def fskt(time_target=1e9, tsamples=60, kmin=7.0, kmax=8.0, ksamples=1,
             func = logx_grid
             t_grid = [0.0] + func(th.timestep, min(th.times[-1], time_target), tsamples)
         else:
-            t_grid = [th.timestep*i for i in th.steps]        
+            t_grid = [th.timestep*i for i in th.steps]
         k_grid = linear_grid(kmin, kmax, ksamples)
         if total:
             postprocessing.SelfIntermediateScattering(th, k_grid, t_grid,

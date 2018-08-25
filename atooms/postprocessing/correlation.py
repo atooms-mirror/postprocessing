@@ -242,7 +242,7 @@ class Correlation(object):
         if not self._need_update:
             log.info('skip %s (%s) for %s' % (self.short_name, self.tag, self.trajectory.filename))
             return
-        
+
         log.debug('setup')
         from atooms.core.utils import Timer
         t = [Timer(), Timer()]
@@ -364,5 +364,3 @@ class Correlation(object):
 
     def __call__(self):
         self.do()
-
-

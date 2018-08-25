@@ -80,7 +80,7 @@ def k_norm(ik, k0):
 
 class FourierSpaceCorrelation(Correlation):
 
-    def __init__(self, trajectory, grid, variables, short_name, 
+    def __init__(self, trajectory, grid, variables, short_name,
                  description, phasespace, nk=8, dk=0.1, kmin=-1, kmax=10,
                  ksamples=20):
         # grid and name variables can be lists or tuples, ex. ['k', 't'] or ['k', 'w']
