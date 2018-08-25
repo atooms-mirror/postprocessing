@@ -1,6 +1,8 @@
 # This file is part of atooms
 # Copyright 2010-2014, Daniele Coslovich
 
+"""Base correlation function."""
+
 import sys
 import os
 import copy
@@ -109,6 +111,8 @@ OUTPUT_PATH = '{trajectory.filename}.pp.{short_name}.{tag}'
 
 class Correlation(object):
 
+    """Base class for correlation functions."""
+
     nbodies = 1
 
     def __init__(self, trj, grid, variables='', short_name='',
@@ -134,7 +138,7 @@ class Correlation(object):
         self.output_path = output_path if output_path is not None else OUTPUT_PATH
         self.tag = ''
         self.tag_description = ''
-        self.comments = None # can be modified by user at run time
+        self.comments = None  # can be modified by user at run time
         if isinstance(phasespace, str):
             self._phasespace = [phasespace]
         self.value = []
@@ -151,7 +155,6 @@ class Correlation(object):
                 if os.path.getmtime(self.trajectory.filename) < \
                    os.path.getmtime(self._output_file):
                     self._need_update = False
-                    # # TODO: to optimize avoid reading correlation objects unless we explicitly pass something to __init__
                     self.read()
 
     def __str__(self):
