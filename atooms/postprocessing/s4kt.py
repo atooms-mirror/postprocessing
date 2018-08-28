@@ -19,7 +19,8 @@ class S4ktOverlap(FourierSpaceCorrelation):
     # TODO: refactor a S4k base correlation that forces to implement tabulat method (e.g. overlap, Q_6, voronoi ...)
     # TODO: should we drop this instead and rely on F(k,t) with grandcanonical
 
-    def __init__(self, trajectory, tgrid, kgrid=None, norigins=-1, nk=20, dk=0.1, a=0.3, kmin=1.0, kmax=10.0, ksamples=10):
+    def __init__(self, trajectory, tgrid, kgrid=None, norigins=-1,
+                 nk=20, dk=0.1, a=0.3, kmin=1.0, kmax=10.0, ksamples=10):
         FourierSpaceCorrelation.__init__(self, trajectory, [tgrid, kgrid], 'S_4(k,t)', 's4kt',
                                          '4-point dynamic structure factor from self overlap',
                                          ['pos', 'pos-unf'],

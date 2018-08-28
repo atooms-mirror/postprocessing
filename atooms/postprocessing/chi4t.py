@@ -21,14 +21,14 @@ class Chi4SelfOverlap(Correlation):
     """
 
     # TODO: refactor correlation init via class variables??
-    def __init__(self, trajectory, grid=None, norigins=-1, a=0.3,
-                 nsamples=60):
-        Correlation.__init__(self, trajectory, grid, 'chi_4(t)', 'chi4qs',
+    def __init__(self, trajectory, tgrid=None, norigins=-1, a=0.3,
+                 tsamples=60):
+        Correlation.__init__(self, trajectory, tgrid, 'chi_4(t)', 'chi4qs',
                              'dynamic susceptibility of self overlap', 'pos-unf')
         if not self._need_update:
             return
         if grid is None:
-            self.grid = logx_grid(0.0, trajectory.total_time * 0.75, nsamples)
+            self.grid = logx_grid(0.0, trajectory.total_time * 0.75, tsamples)
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid)
         self.skip = adjust_skip(self.trajectory, norigins)
         self.a_square = a**2
@@ -91,14 +91,14 @@ class Chi4SelfOverlapOptimized(Correlation):
     """
 
     # TODO: refactor correlation init via class variables??
-    def __init__(self, trajectory, grid=None, norigins=-1, a=0.3,
-                 nsamples=60):
-        Correlation.__init__(self, trajectory, grid, 't', ' chi_4(t)', 'chi4qs',
+    def __init__(self, trajectory, tgrid=None, norigins=-1, a=0.3,
+                 tsamples=60):
+        Correlation.__init__(self, trajectory, tgrid, 't', ' chi_4(t)', 'chi4qs',
                              'dynamic susceptibility of self overlap', 'pos-unf')
         if not self._need_update:
             return
         if grid is None:
-            self.grid = logx_grid(0.0, trajectory.total_time * 0.75, nsamples)
+            self.grid = logx_grid(0.0, trajectory.total_time * 0.75, tsamples)
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid)
         self.skip = adjust_skip(self.trajectory, norigins)
         self.a_square = a**2

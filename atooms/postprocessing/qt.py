@@ -40,14 +40,14 @@ class CollectiveOverlap(Correlation):
 
     # TODO: why dont we use PBCed distance here?!
 
-    def __init__(self, trajectory, grid=None, nsamples=60, a=0.3,
+    def __init__(self, trajectory, tgrid=None, tsamples=60, a=0.3,
                  norigins=-1):
-        Correlation.__init__(self, trajectory, grid, 'Q(t)', 'qt',
+        Correlation.__init__(self, trajectory, tgrid, 'Q(t)', 'qt',
                              'collective overlap', 'pos')
         self.a_square = a**2
         self.skip = adjust_skip(self.trajectory, norigins)
         if grid is None:
-            self.grid = logx_grid(0.0, trajectory.total_time * 0.75, nsamples)
+            self.grid = logx_grid(0.0, trajectory.total_time * 0.75, tsamples)
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid)
 
     def _compute(self):
@@ -63,14 +63,14 @@ class SelfOverlap(Correlation):
 
     """Time-dependent self overlap."""
 
-    def __init__(self, trajectory, grid=None, norigins=-1, a=0.3,
-                 nsamples=60):
-        Correlation.__init__(self, trajectory, grid, 'Q_s(t)', 'qst',
+    def __init__(self, trajectory, tgrid=None, norigins=-1, a=0.3,
+                 tsamples=60):
+        Correlation.__init__(self, trajectory, tgrid, 'Q_s(t)', 'qst',
                              'self overlap', 'pos-unf')
         if not self._need_update:
             return
         if grid is None:
-            self.grid = logx_grid(0.0, trajectory.total_time * 0.75, nsamples)
+            self.grid = logx_grid(0.0, trajectory.total_time * 0.75, tsamples)
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid)
         self.skip = adjust_skip(self.trajectory, norigins)
         self.a_square = a**2

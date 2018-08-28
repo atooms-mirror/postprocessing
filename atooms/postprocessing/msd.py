@@ -28,7 +28,7 @@ class MeanSquareDisplacement(Correlation):
     """Mean square displacement."""
 
     def __init__(self, trajectory, tgrid=None, sigma=1.0, norigins=50,
-                 nsamples=30, sigma_max=1e100, nblocks=1):
+                 tsamples=30, sigma_max=1e100, nblocks=1):
         # TODO: optimize targeting msd takes a lot of time especially on large systems because of pbc unfolding
         # TODO: memory is leaking when sourcing and analyzing many files!
         self.sigma = sigma
@@ -48,9 +48,9 @@ class MeanSquareDisplacement(Correlation):
             if sigma_max < 1e99:
                 self.grid = linear_grid(0.0, min(trajectory.total_time * 1./(1+nblocks),
                                                  trajectory.time_when_msd_is(sigma_max**2)),
-                                        nsamples)
+                                        tsamples)
             else:
-                self.grid = linear_grid(0.0, trajectory.total_time * 1./(1+nblocks), nsamples)
+                self.grid = linear_grid(0.0, trajectory.total_time * 1./(1+nblocks), tsamples)
         else:
             self.grid = tgrid
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid)
