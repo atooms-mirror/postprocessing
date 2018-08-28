@@ -32,9 +32,9 @@ class Chi4SelfOverlap(Correlation):
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid)
         self.skip = adjust_skip(self.trajectory, norigins)
         self.a_square = a**2
-        self.average = Correlation(trajectory, self.grid, 't', 'Q^u(t)', 'qsu',
+        self.average = Correlation(trajectory, self.grid, 'Q^u(t)', 'qsu',
                                    'Average of self overlap not normalized')
-        self.variance = Correlation(trajectory, self.grid, 't', 'Q_2^u(t)','qs2u',
+        self.variance = Correlation(trajectory, self.grid, 'Q_2^u(t)','qs2u',
                                     'Variance self overlap not normalized')
 
     def _compute(self):
