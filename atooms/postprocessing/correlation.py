@@ -112,10 +112,48 @@ OUTPUT_PATH = '{trajectory.filename}.pp.{short_name}.{tag}'
 
 class Correlation(object):
 
-    """Base class for correlation functions."""
+    """
+    Base class for correlation functions.
+
+    A correlation function A(x) is defined over a grid of real
+    entries {x_i} given by the list `grid`. To each entry of the grid,
+    the correlation function has a corresponding value A_i=A(x_i). The
+    latter values are stored in the `value` list.
+
+    Correlation functions depending on multiple variables must provide
+    a list of grids, one for each variable. The order is one specified
+    by in the `symbol` variable, see below.
+
+    Subclasses must provide a symbolic expression of the correlation
+    function through the `symbol` string variable. The following
+    convention is used: if a correlation function A depends on
+    variables x and y, then `symbol='A(x,y)'`.
+
+    The interface of subclasses should enforce the following
+    convention for grid and samples variables passed to __init__()
+    methods: if the correlation function variable is `x`, e.g. the
+    correlation function is `A(x)`, then the associated grid variable
+    is `xgrid` and the number of samples in that grid is `tsamples`.
+
+    The `phasespace` variable allow subclasses to access a list of 2d
+    numpy arrays with particles coordinates via the following private
+    variables:
+
+    - if `nbodies` is 1: `self._pos` for positions, `self._vel` for
+    velocities, `self._unf_pos` for PBC-unfolded positions
+    
+    - if `nbodies` is 2, an additional suffix that take values 0 or 1
+    is added to distinguish the two sets of particles,
+    e.g. `self._pos_0` and `self._pos_1`
+    """
 
     nbodies = 1
-
+    """
+    Class variable that controls the number of bodies, i.e. particles,
+    associated to the correlation function. This variable controls the
+    internal arrays used to compute the correlation, see `phasespace`.
+    """
+    
     def __init__(self, trj, grid, symbol='', short_name='',
                  description='', phasespace=None, output_path=None):
         # TODO: we could force trajectory cast if a string is passed
@@ -242,6 +280,11 @@ class Correlation(object):
                 pass
 
     def compute(self):
+        """
+        Compute and analyze the correlation function.
+
+        This method also returns the tuple `self.grid`, `self.value`.
+        """
         if not self._need_update:
             log.info('skip %s (%s) for %s' % (self.short_name, self.tag, self.trajectory.filename))
             return
