@@ -169,15 +169,14 @@ class Correlation(object):
         self.description = description
         self.value = []
         self.results = {}
-        if phasespace is None:
-            self._phasespace = []
-        else:
-            self._phasespace = phasespace
-        self.output_path = output_path if output_path is not None else OUTPUT_PATH
+        self.comments = None  # can be modified by user at run time
         self.tag = ''
         self.tag_description = ''
-        self.comments = None  # can be modified by user at run time
-        if isinstance(phasespace, str):
+        self.output_path = output_path if output_path is not None else OUTPUT_PATH
+
+        # Make sure phasespace is a list
+        self._phasespace = phasespace if phasespace is not None else []
+        if not isinstance(phasespace, list) and not isinstance(phasespace, tuple):
             self._phasespace = [phasespace]
 
         # Callbacks
@@ -337,7 +336,7 @@ class Correlation(object):
                 raise
             # Strip unpleasant punctuation
             for punct in ['.', '_', '-']:
-                filename = filename.replace(punct*2, punct)
+                filename = filename.replace(punct * 2, punct)
                 filename = filename.strip(punct)
         return filename
 
