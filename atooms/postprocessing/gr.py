@@ -62,8 +62,8 @@ class RadialDistributionFunction(Correlation):
     nbodies = 2
 
     def __init__(self, trajectory, grid=None, norigins=-1, dr=0.04):
-        Correlation.__init__(self, trajectory, grid, 'r', 'gr',
-                             'radial distribution function g(r)', 'pos')
+        Correlation.__init__(self, trajectory, grid, 'g(r)', 'gr',
+                             'radial distribution function', 'pos')
         self.skip = adjust_skip(trajectory, norigins)
         self.side = self.trajectory.read(0).cell.side
         if grid is not None:

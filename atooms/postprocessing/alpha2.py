@@ -26,8 +26,8 @@ class NonGaussianParameter(Correlation):
     """Non-Gaussian parameter."""
 
     def __init__(self, trajectory, tgrid=None, norigins=50, nsamples=30):
-        Correlation.__init__(self, trajectory, tgrid, 't', 'alpha2',
-                             "non-Gaussian parameter alpha_2(t)", ['pos-unf'])
+        Correlation.__init__(self, trajectory, tgrid, 'alpha_2(t)', 'alpha2',
+                             "non-Gaussian parameter", ['pos-unf'])
         if not self._need_update:
             return
         if self.grid is None:

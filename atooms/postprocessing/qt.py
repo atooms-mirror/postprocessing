@@ -42,8 +42,8 @@ class CollectiveOverlap(Correlation):
 
     def __init__(self, trajectory, grid=None, nsamples=60, a=0.3,
                  norigins=-1):
-        Correlation.__init__(self, trajectory, grid, 't', 'qt',
-                             'collective overlap Q(t)', 'pos')
+        Correlation.__init__(self, trajectory, grid, 'Q(t)', 'qt',
+                             'collective overlap', 'pos')
         self.a_square = a**2
         self.skip = adjust_skip(self.trajectory, norigins)
         if grid is None:
@@ -65,8 +65,8 @@ class SelfOverlap(Correlation):
 
     def __init__(self, trajectory, grid=None, norigins=-1, a=0.3,
                  nsamples=60):
-        Correlation.__init__(self, trajectory, grid, 't', 'qst',
-                             'self overlap Q_s(t)', 'pos-unf')
+        Correlation.__init__(self, trajectory, grid, 'Q_s(t)', 'qst',
+                             'self overlap', 'pos-unf')
         if not self._need_update:
             return
         if grid is None:
@@ -86,6 +86,6 @@ class SelfOverlap(Correlation):
     def analyze(self):
         try:
             from .helpers import feqc
-            self.results['tau'] = feqc(self.grid, self.value, 1/numpy.exp(1.0))[0]
+            self.results['tau'] = feqc(self.grid, self.value, 1 / numpy.exp(1.0))[0]
         except:
             self.results['tau'] = None

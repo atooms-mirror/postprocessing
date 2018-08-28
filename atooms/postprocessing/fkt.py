@@ -22,8 +22,8 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
     #TODO: xyz files are 2 slower than hdf5 where
     def __init__(self, trajectory, kgrid=None, tgrid=None, nk=8, tsamples=60,
                  dk=0.1, kmin=1.0, kmax=10.0, ksamples=10, norigins=-1):
-        FourierSpaceCorrelation.__init__(self, trajectory, [kgrid, tgrid], ('k', 't'), \
-                                         'fkt.self', 'self intermediate scattering function F_s(k,t)',
+        FourierSpaceCorrelation.__init__(self, trajectory, [kgrid, tgrid], 'F_s(k,t)',
+                                         'fskt', 'self intermediate scattering function',
                                          'pos-unf', nk, dk, kmin, kmax, ksamples)
         # Setup time grid
         # Before setting up the time grid, we need to check periodicity over blocks
@@ -72,7 +72,6 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
                     for off, i in self._discrete_tgrid:
                         for i0 in range(off, x.shape[0]-i, skip):
                             # Get the actual time difference. steps must be accessed efficiently (cached!)
-                            # TODO: fix x.shape[0] in loop and x.shape[1] in normalization everywhere!
                             dt = self.trajectory.steps[i0+i] - self.trajectory.steps[i0]
                             acf[kk][dt] += numpy.sum(x[i0+i, :, 0, ik[0]]*x[i0, :, 0, ik[0]].conjugate() *
                                                      x[i0+i, :, 1, ik[1]]*x[i0, :, 1, ik[1]].conjugate() *
@@ -125,8 +124,8 @@ class IntermediateScattering(FourierSpaceCorrelation):
 
     def __init__(self, trajectory, kgrid=None, tgrid=None, nk=100, dk=0.1, tsamples=60,
                  kmin=1.0, kmax=10.0, ksamples=10):
-        FourierSpaceCorrelation.__init__(self, trajectory, [kgrid, tgrid], ('k', 't'),
-                                         'fkt.total', 'intermediate scattering function F(k,t)',
+        FourierSpaceCorrelation.__init__(self, trajectory, [kgrid, tgrid], 'F(k,t)',
+                                         'fkt', 'intermediate scattering function',
                                          'pos', nk, dk, kmin, kmax, ksamples)
         # Setup time grid
         check_block_size(self.trajectory.steps, self.trajectory.block_size)

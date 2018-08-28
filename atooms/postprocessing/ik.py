@@ -23,8 +23,8 @@ class SpectralDensity(FourierSpaceCorrelation):
     def __init__(self, trajectory, trajectory_radius, kgrid=None,
                  norigins=-1, nk=20, dk=0.1, kmin=-1.0, kmax=15.0,
                  ksamples=30):
-        FourierSpaceCorrelation.__init__(self, trajectory, kgrid, 'k',
-                                         'ik', 'spectral density I(k)',
+        FourierSpaceCorrelation.__init__(self, trajectory, kgrid, 'I(k)',
+                                         'ik', 'spectral density',
                                          ['pos'], nk, dk, kmin,
                                          kmax, ksamples)
         # TODO: move this up the chain?

@@ -80,13 +80,11 @@ def k_norm(ik, k0):
 
 class FourierSpaceCorrelation(Correlation):
 
-    def __init__(self, trajectory, grid, variables, short_name,
+    def __init__(self, trajectory, grid, symbol, short_name,
                  description, phasespace, nk=8, dk=0.1, kmin=-1, kmax=10,
                  ksamples=20):
-        # grid and name variables can be lists or tuples, ex. ['k', 't'] or ['k', 'w']
-        # TODO: the time grid is not used here
         super(FourierSpaceCorrelation, self).__init__(trajectory,
-                                                      grid, variables, short_name,
+                                                      grid, symbol, short_name,
                                                       description, phasespace)
         if not self._need_update:
             return
@@ -100,8 +98,10 @@ class FourierSpaceCorrelation(Correlation):
         self.ksamples = ksamples
 
         # Find k grid. It will be copied over to self.grid at end
-        if type(variables) is list or type(variables) is tuple:
-            self.kgrid = grid[self.variables.index('k')]
+        variables = self.symbol.split('(')[1][:-1]
+        variables = variables.split(',')
+        if len(variables) > 1:
+            self.kgrid = grid[variables.index('k')]
         else:
             self.kgrid = grid
 

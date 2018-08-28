@@ -36,8 +36,8 @@ class MeanSquareDisplacement(Correlation):
         self.nblocks = nblocks
         self.var = None
 
-        Correlation.__init__(self, trajectory, tgrid, 't', 'msd',
-                             'mean square displacement dr^2(t)', ['pos-unf'])
+        Correlation.__init__(self, trajectory, tgrid, 'dr^2(t)', 'msd',
+                             'mean square displacement', ['pos-unf'])
         if not self._need_update:
             return
         # TODO: subtrajectories should behave well when sampling is logarithmic

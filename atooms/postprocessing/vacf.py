@@ -16,8 +16,8 @@ class VelocityAutocorrelation(Correlation):
     """Velocity autocorrelation function."""
 
     def __init__(self, trajectory, tgrid):
-        Correlation.__init__(self, trajectory, tgrid, 't', 'vacf',
-                             'velocity autocorrelation Z(t)', ['vel'])
+        Correlation.__init__(self, trajectory, tgrid, 'Z(t)', 'vacf',
+                             'velocity autocorrelation', ['vel'])
         self._discrete_tgrid = setup_t_grid(trajectory, tgrid)
 
     def _compute(self):

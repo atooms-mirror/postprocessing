@@ -18,6 +18,7 @@ except ImportError:
     from .helpers import _dump
 from .core import __version__
 from atooms.trajectory.decorators import Unfolded
+from atooms.core.utils import Timer
 
 
 log = logging.getLogger(__name__)
@@ -115,20 +116,20 @@ class Correlation(object):
 
     nbodies = 1
 
-    def __init__(self, trj, grid, variables='', short_name='',
-                 description='', phasespace=None,
-                 output_path=None):
+    def __init__(self, trj, grid, symbol='', short_name='',
+                 description='', phasespace=None, output_path=None):
         # TODO: we could force trajectory cast if a string is passed
-        # self.variables = ('k', 't')
+        # self.symbol =  'F_s(k,t)'
         # self.short_name = 'fskt'
-        # self.description = 'Self intermediate scattering function F_s(k,t)'
-        # self.tag_description = 'of particles A'  # 'of radius field'
+        # self.description = 'Self intermediate scattering function'
         # self.tag = 'A'
+        # self.tag_description = 'of particles A'  # 'of radius field'
         self.trajectory = trj
         self.grid = grid
-        self.variables = variables
+        self.symbol = symbol
         self.short_name = short_name
         self.description = description
+
         self.results = {}
         self.output = None
         if phasespace is None:
@@ -241,25 +242,26 @@ class Correlation(object):
                 pass
 
     def compute(self):
-        # Log
         if not self._need_update:
             log.info('skip %s (%s) for %s' % (self.short_name, self.tag, self.trajectory.filename))
             return
 
         log.debug('setup')
-        from atooms.core.utils import Timer
         t = [Timer(), Timer()]
         t[0].start()
         self._setup_arrays()
         t[0].stop()
+
         log.debug('compute')
         t[1].start()
         self._compute()
         t[1].stop()
+
         log.info('computed %s %s for %s in %.1f sec [setup:%.0f%%, compute: %.0f%%]', self.description,
                  self.tag_description, self.trajectory.filename, t[0].wall_time + t[1].wall_time,
                  t[0].wall_time / (t[0].wall_time + t[1].wall_time) * 100,
                  t[1].wall_time / (t[0].wall_time + t[1].wall_time) * 100)
+
         try:
             self.analyze()
         except ImportError as e:
@@ -323,15 +325,15 @@ class Correlation(object):
             dump = numpy.transpose(numpy.array([self.grid, self.value]))
 
         # Comment line
-        if isinstance(self.variables, tuple) or isinstance(self.variables, list):
-            columns = list(self.variables) + [self.description]
-        else:
-            columns = [self.variables] + [self.description]
+        # Extract variables from parenthesis in symbol
+        variables = self.symbol.split('(')[1][:-1]
+        variables = variables.split(',')
+        columns = variables + [self.symbol]
         if len(self.tag_description) > 0:
             conj = 'of'
         else:
             conj = ''
-        comments = _dump(title='%s %s %s' % (self.description, conj, self.tag_description),
+        comments = _dump(title='%s %s %s %s' % (self.description, self.symbol, conj, self.tag_description),
                          columns=columns,
                          command='atooms-pp', version=__version__,
                          description=None, note=None,

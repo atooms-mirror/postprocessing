@@ -25,8 +25,8 @@ class StructureFactor(FourierSpaceCorrelation):
         column of this trajectory file, unless the `field` string is
         provided.
         """
-        FourierSpaceCorrelation.__init__(self, trajectory, kgrid, 'k',
-                                         'sk', 'structure factor S(k)',
+        FourierSpaceCorrelation.__init__(self, trajectory, kgrid, 'S(k)',
+                                         'sk', 'structure factor',
                                          ['pos'], nk, dk, kmin,
                                          kmax, ksamples)
         # TODO: move this up the chain?
@@ -148,8 +148,8 @@ class StructureFactorOptimized(FourierSpaceCorrelation):
         column of this trajectory file, unless the `field` string is
         provided.
         """
-        FourierSpaceCorrelation.__init__(self, trajectory, kgrid, 'k',
-                                         'sk', 'structure factor S(k)',
+        FourierSpaceCorrelation.__init__(self, trajectory, kgrid, 'k', 'S(k)',
+                                         'sk', 'structure factor',
                                          ['pos'], nk, dk, kmin,
                                          kmax, ksamples)
         # TODO: move this up the chain?
@@ -273,7 +273,7 @@ class StructureFactorStats(FourierSpaceCorrelation):
     """Wave-vector dependent statistics of structure factor."""
 
     def __init__(self, trajectory, kgrid=None, norigins=-1, nk=1000, dk=1.0, kmin=7.0):
-        FourierSpaceCorrelation.__init__(self, trajectory, kgrid, 'k', 'skstats',
+        FourierSpaceCorrelation.__init__(self, trajectory, kgrid, 'k', 'S(k)', 'skstats',
                                          'structure factor statistics', ['pos'], \
                                          nk, dk, kmin, kmin, 1)
         # TODO: move this up the chain?
