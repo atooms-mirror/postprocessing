@@ -29,47 +29,44 @@ class MeanSquareDisplacement(Correlation):
     Mean square displacement.
     
     If the time grid `tgrid` is None, the latter is redefined in a way
-    controlled by the variable `sigma_max`, see below.
+    controlled by the variable `rmax`. If `rmax` is negative
+    (default), the time grid is linear between 0 and half of the
+    largest time in the trajectory. If `rmax` is positive, the time
+    grid comprises `tsamples` entries linearly spaced between 0 and
+    the time at which the square root of the mean squared displacement
+    reaches `rmax`.
 
     Additional parameters:
     ----------------------
 
-    - sigma: value of the interparticle distance (usually one)
-
-    - sigma_max: define the time grid so that its largest value
-    corresponds to `sigma_max` interparticle distances
-
-    - nblocks: compute statistical uncertainties on the mean squared
-    displacement via block sampling over `nblocks` subtrajectories of
-    the trajectory
+    - sigma: value of the interparticle distance (usually 1.0). It is
+    used to limit the fit range to extract the diffusion coefficient
+    and to determine the diffusion time
     """
 
-    def __init__(self, trajectory, tgrid=None, sigma=1.0, norigins=50,
-                 tsamples=30, sigma_max=1e100, nblocks=1):
+    def __init__(self, trajectory, tgrid=None, rmax=-1.0, norigins=50,
+                 tsamples=30, sigma=1.0):
         # TODO: optimize targeting msd takes a lot of time especially on large systems because of pbc unfolding
         # TODO: memory is leaking when sourcing and analyzing many files!
+        self.rmax = rmax
         self.sigma = sigma
-        self.sigma_max = sigma_max
-        self.nblocks = nblocks
-        self.var = None
+        self._nblocks = 1  # currently not used
+        self._var = None  # currently not used
 
         Correlation.__init__(self, trajectory, tgrid, 'dr^2(t)', 'msd',
                              'mean square displacement', ['pos-unf'])
-        if not self._need_update:
-            return
-        # TODO: subtrajectories should behave well when sampling is logarithmic
 
+        # TODO: subtrajectories should behave well when sampling is logarithmic
         # We redefine trajectory here to avoid unfolding the file if this is not necessary
         # e.g. because we are just sourcing the correlation object from file
-        if tgrid is None:
-            if sigma_max < 1e99:
-                self.grid = linear_grid(0.0, min(trajectory.total_time * 1./(1+nblocks),
-                                                 trajectory.time_when_msd_is(sigma_max**2)),
+        if self.grid is None:
+            if rmax > 0.0:
+                self.grid = linear_grid(0.0, min(trajectory.total_time * 1./(1+self._nblocks),
+                                                 trajectory.time_when_msd_is(rmax**2)),
                                         tsamples)
             else:
-                self.grid = linear_grid(0.0, trajectory.total_time * 1./(1+nblocks), tsamples)
-        else:
-            self.grid = tgrid
+                self.grid = linear_grid(0.0, trajectory.total_time * 1./(1+self._nblocks), tsamples)
+
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid)
         self.skip = adjust_skip(trajectory, norigins)
 
@@ -88,13 +85,14 @@ class MeanSquareDisplacement(Correlation):
 
         # Collect results for subtrajectories (nblocks)
         v = []
-        for sl in partition(self.trajectory, self.nblocks):
+        for sl in partition(self.trajectory, self._nblocks):
             grid, value = gcf_offset(f, self._discrete_tgrid, self.skip,
                                      self.trajectory.steps[sl], self._pos_unf[sl])
             v.append(value)
 
         # Compute variance to provide diffusion coefficient fit with weights
-        self.var = numpy.std(v, axis=0) #[x if x>0 else 1e-100 for x in numpy.std(v, axis=0)]
+        # Currently not used
+        self._var = numpy.std(v, axis=0) #[x if x>0 else 1e-100 for x in numpy.std(v, axis=0)]
 
         # Update real time grid
         self.grid = [ti * self.trajectory.timestep for ti in self.grid]
@@ -107,8 +105,7 @@ class MeanSquareDisplacement(Correlation):
         except:
             self.results['diffusive time tau_D'] = None
 
-        where = (numpy.array(self.value) > self.sigma**2) * \
-            (numpy.array(self.value) < self.sigma_max**2)
+        where = numpy.array(self.value) > self.sigma**2
 
         if list(where).count(True) < 2:
             log.warn('could not fit MSD: not enough data above sigma')
