@@ -181,9 +181,9 @@ class Correlation(object):
             self._phasespace = [phasespace]
 
         # Callbacks
-        self.cbk = []
-        self.cbk_args = []
-        self.cbk_kwargs = []
+        self._cbk = []
+        self._cbk_args = []
+        self._cbk_kwargs = []
 
         log.debug('%s for %s' % (self.description, self.trajectory.filename))
 
@@ -202,11 +202,11 @@ class Correlation(object):
 
     def add_filter(self, cbk, *args, **kwargs):
         """Add filter callback `cbk` along with positional and keyword arguments"""
-        if len(self.cbk) > self.nbodies:
+        if len(self._cbk) > self.nbodies:
             raise ValueError('number of filters cannot exceed n. of bodies')
-        self.cbk.append(cbk)
-        self.cbk_args.append(args)
-        self.cbk_kwargs.append(kwargs)
+        self._cbk.append(cbk)
+        self._cbk_args.append(args)
+        self._cbk_kwargs.append(kwargs)
 
     def _setup_arrays(self):
         """
@@ -224,8 +224,8 @@ class Correlation(object):
         if 'pos' in self._phasespace or 'vel' in self._phasespace:
             for s in self.trajectory:
                 # Apply filter if there is one
-                if len(self.cbk) > 0:
-                    s = self.cbk[0](s, *self.cbk_args[0], **self.cbk_kwargs[0])
+                if len(self._cbk) > 0:
+                    s = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
                 if 'pos' in self._phasespace:
                     self._pos.append(s.dump('pos'))
                 if 'vel' in self._phasespace:
@@ -236,8 +236,8 @@ class Correlation(object):
         if 'pos-unf' in self._phasespace:
             for s in Unfolded(self.trajectory, fixed_cm=True):
                 # Apply filter if there is one
-                if len(self.cbk) > 0:
-                    s = self.cbk[0](s, *self.cbk_args[0], **self.cbk_kwargs[0])
+                if len(self._cbk) > 0:
+                    s = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
                 self._pos_unf.append(s.dump('pos'))
 
         # If trajectory is grandcanonical, we make sure all samples
@@ -249,7 +249,7 @@ class Correlation(object):
                     #raise ValueError('cannot handle null samples in GC trajectory')
 
     def _setup_arrays_twobody(self):
-        if len(self.cbk) <= 1:
+        if len(self._cbk) <= 1:
             self._setup_arrays_onebody()
             self._pos_0 = self._pos
             self._pos_1 = self._pos
@@ -259,8 +259,8 @@ class Correlation(object):
         self._vel_0, self._vel_1 = [], []
         if 'pos' in self._phasespace or 'vel' in self._phasespace:
             for s in self.trajectory:
-                s0 = self.cbk[0](s, *self.cbk_args[0], **self.cbk_kwargs[0])
-                s1 = self.cbk[1](s, *self.cbk_args[1], **self.cbk_kwargs[1])
+                s0 = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
+                s1 = self._cbk[1](s, *self._cbk_args[1], **self._cbk_kwargs[1])
                 if 'pos' in self._phasespace:
                     self._pos_0.append(s0.dump('pos'))
                     self._pos_1.append(s1.dump('pos'))
@@ -272,8 +272,8 @@ class Correlation(object):
         self._pos_unf_0, self._pos_unf_1 = [], []
         if 'pos-unf' in self._phasespace:
             for s in Unfolded(self.trajectory):
-                s0 = self.cbk[0](s, *self.cbk_args[0], **self.cbk_kwargs[0])
-                s1 = self.cbk[1](s, *self.cbk_args[1], **self.cbk_kwargs[1])
+                s0 = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
+                s1 = self._cbk[1](s, *self._cbk_args[1], **self._cbk_kwargs[1])
                 self._pos_unf_0.append(s0.dump('pos'))
                 self._pos_unf_1.append(s1.dump('pos'))
 
