@@ -25,7 +25,24 @@ def partition(inp, nbl):
 
 class MeanSquareDisplacement(Correlation):
 
-    """Mean square displacement."""
+    """
+    Mean square displacement.
+    
+    If the time grid `tgrid` is None, the latter is redefined in a way
+    controlled by the variable `sigma_max`, see below.
+
+    Additional parameters:
+    ----------------------
+
+    - sigma: value of the interparticle distance (usually one)
+
+    - sigma_max: define the time grid so that its largest value
+    corresponds to `sigma_max` interparticle distances
+
+    - nblocks: compute statistical uncertainties on the mean squared
+    displacement via block sampling over `nblocks` subtrajectories of
+    the trajectory
+    """
 
     def __init__(self, trajectory, tgrid=None, sigma=1.0, norigins=50,
                  tsamples=30, sigma_max=1e100, nblocks=1):

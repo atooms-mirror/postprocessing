@@ -13,18 +13,22 @@ __all__ = ['StructureFactor', 'StructureFactorOptimized', 'StructureFactorStats'
 
 class StructureFactor(FourierSpaceCorrelation):
 
-    """Structure factor."""
+    """
+    Structure factor.
+
+    If `trajectory_field` is not `None`, the field is read from the
+    last column of this trajectory file, unless the `field` string is
+    provided.
+
+    See the documentation of the `FourierSpaceCorrelation` base class
+    for information on the instance variables.
+    """
 
     nbodies = 2
 
     def __init__(self, trajectory, kgrid=None, norigins=-1, nk=20,
                  dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
                  trajectory_field=None, field=None):
-        """
-        If `trajectory_field` is not None, the field is read from the last
-        column of this trajectory file, unless the `field` string is
-        provided.
-        """
         FourierSpaceCorrelation.__init__(self, trajectory, kgrid, 'S(k)',
                                          'sk', 'structure factor',
                                          ['pos'], nk, dk, kmin,

@@ -57,7 +57,20 @@ def pairs_hist(f, x, y, L, bins):
 
 class RadialDistributionFunction(Correlation):
 
-    """Radial distribution function."""
+    """
+    Radial distribution function.
+
+    The correlation function g(r) is computed over a grid of distances
+    `rgrid`. If the latter is `None`, the grid is linear from 0 to L/2
+    with a spacing of `dr`. Here, L is the side of the simulation cell
+    along the x axis at the first step.
+
+    Additional parameters:
+    ----------------------
+
+    - norigins: controls the number of trajectory frames to compute
+      the time average
+    """
 
     nbodies = 2
 

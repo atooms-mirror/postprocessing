@@ -18,6 +18,12 @@ class Chi4SelfOverlap(Correlation):
     """
     Four-point dynamic susceptibility from the time-dependent self
     overlap function.
+
+    Parameters:
+    -----------
+
+    - a: distance parameter entering the Heaviside function in the
+    overlap calculation
     """
 
     def __init__(self, trajectory, tgrid=None, norigins=-1, a=0.3,

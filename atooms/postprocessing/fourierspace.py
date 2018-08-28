@@ -80,6 +80,20 @@ def k_norm(ik, k0):
 
 class FourierSpaceCorrelation(Correlation):
 
+    """
+    Base class for Fourier space correlation functions.
+    
+    The correlation function is computed for each of the scalar values
+    k_i of the provided `kgrid`. If the latter is `None`, the grid is
+    built using `ksamples` entries linearly spaced between `kmin` and
+    `kmax`.
+
+    For each sample k_i in `kgrid`, the correlation function is
+    computed over at most `nk` wave-vectors (k_x, k_y, k_z) such that
+    their norm (k_x^2+k_y^2+k_z^2)^{1/2} lies within `dk` of the
+    prescribed value k_i.
+    """
+    
     def __init__(self, trajectory, grid, symbol, short_name,
                  description, phasespace, nk=8, dk=0.1, kmin=-1, kmax=10,
                  ksamples=20):

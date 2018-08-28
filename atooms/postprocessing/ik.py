@@ -17,7 +17,10 @@ class SpectralDensity(FourierSpaceCorrelation):
     """
     Free volume spectral density.
 
-    See Zachary, Jiao, Torquato PRL 106, 178001 (2011).
+    From Zachary, Jiao, Torquato PRL 106, 178001 (2011).
+
+    See the documentation of the `FourierSpaceCorrelation` base class
+    for information on the instance variables.
     """
 
     def __init__(self, trajectory, trajectory_radius, kgrid=None,

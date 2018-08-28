@@ -17,7 +17,12 @@ __all__ = ['SelfIntermediateScattering', 'IntermediateScattering']
 
 class SelfIntermediateScattering(FourierSpaceCorrelation):
 
-    """Self part of the intermediate scattering function."""
+    """
+    Self part of the intermediate scattering function.
+
+    See the documentation of the `FourierSpaceCorrelation` base class
+    for information on the instance variables.
+    """
 
     #TODO: xyz files are 2 slower than hdf5 where
     def __init__(self, trajectory, kgrid=None, tgrid=None, nk=8, tsamples=60,
@@ -118,7 +123,12 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
 
 class IntermediateScattering(FourierSpaceCorrelation):
 
-    """Coherent intermediate scattering function."""
+    """
+    Coherent intermediate scattering function.
+
+    See the documentation of the `FourierSpaceCorrelation` base class
+    for information on the instance variables.
+    """
 
     nbodies = 2
 

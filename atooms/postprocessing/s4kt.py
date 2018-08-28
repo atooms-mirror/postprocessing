@@ -14,7 +14,12 @@ __all__ = ['S4ktOverlap']
 
 class S4ktOverlap(FourierSpaceCorrelation):
 
-    """Four-point dynamic structure factor from time-dependent self overlap."""
+    """
+    Four-point dynamic structure factor from time-dependent self overlap.
+
+    See the documentation of the `FourierSpaceCorrelation` base class
+    for information on the instance variables.
+    """
 
     # TODO: refactor a S4k base correlation that forces to implement tabulat method (e.g. overlap, Q_6, voronoi ...)
     # TODO: should we drop this instead and rely on F(k,t) with grandcanonical
