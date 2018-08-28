@@ -54,9 +54,12 @@ class Partial(object):
                 self.partial[(isp, jsp)].tag_description = 'species pair %s-%s' % (isp, jsp)
                 self.partial[(isp, jsp)].compute()
 
-    def do(self, show=False):
+    def do(self):
         self.compute()
         for k in self.partial:
+            try:
+                self.partial[k].analyze()
+            except ImportError as e:
+                print('Could not analyze due to missing modules, continuing...')
+                print(e.message)
             self.partial[k].write()
-            if show:
-                print(self.partial[k].results)

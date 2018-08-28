@@ -167,9 +167,8 @@ class Correlation(object):
         self.symbol = symbol
         self.short_name = short_name
         self.description = description
-
+        self.value = []
         self.results = {}
-        self.output = None
         if phasespace is None:
             self._phasespace = []
         else:
@@ -180,10 +179,12 @@ class Correlation(object):
         self.comments = None  # can be modified by user at run time
         if isinstance(phasespace, str):
             self._phasespace = [phasespace]
-        self.value = []
+
+        # Callbacks
         self.cbk = []
         self.cbk_args = []
         self.cbk_kwargs = []
+
         log.debug('%s for %s' % (self.description, self.trajectory.filename))
 
         # If update mode is on, we will only do the calculation if the trajectory
@@ -197,9 +198,10 @@ class Correlation(object):
                     self.read()
 
     def __str__(self):
-        return '%s' % (self.description, )
+        return '%s' % self.description
 
     def add_filter(self, cbk, *args, **kwargs):
+        """Add filter callback `cbk` along with positional and keyword arguments"""
         if len(self.cbk) > self.nbodies:
             raise ValueError('number of filters cannot exceed n. of bodies')
         self.cbk.append(cbk)
@@ -207,7 +209,10 @@ class Correlation(object):
         self.cbk_kwargs.append(kwargs)
 
     def _setup_arrays(self):
-        """Dump positions and/or velocities in numpy array"""
+        """
+        Dump positions and/or velocities at different time frames as a
+        list of numpy array.
+        """
         if self.nbodies == 1:
             self._setup_arrays_onebody()
         elif self.nbodies == 2:
@@ -281,8 +286,9 @@ class Correlation(object):
 
     def compute(self):
         """
-        Compute and analyze the correlation function.
+        Compute the correlation function.
 
+        It wraps the _compute() method implemented by subclasses.
         This method also returns the tuple `self.grid`, `self.value`.
         """
         if not self._need_update:
@@ -305,20 +311,19 @@ class Correlation(object):
                  t[0].wall_time / (t[0].wall_time + t[1].wall_time) * 100,
                  t[1].wall_time / (t[0].wall_time + t[1].wall_time) * 100)
 
-        try:
-            self.analyze()
-        except ImportError as e:
-            log.warn('no analysis due to missing modules')
         return self.grid, self.value
 
     def _compute(self):
+        """Subclasses must implement this"""
         pass
 
     def analyze(self):
+        """Subclasses may implement this and store the results in the self.results dictonary"""
         pass
 
     @property
     def _output_file(self):
+        """Returns path of output file"""
         # Interpolate the output path string
         if self.output_path is None:
             filename = None
@@ -337,19 +342,19 @@ class Correlation(object):
         return filename
 
     def read(self):
-        inp = open(self._output_file, 'r')
-        x = numpy.loadtxt(inp, unpack=True)
-        if len(x) == 3:
-            self.grid, self.value = x
-        elif len(x) == 2:
-            self.grid, self.value = x
-        else:
-            self.grid, self.value = x[0:2]
-            warnings.warn("Ignoring some columns in %s" % self._output_file)
-
-        inp.close()
+        """Read correlation function from existing file"""
+        with open(self._output_file, 'r') as inp:
+            x = numpy.loadtxt(inp, unpack=True)
+            if len(x) == 3:
+                self.grid, self.value = x
+            elif len(x) == 2:
+                self.grid, self.value = x
+            else:
+                self.grid, self.value = x[0:2]
+                warnings.warn("Ignoring some columns in %s" % self._output_file)
 
     def write(self):
+        """Write the correlation function and the analysis data to file"""
         def is_iterable(maybe_iterable):
             try:
                 iter(maybe_iterable)
@@ -358,7 +363,7 @@ class Correlation(object):
             else:
                 return True
 
-        # TODO: it is probably the compute method that should be responsible for dumping grids appropriately
+        # Pack grid and value into arrays to dump
         if is_iterable(self.grid[0]) and len(self.grid) == 2:
             x = numpy.array(self.grid[0]).repeat(len(self.value[0]))
             y = numpy.array(self.grid[1] * len(self.grid[0]))
@@ -385,7 +390,7 @@ class Correlation(object):
         if not self.comments is None:
             comments += self.comments
 
-        # Analyze results
+        # Results of analysis
         analysis = ""
         for x, f in self.results.items():
             if f is not None:
@@ -400,8 +405,10 @@ class Correlation(object):
             fh.flush()
 
     def do(self):
-        if not self._need_update:
-            return
+        """
+        Do the full template pattern: compute, analyze and write the
+        correlation function.
+        """
         self.compute()
         try:
             self.analyze()

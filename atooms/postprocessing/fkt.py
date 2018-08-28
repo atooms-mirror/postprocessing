@@ -104,7 +104,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
 
     def write(self):
         Correlation.write(self)
-        if self._output_file == '/dev/stdout/':
+        if self._output_file == '/dev/stdout':
             out = sys.stdout
         else:
             out = open(self._output_file + '.tau', 'w')
@@ -117,7 +117,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
             else:
                 out.write('%12g %12g\n' % (k, self.tau[k]))
 
-        if not self.output is sys.stdout:
+        if out is not sys.stdout:
             out.close()
 
 
@@ -225,24 +225,20 @@ class IntermediateScattering(FourierSpaceCorrelation):
 
     def write(self):
         Correlation.write(self)
-        # Write down unnormalized functions
-        # Correlation.write(self, self.value_nonorm)
 
         # TODO: refactor
-        filename = '.'.join([e for e in [self.trajectory.filename, 'pp', self.short_name, self.tag] if len(e) > 0])
-        fileinfo = filename + '.tau'
-        if not self.output is sys.stdout:
-            out = open(fileinfo, 'w')
-        else:
+        if self._output_file == '/dev/stdout':
             out = sys.stdout
+        else:
+            out = open(self._output_file + '.tau', 'w')
 
-        # some header
-        # custom writing of taus (could be refactored)
+        # Some header
+        # Custom writing of taus (could be refactored)
         for k in self.tau:
             if self.tau[k] is None:
                 out.write('%12g\n' % k)
             else:
                 out.write('%12g %12g\n' % (k, self.tau[k]))
 
-        if not self.output is sys.stdout:
+        if out is not sys.stdout:
             out.close()
