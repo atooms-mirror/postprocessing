@@ -4,36 +4,36 @@ module fourierspace_module
 
 contains
 
-!   subroutine setup_expo(k0,nmax,positions,expo)
-!     real(8), intent(in) :: k0
-!     integer, intent(in) :: nmax(:) !,kmax
-!     real(8),intent(in) :: positions(:,:)
-!     complex(8),intent(out) :: expo(:,:,:)
-!     integer :: i,j,ndims,npart
-!     complex(8), parameter :: IM = (0.d0, 1.d0)
-!     return
-!     npart = size(positions,1)
-!     ndims = size(positions,2)
-! !    if (associated(expo) .and. size(expo,1)/=size(positions,1)) then
-! !       deallocate(expo)
-! !    end if
-! !    if (.not.associated(expo)) then
-! !       allocate(expo(npart,ndims,-kmax:kmax))
-! !    end if
-!     expo(:,:,0)  = (1.D0,0.D0)
-!     do j = 1,ndims
-!        expo(:,j,1) = exp(IM*k0*positions(:,j))
-!        do i=2,nmax(j)
-!           expo(:,j,i)=expo(:,j,i-1)*expo(:,j,1)
-!        end do
-!     end do
-!     do i=-nmax(2),-1
-!        expo(:,2,i)=conjg(expo(:,2,-i))
-!     end do
-!     do i=-nmax(3),-1
-!        expo(:,3,i)=conjg(expo(:,3,-i))
-!     end do
-!   end subroutine setup_expo
+  subroutine setup_expo(k0,nmax,positions,expo)
+    real(8), intent(in) :: k0
+    integer, intent(in) :: nmax(:) !,kmax
+    real(8),intent(in) :: positions(:,:)
+    complex(8),intent(out) :: expo(:,:,:)
+    integer :: i,j,ndims,npart
+    complex(8), parameter :: IM = (0.d0, 1.d0)
+    return
+    npart = size(positions,1)
+    ndims = size(positions,2)
+!    if (associated(expo) .and. size(expo,1)/=size(positions,1)) then
+!       deallocate(expo)
+!    end if
+!    if (.not.associated(expo)) then
+!       allocate(expo(npart,ndims,-kmax:kmax))
+!    end if
+    expo(:,:,0)  = (1.D0,0.D0)
+    do j = 1,ndims
+       expo(:,j,1) = exp(IM*k0*positions(:,j))
+       do i=2,nmax(j)
+          expo(:,j,i)=expo(:,j,i-1)*expo(:,j,1)
+       end do
+    end do
+    do i=-nmax(2),-1
+       expo(:,2,i)=conjg(expo(:,2,-i))
+    end do
+    do i=-nmax(3),-1
+       expo(:,3,i)=conjg(expo(:,3,-i))
+    end do
+  end subroutine setup_expo
 
 !   SUBROUTINE setup_expo_sphere(k0,kmax,positions,expo)
 !     REAL(8), INTENT(in) :: k0
