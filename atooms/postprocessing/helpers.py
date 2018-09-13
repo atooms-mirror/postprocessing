@@ -169,7 +169,6 @@ def _dump(title, columns=None, command=None, version=None,
     """
     Return a string of comments filled with metadata.
     """
-    import md5
     import datetime
     import os
     date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -179,21 +178,25 @@ def _dump(title, columns=None, command=None, version=None,
 
     # Checksums of parent files
     if parents is not None:
-        # Make sure parents is list
-        if not hasattr(parents, '__iter__'):
-            parents = [parents]
-        # Compute checksum
-        checksums = []
-        size_limit = 1e9
-        if max([os.path.getsize(f) for f in parents]) < size_limit:
-            for parentpath in parents:
-                tag = md5.md5(open(parentpath).read()).hexdigest()
-                checksums.append(tag)
-            checksums = ', '.join(checksums)
-        else:
+        try:
+            import md5
+            # Make sure parents is list
+            if not hasattr(parents, '__iter__'):
+                parents = [parents]
+            # Compute checksum
+            checksums = []
+            size_limit = 1e9
+            if max([os.path.getsize(f) for f in parents]) < size_limit:
+                for parentpath in parents:
+                    tag = md5.md5(open(parentpath).read()).hexdigest()
+                    checksums.append(tag)
+                checksums = ', '.join(checksums)
+            else:
+                checksums = None
+            # Convert to string
+            parents = ', '.join([os.path.basename(p) for p in parents])
+        except ImportError:
             checksums = None
-        # Convert to string
-        parents = ', '.join([os.path.basename(p) for p in parents])
 
     metadata = [('title', title),
                 ('columns', columns_string),
