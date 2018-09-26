@@ -4,6 +4,7 @@ import os
 import glob
 
 # We use numpy distutils to compile and wrap f90 code via f2py
+import setuptools
 from numpy.distutils.core import setup, Extension
 
 
