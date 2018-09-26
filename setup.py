@@ -4,6 +4,7 @@ import os
 import glob
 
 # We use numpy distutils to compile and wrap f90 code via f2py
+import setuptools
 from numpy.distutils.core import setup, Extension
 
 
@@ -36,6 +37,7 @@ args = dict(name='atooms-pp',
                          Extension('atooms.postprocessing.fourierspace_wrap', 
                                    sources=['atooms/postprocessing/fourierspace.f90'])],
             license='GPLv3',
+            setup_requires = ['numpy'],
             classifiers=[
                 'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
                 'Development Status :: 5 - Production/Stable',
