@@ -1,7 +1,7 @@
 # This file is part of atooms
 # Copyright 2010-2018, Daniele Coslovich
 
-""" """
+"""Four-point dynamic susceptibility."""
 
 import numpy
 
@@ -10,26 +10,36 @@ from .correlation import Correlation
 from .helpers import adjust_skip, setup_t_grid
 from .qt import self_overlap
 
-__all__ = ['Chi4SelfOverlap', 'Chi4SelfOverlapOpti']
+__all__ = ['Chi4SelfOverlap', 'Chi4SelfOverlapOptimized']
 
 
 class Chi4SelfOverlap(Correlation):
 
-    # TODO: refactor correlation init via class variables??
-    def __init__(self, trajectory, grid=None, norigins=-1, a=0.3,
-                 nsamples=60):
-        Correlation.__init__(self, trajectory, grid, 't', 'chi4qs',
-                             'dynamic susceptibility of self overlap chi_4(t)', 'pos-unf')
+    """
+    Four-point dynamic susceptibility from the time-dependent self
+    overlap function.
+
+    Parameters:
+    -----------
+
+    - a: distance parameter entering the Heaviside function in the
+    overlap calculation
+    """
+
+    def __init__(self, trajectory, tgrid=None, norigins=-1, a=0.3,
+                 tsamples=60):
+        Correlation.__init__(self, trajectory, tgrid, 'chi_4(t)', 'chi4qs',
+                             'dynamic susceptibility of self overlap', 'pos-unf')
         if not self._need_update:
             return
-        if grid is None:
-            self.grid = logx_grid(0.0, trajectory.total_time * 0.75, nsamples)
+        if tgrid is None:
+            self.grid = logx_grid(0.0, trajectory.total_time * 0.75, tsamples)
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid)
         self.skip = adjust_skip(self.trajectory, norigins)
         self.a_square = a**2
-        self.average = Correlation(trajectory, self.grid, 't', 'qsu',
+        self.average = Correlation(trajectory, self.grid, 'Q^u(t)', 'qsu',
                                    'Average of self overlap not normalized')
-        self.variance = Correlation(trajectory, self.grid, 't', 'qs2u',
+        self.variance = Correlation(trajectory, self.grid, 'Q_2^u(t)','qs2u',
                                     'Variance self overlap not normalized')
 
     def _compute(self):
@@ -76,23 +86,29 @@ class Chi4SelfOverlap(Correlation):
             pass
 
 
-class Chi4SelfOverlapOpti(Correlation):
+class Chi4SelfOverlapOptimized(Correlation):
 
-    # TODO: refactor correlation init via class variables??
-    def __init__(self, trajectory, grid=None, norigins=-1, a=0.3,
-                 nsamples=60):
-        Correlation.__init__(self, trajectory, grid, 't', 'chi4qs',
-                             'dynamic susceptibility of self overlap chi_4(t)', 'pos-unf')
+    """
+    Four-point dynamic susceptibility from the time-dependent self
+    overlap function.
+
+    Optimized version using fortran 90 extension.
+    """
+
+    def __init__(self, trajectory, tgrid=None, norigins=-1, a=0.3,
+                 tsamples=60):
+        Correlation.__init__(self, trajectory, tgrid, 't', ' chi_4(t)', 'chi4qs',
+                             'dynamic susceptibility of self overlap', 'pos-unf')
         if not self._need_update:
             return
         if grid is None:
-            self.grid = logx_grid(0.0, trajectory.total_time * 0.75, nsamples)
+            self.grid = logx_grid(0.0, trajectory.total_time * 0.75, tsamples)
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid)
         self.skip = adjust_skip(self.trajectory, norigins)
         self.a_square = a**2
-        self.average = Correlation(trajectory, self.grid, 't', 'qsu',
+        self.average = Correlation(trajectory, self.grid, 't', 'Q^u(t)', 'qsu',
                                    'Average of self overlap not normalized')
-        self.variance = Correlation(trajectory, self.grid, 't', 'qs2u',
+        self.variance = Correlation(trajectory, self.grid, 't', 'Q_2^u(t)','qs2u',
                                     'Variance self overlap not normalized')
 
     def _compute(self):
@@ -125,7 +141,7 @@ class Chi4SelfOverlapOpti(Correlation):
 
     def write(self):
         # We subclass this to also write down qsu and qsu2
-        super(Chi4SelfOverlapOpti, self).write()
+        super(Chi4SelfOverlapOptimized, self).write()
         self.average.write()
         self.variance.write()
 

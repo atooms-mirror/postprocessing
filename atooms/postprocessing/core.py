@@ -7,4 +7,3 @@ except ImportError:
     __commit__ = ""
     __date__ = ""
     __version__ = __bare_version
-

@@ -1,7 +1,7 @@
 # This file is part of atooms
 # Copyright 2010-2018, Daniele Coslovich
 
-""" """
+"""Free volume spectral density."""
 
 import numpy
 
@@ -17,14 +17,17 @@ class SpectralDensity(FourierSpaceCorrelation):
     """
     Free volume spectral density.
 
-    See Zachary, Jiao, Torquato PRL 106, 178001 (2011).
+    From Zachary, Jiao, Torquato PRL 106, 178001 (2011).
+
+    See the documentation of the `FourierSpaceCorrelation` base class
+    for information on the instance variables.
     """
 
     def __init__(self, trajectory, trajectory_radius, kgrid=None,
                  norigins=-1, nk=20, dk=0.1, kmin=-1.0, kmax=15.0,
                  ksamples=30):
-        FourierSpaceCorrelation.__init__(self, trajectory, kgrid, 'k',
-                                         'ik', 'spectral density I(k)',
+        FourierSpaceCorrelation.__init__(self, trajectory, kgrid, 'I(k)',
+                                         'ik', 'spectral density',
                                          ['pos'], nk, dk, kmin,
                                          kmax, ksamples)
         # TODO: move this up the chain?
@@ -69,5 +72,3 @@ class SpectralDensity(FourierSpaceCorrelation):
                        for kk in range(len(self.grid))]
         self.value_nonorm = [rho2_av[kk].real / cnt[kk]
                              for kk in range(len(self.grid))]
-
-

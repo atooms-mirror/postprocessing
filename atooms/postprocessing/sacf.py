@@ -11,8 +11,11 @@ from .helpers import setup_t_grid
 
 class StressAutocorrelation(Correlation):
 
+    """Stress autocorrelation function."""
+
     def __init__(self, trajectory, tgrid):
-        Correlation.__init__(self, trajectory, tgrid, 't', 'sacf', "Stress autocorrelation", ['vel'])
+        Correlation.__init__(self, trajectory, tgrid, 'S(t)', 'sacf',
+                             'stress autocorrelation', ['vel'])
         self._discrete_tgrid = setup_t_grid(trajectory, tgrid)
 
     def _get_stress(self):

@@ -1,11 +1,9 @@
 Post processing
 ==================
 
-Python analysis tools for particle-based simulations.
-
-- Static and time-dependent correlation functions
-  - real space: radial distribution function, mean square displacement, time-dependent overlap, ...
-  - Fourier space: structure factor, intermediate scattering function, dynamic susceptibility, ...
+Python post processing tools to compute static and dynamic correlation functions from particle-based simulations. Supported correlation functions:
+- real space: radial distribution function, mean square displacement, time-dependent overlap, ...
+- Fourier space: structure factor, intermediate scattering function, dynamic susceptibility, ...
 
 This package relies on [atooms](https://gitlab.info-ufr.univ-montp2.fr/atooms/postprocessing.git) to read trajectory files.
 
@@ -14,9 +12,9 @@ Getting started
 
 Post processing tools typically operate on trajectory files produced
 by molecular simulation codes. Any trajectory format recognized by
-atooms can be processed, for instance most "xyz" trajectory files should work fine. 
-Most tools are simple python scripts that can
-be executed from the command line. 
+atooms can be processed, for instance most "xyz" trajectory files
+should work fine. The correlation functions can be computed using
+either the command line script `pp.py` or directly from python.
 
 Example: the following command
 will compute the radial distribution function g(r) from the trajectory
@@ -41,10 +39,14 @@ with Trajectory('data/trajectory.xyz') as t:
      p.do()
 ```
 
+See the tutorials under `docs/` for more details.
+
+
 Requirements
 ------------
 - numpy
 - [atooms](https://gitlab.info-ufr.univ-montp2.fr/atooms/postprocessing.git)
+- argh (optional, only needed when using `pp.py`)
 
 Installation
 ------------

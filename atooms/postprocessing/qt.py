@@ -1,7 +1,7 @@
 # This file is part of atooms
 # Copyright 2010-2018, Daniele Coslovich
 
-""" """
+"""Time-dependent overlap."""
 
 import numpy
 
@@ -36,16 +36,18 @@ def self_overlap(r0, r1, side, a_square):
 
 class CollectiveOverlap(Correlation):
 
+    """Time-dependent collective overlap."""
+
     # TODO: why dont we use PBCed distance here?!
 
-    def __init__(self, trajectory, grid=None, nsamples=60, a=0.3,
+    def __init__(self, trajectory, tgrid=None, tsamples=60, a=0.3,
                  norigins=-1):
-        Correlation.__init__(self, trajectory, grid, 't', 'qt',
-                             'collective overlap Q(t)', 'pos')
+        Correlation.__init__(self, trajectory, tgrid, 'Q(t)', 'qt',
+                             'collective overlap', 'pos')
         self.a_square = a**2
         self.skip = adjust_skip(self.trajectory, norigins)
         if grid is None:
-            self.grid = logx_grid(0.0, trajectory.total_time * 0.75, nsamples)
+            self.grid = logx_grid(0.0, trajectory.total_time * 0.75, tsamples)
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid)
 
     def _compute(self):
@@ -59,14 +61,16 @@ class CollectiveOverlap(Correlation):
 
 class SelfOverlap(Correlation):
 
-    def __init__(self, trajectory, grid=None, norigins=-1, a=0.3,
-                 nsamples=60):
-        Correlation.__init__(self, trajectory, grid, 't', 'qst',
-                             'self overlap Q_s(t)', 'pos-unf')
+    """Time-dependent self overlap."""
+
+    def __init__(self, trajectory, tgrid=None, norigins=-1, a=0.3,
+                 tsamples=60):
+        Correlation.__init__(self, trajectory, tgrid, 'Q_s(t)', 'qst',
+                             'self overlap', 'pos-unf')
         if not self._need_update:
             return
         if grid is None:
-            self.grid = logx_grid(0.0, trajectory.total_time * 0.75, nsamples)
+            self.grid = logx_grid(0.0, trajectory.total_time * 0.75, tsamples)
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid)
         self.skip = adjust_skip(self.trajectory, norigins)
         self.a_square = a**2
@@ -82,6 +86,6 @@ class SelfOverlap(Correlation):
     def analyze(self):
         try:
             from .helpers import feqc
-            self.results['tau'] = feqc(self.grid, self.value, 1/numpy.exp(1.0))[0]
+            self.results['tau'] = feqc(self.grid, self.value, 1 / numpy.exp(1.0))[0]
         except:
             self.results['tau'] = None

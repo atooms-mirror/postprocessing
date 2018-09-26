@@ -80,13 +80,25 @@ def k_norm(ik, k0):
 
 class FourierSpaceCorrelation(Correlation):
 
-    def __init__(self, trajectory, grid, variables, short_name, 
+    """
+    Base class for Fourier space correlation functions.
+    
+    The correlation function is computed for each of the scalar values
+    k_i of the provided `kgrid`. If the latter is `None`, the grid is
+    built using `ksamples` entries linearly spaced between `kmin` and
+    `kmax`.
+
+    For each sample k_i in `kgrid`, the correlation function is
+    computed over at most `nk` wave-vectors (k_x, k_y, k_z) such that
+    their norm (k_x^2+k_y^2+k_z^2)^{1/2} lies within `dk` of the
+    prescribed value k_i.
+    """
+    
+    def __init__(self, trajectory, grid, symbol, short_name,
                  description, phasespace, nk=8, dk=0.1, kmin=-1, kmax=10,
                  ksamples=20):
-        # grid and name variables can be lists or tuples, ex. ['k', 't'] or ['k', 'w']
-        # TODO: the time grid is not used here
         super(FourierSpaceCorrelation, self).__init__(trajectory,
-                                                      grid, variables, short_name,
+                                                      grid, symbol, short_name,
                                                       description, phasespace)
         if not self._need_update:
             return
@@ -100,8 +112,10 @@ class FourierSpaceCorrelation(Correlation):
         self.ksamples = ksamples
 
         # Find k grid. It will be copied over to self.grid at end
-        if type(variables) is list or type(variables) is tuple:
-            self.kgrid = grid[self.variables.index('k')]
+        variables = self.symbol.split('(')[1][:-1]
+        variables = variables.split(',')
+        if len(variables) > 1:
+            self.kgrid = grid[variables.index('k')]
         else:
             self.kgrid = grid
 

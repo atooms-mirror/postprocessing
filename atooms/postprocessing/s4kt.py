@@ -1,7 +1,7 @@
 # This file is part of atooms
 # Copyright 2010-2018, Daniele Coslovich
 
-""" """
+"""Four-point dynamic structure factor."""
 
 import numpy
 
@@ -14,12 +14,21 @@ __all__ = ['S4ktOverlap']
 
 class S4ktOverlap(FourierSpaceCorrelation):
 
+    """
+    Four-point dynamic structure factor from time-dependent self overlap.
+
+    See the documentation of the `FourierSpaceCorrelation` base class
+    for information on the instance variables.
+    """
+
     # TODO: refactor a S4k base correlation that forces to implement tabulat method (e.g. overlap, Q_6, voronoi ...)
     # TODO: should we drop this instead and rely on F(k,t) with grandcanonical
 
-    def __init__(self, trajectory, tgrid, kgrid=None, norigins=-1, nk=20, dk=0.1, a=0.3, kmin=1.0, kmax=10.0, ksamples=10):
-        FourierSpaceCorrelation.__init__(self, trajectory, [tgrid, kgrid], ('t', 'k'), 's4kt',
-                                         '4-point dynamic structure factor S_4(k,t)', ['pos', 'pos-unf'],
+    def __init__(self, trajectory, tgrid, kgrid=None, norigins=-1,
+                 nk=20, dk=0.1, a=0.3, kmin=1.0, kmax=10.0, ksamples=10):
+        FourierSpaceCorrelation.__init__(self, trajectory, [tgrid, kgrid], 'S_4(k,t)', 's4kt',
+                                         '4-point dynamic structure factor from self overlap',
+                                         ['pos', 'pos-unf'],
                                          nk, dk, kmin, kmax, ksamples)
         # Setup time grid
         self._discrete_tgrid = setup_t_grid(trajectory, tgrid)

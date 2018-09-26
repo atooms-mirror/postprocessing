@@ -1,7 +1,7 @@
 # This file is part of atooms
 # Copyright 2010-2018, Daniele Coslovich
 
-""" """
+"""Radial distribution function."""
 
 import numpy
 import math
@@ -57,21 +57,36 @@ def pairs_hist(f, x, y, L, bins):
 
 class RadialDistributionFunction(Correlation):
 
+    """
+    Radial distribution function.
+
+    The correlation function g(r) is computed over a grid of distances
+    `rgrid`. If the latter is `None`, the grid is linear from 0 to L/2
+    with a spacing of `dr`. Here, L is the side of the simulation cell
+    along the x axis at the first step.
+
+    Additional parameters:
+    ----------------------
+
+    - norigins: controls the number of trajectory frames to compute
+      the time average
+    """
+
     nbodies = 2
 
-    def __init__(self, trajectory, grid=None, norigins=-1, dr=0.04):
-        Correlation.__init__(self, trajectory, grid, 'r', 'gr',
-                             'radial distribution function g(r)', 'pos')
+    def __init__(self, trajectory, rgrid=None, norigins=-1, dr=0.04):
+        Correlation.__init__(self, trajectory, rgrid, 'g(r)', 'gr',
+                             'radial distribution function', 'pos')
         self.skip = adjust_skip(trajectory, norigins)
         self.side = self.trajectory.read(0).cell.side
-        if grid is not None:
+        if rgrid is not None:
             # Reconstruct bounds of grid for numpy histogram
             self.grid = []
-            for i in range(len(grid)):
-                self.grid.append(grid[i] - (grid[1]-grid[0])/2)
-            self.grid.append(grid[-1] + (grid[1]-grid[0])/2)
+            for i in range(len(rgrid)):
+                self.grid.append(rgrid[i] - (rgrid[1] - rgrid[0]) / 2)
+            self.grid.append(rgrid[-1] + (rgrid[1] - rgrid[0]) / 2)
         else:
-            self.grid = linear_grid(0.0, self.side[0]/2.0, dr)
+            self.grid = linear_grid(0.0, self.side[0] / 2.0, dr)
 
     def _compute(self):
         ncfg = len(self.trajectory)
@@ -103,5 +118,5 @@ class RadialDistributionFunction(Correlation):
         else:
             norm = rho * vol * N_0
         gr = numpy.average(gr_all, axis=0)
-        self.grid = (r[:-1]+r[1:]) / 2.0
+        self.grid = (r[:-1] + r[1:]) / 2.0
         self.value = gr / norm
