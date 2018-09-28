@@ -37,7 +37,7 @@ def _compat(args, fmt, species_layout=None):
         args['species_layout'] = species_layout
     return args
 
-def gr(input_file, grandcanonical=False, fmt=None, species_layout=None,
+def gr(input_file, dr=0.04, grandcanonical=False, fmt=None, species_layout=None,
        norigins=-1, *input_files, **global_args):
     """Radial distribution function."""
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
