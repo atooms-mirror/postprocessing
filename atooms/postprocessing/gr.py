@@ -86,7 +86,11 @@ class RadialDistributionFunction(Correlation):
                 self.grid.append(rgrid[i] - (rgrid[1] - rgrid[0]) / 2)
             self.grid.append(rgrid[-1] + (rgrid[1] - rgrid[0]) / 2)
         else:
-            self.grid = linear_grid(0.0, self.side[0] / 2.0, dr)
+            if len(self.side.shape) > 0:
+                L = self.side[0]
+            else:
+                L = self.side
+            self.grid = linear_grid(0.0, L / 2.0, dr)
 
     def _compute(self):
         ncfg = len(self.trajectory)
