@@ -195,7 +195,7 @@ def _dump(title, columns=None, command=None, version=None,
                 checksums = None
             # Convert to string
             parents = ', '.join([os.path.basename(p) for p in parents])
-        except ImportError:
+        except ImportError, IOError:
             checksums = None
 
     metadata = [('title', title),
