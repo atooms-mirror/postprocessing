@@ -176,35 +176,12 @@ def _dump(title, columns=None, command=None, version=None,
     if columns is not None:
         columns_string  = ', '.join(columns)
 
-    # Checksums of parent files
-    if parents is not None:
-        try:
-            import md5
-            # Make sure parents is list
-            if not hasattr(parents, '__iter__'):
-                parents = [parents]
-            # Compute checksum
-            checksums = []
-            size_limit = 1e9
-            if max([os.path.getsize(f) for f in parents]) < size_limit:
-                for parentpath in parents:
-                    tag = md5.md5(open(parentpath).read()).hexdigest()
-                    checksums.append(tag)
-                checksums = ', '.join(checksums)
-            else:
-                checksums = None
-            # Convert to string
-            parents = ', '.join([os.path.basename(p) for p in parents])
-        except ImportError, IOError:
-            checksums = None
-
     metadata = [('title', title),
                 ('columns', columns_string),
                 ('date', date),
                 ('command', command),
                 ('version', version),
                 ('parents', parents),
-                ('checksums', checksums),
                 ('description', description),
                 ('note', note)]
 
