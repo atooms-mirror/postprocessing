@@ -84,11 +84,14 @@ class MeanSquareDisplacement(Correlation):
                                            self.trajectory.steps, self._pos_unf)
 
         # Collect results for subtrajectories (nblocks)
-        v = []
-        for sl in partition(self.trajectory, self._nblocks):
-            grid, value = gcf_offset(f, self._discrete_tgrid, self.skip,
-                                     self.trajectory.steps[sl], self._pos_unf[sl])
-            v.append(value)
+        if self._nblocks > 1:
+            v = []
+            for sl in partition(self.trajectory, self._nblocks):
+                grid, value = gcf_offset(f, self._discrete_tgrid, self.skip,
+                                         self.trajectory.steps[sl], self._pos_unf[sl])
+                v.append(value)
+        else:
+            v = [self.value]
 
         # Compute variance to provide diffusion coefficient fit with weights
         # Currently not used
