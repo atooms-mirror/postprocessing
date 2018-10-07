@@ -9,6 +9,7 @@ from .helpers import logx_grid
 from .correlation import Correlation
 from .helpers import adjust_skip, setup_t_grid
 from .qt import self_overlap
+from .progress import progress
 
 __all__ = ['Chi4SelfOverlap', 'Chi4SelfOverlapOptimized']
 
@@ -51,7 +52,7 @@ class Chi4SelfOverlap(Correlation):
             return self_overlap(x, y, side, self.a_square).sum()
 
         self.grid = []
-        for off, i in self._discrete_tgrid:
+        for off, i in progress(self._discrete_tgrid):
             A, A2, cnt = 0.0, 0.0, 0
             for i0 in range(off, len(self._pos_unf)-i-self.skip, self.skip):
                 w = f(self._pos_unf[i0], self._pos_unf[i0+i])
@@ -123,7 +124,7 @@ class Chi4SelfOverlapOptimized(Correlation):
             #return self_overlap(x, y, side, self.a_square).sum()
 
         self.grid = []
-        for off, i in self._discrete_tgrid:
+        for off, i in progress(self._discrete_tgrid):
             A, A2, cnt = 0.0, 0.0, 0
             for i0 in range(off, len(self._pos_unf)-i-self.skip, self.skip):
                 w = f(self._pos_unf[i0], self._pos_unf[i0+i])

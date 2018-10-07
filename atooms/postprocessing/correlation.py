@@ -19,6 +19,7 @@ except ImportError:
 from .core import __version__
 from atooms.trajectory.decorators import Unfolded
 from atooms.core.utils import Timer
+from .progress import progress
 
 
 log = logging.getLogger(__name__)
@@ -80,7 +81,7 @@ def gcf_offset(f, grid, skip, t, x, mask=None):
         acf = defaultdict(float)
         cnt = defaultdict(int)
         # Standard calculation
-        for off, i in grid:
+        for off, i in progress(grid, total=len(grid)):
             for i0 in range(off, len(x)-i-skip, skip):
                 # Get the actual time difference
                 dt = t[i0+i] - t[i0]
@@ -107,6 +108,7 @@ def gcf_offset(f, grid, skip, t, x, mask=None):
         return dt, [acf[t] / sum([cnt[t] for t in dt])] #, [cnt[t] for t in dt]
 
 
+# TODO: should not be capitalized
 UPDATE = False
 OUTPUT_PATH = '{trajectory.filename}.pp.{short_name}.{tag}'
 
@@ -171,7 +173,7 @@ class Correlation(object):
         self.results = {}
         self.comments = None  # can be modified by user at run time
         self.tag = ''
-        self.tag_description = ''
+        self.tag_description = 'the whole system'
         self.output_path = output_path if output_path is not None else OUTPUT_PATH
 
         # Make sure phasespace is a list
@@ -183,8 +185,6 @@ class Correlation(object):
         self._cbk = []
         self._cbk_args = []
         self._cbk_kwargs = []
-
-        log.debug('%s for %s' % (self.description, self.trajectory.filename))
 
         # If update mode is on, we will only do the calculation if the trajectory
         # file is newer than any of the provided files
@@ -221,7 +221,7 @@ class Correlation(object):
         self._pos = []
         self._vel = []
         if 'pos' in self._phasespace or 'vel' in self._phasespace:
-            for s in self.trajectory:
+            for s in progress(self.trajectory):
                 # Apply filter if there is one
                 if len(self._cbk) > 0:
                     s = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
@@ -233,7 +233,7 @@ class Correlation(object):
         # Dump unfolded positions if requested
         self._pos_unf = []
         if 'pos-unf' in self._phasespace:
-            for s in Unfolded(self.trajectory, fixed_cm=True):
+            for s in progress(Unfolded(self.trajectory, fixed_cm=True)):
                 # Apply filter if there is one
                 if len(self._cbk) > 0:
                     s = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
@@ -257,7 +257,7 @@ class Correlation(object):
         self._pos_0, self._pos_1 = [], []
         self._vel_0, self._vel_1 = [], []
         if 'pos' in self._phasespace or 'vel' in self._phasespace:
-            for s in self.trajectory:
+            for s in progress(self.trajectory):
                 s0 = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
                 s1 = self._cbk[1](s, *self._cbk_args[1], **self._cbk_kwargs[1])
                 if 'pos' in self._phasespace:
@@ -270,7 +270,7 @@ class Correlation(object):
         # Dump unfolded positions if requested
         self._pos_unf_0, self._pos_unf_1 = [], []
         if 'pos-unf' in self._phasespace:
-            for s in Unfolded(self.trajectory):
+            for s in progress(Unfolded(self.trajectory)):
                 s0 = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
                 s1 = self._cbk[1](s, *self._cbk_args[1], **self._cbk_kwargs[1])
                 self._pos_unf_0.append(s0.dump('pos'))
@@ -294,19 +294,19 @@ class Correlation(object):
             log.info('skip %s (%s) for %s' % (self.short_name, self.tag, self.trajectory.filename))
             return
 
-        log.debug('setup')
+        log.info('setup arrays for %s' % self.tag_description)
         t = [Timer(), Timer()]
         t[0].start()
         self._setup_arrays()
         t[0].stop()
 
-        log.debug('compute')
+        log.info('computing %s for %s' % (self.description, self.tag_description))
         t[1].start()
         self._compute()
         t[1].stop()
 
-        log.info('computed %s %s for %s in %.1f sec [setup:%.0f%%, compute: %.0f%%]', self.description,
-                 self.tag_description, self.trajectory.filename, t[0].wall_time + t[1].wall_time,
+        log.info('done %s for %s in %.1f sec [setup:%.0f%%, compute: %.0f%%]', self.description,
+                 self.tag_description, t[0].wall_time + t[1].wall_time,
                  t[0].wall_time / (t[0].wall_time + t[1].wall_time) * 100,
                  t[1].wall_time / (t[0].wall_time + t[1].wall_time) * 100)
 

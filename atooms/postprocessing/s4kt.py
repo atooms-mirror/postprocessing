@@ -8,6 +8,7 @@ import numpy
 from .fourierspace import FourierSpaceCorrelation, expo_sphere
 from .helpers import adjust_skip, setup_t_grid
 from .qt import self_overlap
+from .progress import progress
 
 __all__ = ['S4ktOverlap']
 
@@ -68,7 +69,7 @@ class S4ktOverlap(FourierSpaceCorrelation):
         #     raise ValueError('There should be only one time for S4kt')
         dt = []
         self.value = []
-        for off, i  in self._discrete_tgrid:
+        for off, i  in progress(self._discrete_tgrid):
 
             # as for fkt
             W = self._tabulate_W(self.k_sorted, self.k_selected, off, i, self.skip)

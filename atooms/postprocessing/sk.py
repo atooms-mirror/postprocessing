@@ -5,6 +5,7 @@
 
 import numpy
 
+from .progress import progress
 from .helpers import adjust_skip
 from .fourierspace import FourierSpaceCorrelation, expo_sphere
 
@@ -73,7 +74,7 @@ class StructureFactor(FourierSpaceCorrelation):
         rho_av = [complex(0.,0.) for k in k_sorted]
         rho2_av = [complex(0.,0.) for k in k_sorted]
         variable_cell = is_cell_variable(self.trajectory)
-        for i in range(0, nsteps, self.skip):
+        for i in progress(range(0, nsteps, self.skip), total=nsteps // self.skip):
             # If cell changes we have to update the wave vectors
             if variable_cell:
                 self._setup(i)

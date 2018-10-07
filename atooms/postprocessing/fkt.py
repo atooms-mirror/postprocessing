@@ -11,6 +11,7 @@ from atooms.trajectory.utils import check_block_size
 from .helpers import logx_grid, adjust_skip, setup_t_grid
 from .correlation import Correlation
 from .fourierspace import FourierSpaceCorrelation, expo_sphere
+from .progress import progress
 
 __all__ = ['SelfIntermediateScattering', 'IntermediateScattering']
 
@@ -56,7 +57,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
         # can optimize the inner loop.  even better we could change
         # order in the tabulated expo array to speed things up shape
         # is (Npart, Ndim)
-        block = min(200, self._pos[0].shape[0])
+        block = min(20, self._pos[0].shape[0])
         kmax = max(self.kvec.keys()) + self.dk
         acf = [defaultdict(float) for k in self.k_sorted]
         cnt = [defaultdict(float) for k in self.k_sorted]
@@ -65,7 +66,8 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
         else:
             skip = self.skip
 
-        for j in range(0, pos.shape[1], block):
+        origins = range(0, pos.shape[1], block)
+        for j in progress(origins):
             x = expo_sphere(self.k0, kmax, pos[:, j:j+block, :])
             for kk, knorm in enumerate(self.k_sorted):
                 # Pick up a random, unique set of nk vectors out ot the avilable ones
@@ -183,7 +185,7 @@ class IntermediateScattering(FourierSpaceCorrelation):
         acf = [defaultdict(float) for k in k_sorted]
         cnt = [defaultdict(float) for k in k_sorted]
         skip = self.trajectory.block_size
-        for kk, knorm in enumerate(k_sorted):
+        for kk, knorm in enumerate(progress(k_sorted)):
             for j in k_selected[kk]:
                 ik = self.kvec[knorm][j]
                 for off, i in self._discrete_tgrid:

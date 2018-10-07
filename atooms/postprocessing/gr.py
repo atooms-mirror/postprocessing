@@ -9,6 +9,7 @@ import math
 from .helpers import linear_grid
 from .correlation import Correlation
 from .helpers import adjust_skip
+from .progress import progress
 
 __all__ = ['RadialDistributionFunction']
 
@@ -102,7 +103,8 @@ class RadialDistributionFunction(Correlation):
 
         gr_all = []
         _, r = numpy.histogram([], bins=self.grid)
-        for i in range(0, ncfg, self.skip):
+        origins = range(0, ncfg, self.skip)
+        for i in progress(origins):
             self.side = self.trajectory.read(i).cell.side
             if len(self._pos_0[i]) == 0 or len(self._pos_1[i]) == 0:
                 continue

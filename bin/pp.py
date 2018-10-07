@@ -26,6 +26,8 @@ postprocessing.correlation.OUTPUT_PATH = args.output
 if args.verbose:
     setup_logging('atooms', level=40)
     setup_logging('atooms.postprocessing', level=20)
+    import atooms.postprocessing.progress
+    atooms.postprocessing.progress.active = True
 elif args.debug:
     setup_logging('atooms', level=40)
     setup_logging('atooms.postprocessing', level=10)
