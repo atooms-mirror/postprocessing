@@ -31,7 +31,7 @@ The same kind of calculation can be done from python:
 
 ```python
 from atooms.trajectory import Trajectory
-import postprocessing as pp
+import atooms.postprocessing as pp
 
 with Trajectory('data/trajectory.xyz') as t:
      p = pp.RadialDistributionFunction(t)
@@ -57,5 +57,5 @@ From the code repository
 ```
 git clone https://gitlab.info-ufr.univ-montp2.fr/atooms/postprocessing.git
 cd postprocessing
-make install
+make user
 ```
