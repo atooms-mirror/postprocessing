@@ -24,13 +24,13 @@ args = parser.parse_args()
 
 postprocessing.correlation.OUTPUT_PATH = args.output 
 if args.verbose:
-    setup_logging('postprocessing', level=20)
     setup_logging('atooms', level=40)
+    setup_logging('atooms.postprocessing', level=20)
 elif args.debug:
-    setup_logging('postprocessing', level=10)
     setup_logging('atooms', level=40)
+    setup_logging('atooms.postprocessing', level=10)
 else:
-    setup_logging('postprocessing', level=40)
     setup_logging('atooms', level=40)
+    setup_logging('atooms.postprocessing', level=40)
 
 argh.dispatching.dispatch(parser)
