@@ -17,7 +17,6 @@ __all__ = ['SelfIntermediateScattering', 'IntermediateScattering']
 
 
 class SelfIntermediateScattering(FourierSpaceCorrelation):
-
     """
     Self part of the intermediate scattering function.
 
@@ -124,7 +123,6 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
 
 
 class IntermediateScattering(FourierSpaceCorrelation):
-
     """
     Coherent intermediate scattering function.
 
@@ -146,9 +144,9 @@ class IntermediateScattering(FourierSpaceCorrelation):
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid[1])
 
     def _tabulate_rho(self, k_sorted, k_selected, f=numpy.sum):
-
-        """Tabulate densities"""
-
+        """
+        Tabulate densities
+        """
         nsteps = len(self._pos_0)
         kmax = max(self.kvec.keys()) + self.dk
         rho_0 = [defaultdict(complex) for it in range(nsteps)]
@@ -214,10 +212,7 @@ class IntermediateScattering(FourierSpaceCorrelation):
             self.value = [[v / self.value_nonorm[kk][0] for v in self.value_nonorm[kk]] for kk in range(len(self.grid[0]))]
 
     def analyze(self):
-        try:
-            from .helpers import feqc
-        except ImportError:
-            return
+        from .helpers import feqc
         self.tau = {}
         for i, k in enumerate(self.grid[0]):
             try:

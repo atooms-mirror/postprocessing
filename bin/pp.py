@@ -22,7 +22,7 @@ parser.add_argument('--species-layout', dest='species_layout', help='force speci
 argh.add_commands(parser, [msd, vacf, fkt, fskt, chi4qs, chi4qs_opti, gr, sk, skopti, ik])
 args = parser.parse_args()
 
-postprocessing.correlation.OUTPUT_PATH = args.output 
+postprocessing.correlation.pp_output_path = args.output 
 if args.verbose:
     setup_logging('atooms', level=40)
     setup_logging('atooms.postprocessing', level=20)

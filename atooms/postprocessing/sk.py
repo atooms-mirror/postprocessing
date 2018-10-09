@@ -13,7 +13,6 @@ __all__ = ['StructureFactor', 'StructureFactorOptimized', 'StructureFactorStats'
 
 
 class StructureFactor(FourierSpaceCorrelation):
-
     """
     Structure factor.
 
@@ -66,6 +65,7 @@ class StructureFactor(FourierSpaceCorrelation):
 
     def _compute(self):
         from atooms.trajectory.utils import is_cell_variable
+
         nsteps = len(self._pos_0)
         # Setup k vectors and tabulate rho
         k_sorted, k_selected = self._decimate_k()
@@ -136,7 +136,6 @@ class StructureFactor(FourierSpaceCorrelation):
 
 
 class StructureFactorOptimized(FourierSpaceCorrelation):
-
     """
     Optimized structure factor.
 

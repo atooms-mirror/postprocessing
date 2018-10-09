@@ -13,7 +13,6 @@ __all__ = ['SpectralDensity']
 
 
 class SpectralDensity(FourierSpaceCorrelation):
-
     """
     Free volume spectral density.
 

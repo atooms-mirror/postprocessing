@@ -22,7 +22,7 @@ class VelocityAutocorrelation(Correlation):
 
     def _compute(self):
         def f(x, y):
-            return numpy.sum(x*y) / float(x.shape[0])
+            return numpy.sum(x * y) / float(x.shape[0])
         self.grid, self.value = gcf_offset(f, self._discrete_tgrid,
                                            self.trajectory.block_size,
                                            self.trajectory.steps,

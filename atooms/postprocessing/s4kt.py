@@ -14,7 +14,6 @@ __all__ = ['S4ktOverlap']
 
 
 class S4ktOverlap(FourierSpaceCorrelation):
-
     """
     Four-point dynamic structure factor from time-dependent self overlap.
 
@@ -44,7 +43,9 @@ class S4ktOverlap(FourierSpaceCorrelation):
         self.grid[1] = self._actual_k_grid(self.k_sorted, self.k_selected)
 
     def _tabulate_W(self, k_sorted, k_selected, t_off, t, skip):
-        """ Tabulate W """
+        """
+        Tabulate W
+        """
         nsteps = len(self._pos)
         side = self.trajectory[0].cell.side
         kmax = max(self.kvec.keys()) + self.dk
@@ -88,6 +89,5 @@ class S4ktOverlap(FourierSpaceCorrelation):
             # Normalization
             npart = self._pos[0].shape[0]
             dt.append(self.trajectory.timestep * (self.trajectory.steps[off+i] - self.trajectory.steps[off]))
-            #self.grid[1] = k_sorted
             self.value.append([float(w2_av[kk] - (w_av[kk]*w_av[kk].conjugate())) / npart for kk in range(len(self.grid[1]))])
         self.grid[0] = dt

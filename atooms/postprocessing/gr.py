@@ -20,6 +20,7 @@ def gr_kernel(x, y, L):
     r = r - numpy.rint(r/L) * L
     return numpy.sqrt(numpy.sum(r**2, axis=1))
 
+
 def gr_kernel_square(x, y, L):
     """Return square distances."""
     # r is an array of array distances
@@ -27,8 +28,10 @@ def gr_kernel_square(x, y, L):
     r = r - numpy.rint(r/L) * L
     return numpy.sum(r**2, axis=1)
 
+
 def pairs_newton_hist(f, x, y, L, bins):
-    """Apply function f to all pairs in x[i] and y[j] and update the
+    """
+    Apply function f to all pairs in x[i] and y[j] and update the
     |hist| histogram using the |bins| bin edges.
     """
     hist, bins = numpy.histogram([], bins)
@@ -44,8 +47,10 @@ def pairs_newton_hist(f, x, y, L, bins):
         hist += hist_tmp
     return hist
 
+
 def pairs_hist(f, x, y, L, bins):
-    """Apply function f to all pairs in x[i] and y[j] and update the
+    """
+    Apply function f to all pairs in x[i] and y[j] and update the
     |hist| histogram using the |bins| bin edges.
     """
     hist, bins = numpy.histogram([], bins)
@@ -57,7 +62,6 @@ def pairs_hist(f, x, y, L, bins):
 
 
 class RadialDistributionFunction(Correlation):
-
     """
     Radial distribution function.
 

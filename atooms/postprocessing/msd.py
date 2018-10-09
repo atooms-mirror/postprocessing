@@ -24,7 +24,6 @@ def partition(inp, nbl):
 
 
 class MeanSquareDisplacement(Correlation):
-
     """
     Mean square displacement.
     

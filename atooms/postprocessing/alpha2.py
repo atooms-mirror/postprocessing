@@ -40,8 +40,8 @@ class NonGaussianParameter(Correlation):
         self.grid = [ti * self.trajectory.timestep for ti in self.grid]
 
     def analyze(self):
+        from .helpers import ifabsmm
         try:
-            from .helpers import ifabsmm
             self.results['t_star'], self.results['a2_star'] = ifabsmm(self.grid, self.value)[1]
-        except:
+        except ZeroDivisionError:
             pass

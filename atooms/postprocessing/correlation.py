@@ -26,7 +26,9 @@ log = logging.getLogger(__name__)
 
 
 def acf(grid, skip, t, x):
-    """Auto correlation function.
+    """
+    Auto correlation function.
+
     Calculate the correlation between time t(i0) and t(i0+i)
     for all possible pairs (i0,i) provided by grid.
     """
@@ -44,8 +46,11 @@ def acf(grid, skip, t, x):
     dt = sorted(cf.keys())
     return dt, [cf[t] / cnt[t] for t in dt], cnt
 
+
 def gcf(f, grid, skip, t, x):
-    """Generalized correlation function.
+    """
+    Generalized correlation function.
+
     Pass a function to apply to the data.
     Exemple: mean square displacement.
     """
@@ -65,13 +70,13 @@ def gcf(f, grid, skip, t, x):
     dt = sorted(acf.keys())
     return dt, [acf[t] / cnt[t] for t in dt], [cnt[t] for t in dt]
 
+
 def gcf_offset(f, grid, skip, t, x, mask=None):
     """
     Generalized correlation function
 
     Pass a function `f` to apply to the data `x`.
-
-    Optionnally, filter the entries at time `t[i0]` according to `mask[i0]`.
+    Optionally, filter the entries at time `t[i0]` according to `mask[i0]`.
 
     Exemple: mean square displacement.
     """
@@ -109,11 +114,10 @@ def gcf_offset(f, grid, skip, t, x, mask=None):
 
 
 # TODO: should not be capitalized
-UPDATE = False
-OUTPUT_PATH = '{trajectory.filename}.pp.{short_name}.{tag}'
+pp_update = False
+pp_output_path = '{trajectory.filename}.pp.{short_name}.{tag}'
 
 class Correlation(object):
-
     """
     Base class for correlation functions.
 
@@ -174,7 +178,7 @@ class Correlation(object):
         self.comments = None  # can be modified by user at run time
         self.tag = ''
         self.tag_description = 'the whole system'
-        self.output_path = output_path if output_path is not None else OUTPUT_PATH
+        self.output_path = output_path if output_path is not None else pp_output_path
 
         # Make sure phasespace is a list
         self._phasespace = phasespace if phasespace is not None else []
@@ -189,7 +193,7 @@ class Correlation(object):
         # If update mode is on, we will only do the calculation if the trajectory
         # file is newer than any of the provided files
         self._need_update = True
-        if UPDATE:
+        if pp_update:
             if os.path.exists(self._output_file) and self._output_file == '/dev/stdout':
                 if os.path.getmtime(self.trajectory.filename) < \
                    os.path.getmtime(self._output_file):

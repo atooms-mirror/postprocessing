@@ -13,7 +13,8 @@ __all__ = ['CollectiveOverlap', 'SelfOverlap']
 
 
 def pairs_numpy(f, x, y, L):
-    """Apply function f to all pairs in x[i] and y[j] and return a numpy
+    """
+    Apply function f to all pairs in x[i] and y[j] and return a numpy
     array of f values.
     """
     fxy = numpy.ndarray((len(y), len(x)))
