@@ -44,7 +44,8 @@ Requirements
 ------------
 - numpy
 - [atooms](https://gitlab.info-ufr.univ-montp2.fr/atooms/postprocessing.git)
-- argh (actually only needed when using `pp.py`)
+- [optional] argh (only needed when using `pp.py`)
+- [optional] tqdm (only needed to enable progress bars)
 
 Installation
 ------------
