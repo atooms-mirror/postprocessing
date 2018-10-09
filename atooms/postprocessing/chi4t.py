@@ -15,7 +15,6 @@ __all__ = ['Chi4SelfOverlap', 'Chi4SelfOverlapOptimized']
 
 
 class Chi4SelfOverlap(Correlation):
-
     """
     Four-point dynamic susceptibility from the time-dependent self
     overlap function.
@@ -26,7 +25,7 @@ class Chi4SelfOverlap(Correlation):
     - a: distance parameter entering the Heaviside function in the
     overlap calculation
     """
-
+    
     def __init__(self, trajectory, tgrid=None, norigins=-1, a=0.3,
                  tsamples=60):
         Correlation.__init__(self, trajectory, tgrid, 'chi_4(t)', 'chi4qs',
@@ -88,22 +87,21 @@ class Chi4SelfOverlap(Correlation):
 
 
 class Chi4SelfOverlapOptimized(Correlation):
-
     """
     Four-point dynamic susceptibility from the time-dependent self
     overlap function.
 
     Optimized version using fortran 90 extension.
     """
-
+    
     def __init__(self, trajectory, tgrid=None, norigins=-1, a=0.3,
                  tsamples=60):
         Correlation.__init__(self, trajectory, tgrid, 't', ' chi_4(t)', 'chi4qs',
                              'dynamic susceptibility of self overlap', 'pos-unf')
         if not self._need_update:
             return
-        if grid is None:
-            self.grid = logx_grid(0.0, trajectory.total_time * 0.75, tsamples)
+        if tgrid is None:
+            self.tgrid = logx_grid(0.0, trajectory.total_time * 0.75, tsamples)
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid)
         self.skip = adjust_skip(self.trajectory, norigins)
         self.a_square = a**2
