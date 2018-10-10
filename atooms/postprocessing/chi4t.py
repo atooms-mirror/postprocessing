@@ -7,7 +7,7 @@ import numpy
 
 from .helpers import logx_grid
 from .correlation import Correlation
-from .helpers import adjust_skip, setup_t_grid
+from .helpers import adjust_skip, setup_t_grid, ifabsmm
 from .qt import self_overlap
 from .progress import progress
 
@@ -47,6 +47,7 @@ class Chi4SelfOverlap(Correlation):
         # At this stage, we must copy over the tags
         self.average.tag, self.variance.tag = self.tag, self.tag
         side = self.trajectory.read(0).cell.side
+
         def f(x, y):
             return self_overlap(x, y, side, self.a_square).sum()
 
@@ -54,17 +55,15 @@ class Chi4SelfOverlap(Correlation):
         for off, i in progress(self._discrete_tgrid):
             A, A2, cnt = 0.0, 0.0, 0
             for i0 in range(off, len(self._pos_unf)-i-self.skip, self.skip):
-                w = f(self._pos_unf[i0], self._pos_unf[i0+i])
+                w = f(self._pos_unf[i0], self._pos_unf[i0 + i])
                 A2 += w**2
                 A += w
                 cnt += 1
             dt = self.trajectory.steps[off+i] - self.trajectory.steps[off]
             if cnt > 0:
-                A_av = A/cnt
-                A2_av = A2/cnt
+                A_av, A2_av = A / cnt, A2 / cnt
             else:
-                A_av = 0
-                A2_av = 0
+                A_av, A2_av = 0, 0
             self.grid.append(dt * self.trajectory.timestep)
             self.value.append((A2_av - A_av**2) / self._pos_unf[0].shape[0])
             self.average.value.append(A_av)
@@ -113,13 +112,14 @@ class Chi4SelfOverlapOptimized(Correlation):
     def _compute(self):
         # TODO: write general susceptibility
         # At this stage, we must copy over the tags
-        self.average.tag, self.variance.tag = self.tag, self.tag
-        side = self.trajectory.read(0).cell.side
         import postprocessing.realspace_wrap
         from postprocessing.realspace_wrap import realspace_module
+
+        self.average.tag, self.variance.tag = self.tag, self.tag
+        side = self.trajectory.read(0).cell.side
+
         def f(x, y):
             return realspace_module.self_overlap(x, y, numpy.array(self.a_square))
-            #return self_overlap(x, y, side, self.a_square).sum()
 
         self.grid = []
         for off, i in progress(self._discrete_tgrid):
@@ -130,8 +130,7 @@ class Chi4SelfOverlapOptimized(Correlation):
                 A += w
                 cnt += 1
             dt = self.trajectory.steps[off+i] - self.trajectory.steps[off]
-            A_av = A/cnt
-            A2_av = A2/cnt
+            A_av, A2_av = A/cnt, A2/cnt
             self.grid.append(dt * self.trajectory.timestep)
             self.value.append((A2_av - A_av**2) / self._pos_unf[0].shape[0])
             self.average.value.append(A_av)
@@ -145,9 +144,7 @@ class Chi4SelfOverlapOptimized(Correlation):
         self.variance.write()
 
     def analyze(self):
-        from .helpers import ifabsmm
         try:
             self.results['peak time tau_star'], self.results['peal value chi4_star'] = ifabsmm(self.grid, self.value)[1]
         except ZeroDivisionError:
             print('# warning : could not find maximum')
-            pass
