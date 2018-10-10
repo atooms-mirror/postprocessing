@@ -110,8 +110,8 @@ class Chi4SelfOverlapOptimized(Correlation):
     def _compute(self):
         # TODO: write general susceptibility
         # At this stage, we must copy over the tags
-        import postprocessing.realspace_wrap
-        from postprocessing.realspace_wrap import realspace_module
+        import atooms.postprocessing.realspace_wrap
+        from atooms.postprocessing.realspace_wrap import realspace_module
 
         self.average.tag, self.variance.tag = self.tag, self.tag
         side = self.trajectory.read(0).cell.side
