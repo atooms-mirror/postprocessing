@@ -3,8 +3,8 @@
 
 """Mean square displacement."""
 
-import numpy
 import logging
+import numpy
 
 from .helpers import linear_grid
 from .correlation import Correlation, gcf_offset

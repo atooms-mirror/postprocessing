@@ -4,10 +4,11 @@
 """Intermediate scattering function."""
 
 import sys
-import numpy
 from collections import defaultdict
 
+import numpy
 from atooms.trajectory.utils import check_block_size
+
 from .helpers import logx_grid, adjust_skip, setup_t_grid
 from .correlation import Correlation
 from .fourierspace import FourierSpaceCorrelation, expo_sphere

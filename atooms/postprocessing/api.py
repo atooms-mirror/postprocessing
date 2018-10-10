@@ -6,6 +6,7 @@ from atooms.trajectory import Trajectory
 from atooms.trajectory.decorators import change_species
 from atooms.trajectory.utils import time_when_msd_is
 from atooms.system.particle import distinct_species
+
 from .helpers import linear_grid, logx_grid
 
 

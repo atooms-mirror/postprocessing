@@ -5,8 +5,11 @@
 """Stress autocorrelation function."""
 
 import numpy
+
 from .correlation import Correlation, gcf_offset
 from .helpers import setup_t_grid
+
+__all__ = ['StressAutocorrelation']
 
 
 class StressAutocorrelation(Correlation):

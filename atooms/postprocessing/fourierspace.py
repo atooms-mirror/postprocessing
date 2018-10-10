@@ -3,10 +3,11 @@
 
 """Fourier-space post processing code."""
 
-import numpy
 import math
 import random
 from collections import defaultdict
+
+import numpy
 
 from .helpers import linear_grid
 from .correlation import Correlation

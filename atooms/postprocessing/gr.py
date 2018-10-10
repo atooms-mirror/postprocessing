@@ -3,8 +3,9 @@
 
 """Radial distribution function."""
 
-import numpy
 import math
+
+import numpy
 
 from .helpers import linear_grid
 from .correlation import Correlation

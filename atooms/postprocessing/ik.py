@@ -4,11 +4,11 @@
 """Free volume spectral density."""
 
 import numpy
+from atooms.trajectory import Trajectory
+from atooms.trajectory.utils import is_cell_variable
 
 from .helpers import adjust_skip
 from .fourierspace import FourierSpaceCorrelation, expo_sphere
-from atooms.trajectory import Trajectory
-from atooms.trajectory.utils import is_cell_variable
 
 __all__ = ['SpectralDensity']
 

@@ -4,17 +4,19 @@
 """Base correlation function."""
 
 import os
-import numpy
 import warnings
 import logging
 from collections import defaultdict
+
+import numpy
+from atooms.trajectory.decorators import Unfolded
+from atooms.core.utils import Timer
 try:
     from medepy.metadata import dump as _dump
 except ImportError:
     from .helpers import _dump
+
 from .core import __version__
-from atooms.trajectory.decorators import Unfolded
-from atooms.core.utils import Timer
 from .progress import progress
 
 
