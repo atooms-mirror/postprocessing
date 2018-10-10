@@ -79,10 +79,13 @@ class RadialDistributionFunction(Correlation):
     """
 
     nbodies = 2
+    symbol = 'gr'
+    short_name = 'g(r)'
+    description = 'radial distribution function'
+    phasespace = 'pos'
 
     def __init__(self, trajectory, rgrid=None, norigins=-1, dr=0.04):
-        Correlation.__init__(self, trajectory, rgrid, 'g(r)', 'gr',
-                             'radial distribution function', 'pos')
+        Correlation.__init__(self, trajectory, rgrid)
         self.skip = adjust_skip(self.trajectory, norigins)
         self.side = self.trajectory.read(0).cell.side
         if rgrid is not None:

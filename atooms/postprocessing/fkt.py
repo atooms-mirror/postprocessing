@@ -25,12 +25,16 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
     for information on the instance variables.
     """
 
-    #TODO: xyz files are 2 slower than hdf5 where
+    symbol = 'fskt'
+    short_name = 'F_s(k,t)'
+    description = 'self intermediate scattering function'
+    phasespace = 'pos-unf'
+
+    #TODO: xyz files are 2 slower than hdf5 here
     def __init__(self, trajectory, kgrid=None, tgrid=None, nk=8, tsamples=60,
                  dk=0.1, kmin=1.0, kmax=10.0, ksamples=10, norigins=-1):
-        FourierSpaceCorrelation.__init__(self, trajectory, [kgrid, tgrid], 'F_s(k,t)',
-                                         'fskt', 'self intermediate scattering function',
-                                         'pos-unf', nk, dk, kmin, kmax, ksamples)
+        FourierSpaceCorrelation.__init__(self, trajectory, [kgrid, tgrid],
+                                         nk, dk, kmin, kmax, ksamples)
         # Setup time grid
         # Before setting up the time grid, we need to check periodicity over blocks
         check_block_size(self.trajectory.steps, self.trajectory.block_size)
@@ -40,12 +44,12 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
         self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid[1])
         self.skip = adjust_skip(self.trajectory, norigins)
 
+    def _compute(self):
         # Pick up a random, unique set of nk vectors out ot the avilable ones
         # without exceeding maximum number of vectors in shell nkmax
         # TODO: Can this be moved up the chain?
         self.k_sorted, self.k_selected = self._decimate_k()
 
-    def _compute(self):
         # Throw everything into a big numpy array
         # TODO: remove this redundancy
         self._pos = self._pos_unf
@@ -130,17 +134,21 @@ class IntermediateScattering(FourierSpaceCorrelation):
     """
 
     nbodies = 2
+    symbol = 'fkt'
+    short_name = 'F(k,t)'
+    description = 'intermediate scattering function'
+    phasespace = 'pos'
 
     def __init__(self, trajectory, kgrid=None, tgrid=None, nk=100, dk=0.1, tsamples=60,
-                 kmin=1.0, kmax=10.0, ksamples=10):
-        FourierSpaceCorrelation.__init__(self, trajectory, [kgrid, tgrid], 'F(k,t)',
-                                         'fkt', 'intermediate scattering function',
-                                         'pos', nk, dk, kmin, kmax, ksamples)
+                 kmin=1.0, kmax=10.0, ksamples=10, norigins=-1):
+        FourierSpaceCorrelation.__init__(self, trajectory, [kgrid, tgrid],
+                                         nk, dk, kmin, kmax, ksamples)
         # Setup time grid
         check_block_size(self.trajectory.steps, self.trajectory.block_size)
         if tgrid is None:
             self.grid[1] = logx_grid(0.0, self.trajectory.total_time * 0.75, tsamples)
         self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid[1])
+        self.skip = adjust_skip(self.trajectory, norigins)
 
     def _tabulate_rho(self, k_sorted, k_selected):
         """
@@ -177,7 +185,7 @@ class IntermediateScattering(FourierSpaceCorrelation):
         # Setup k vectors and tabulate densities
         k_sorted, k_selected = self._decimate_k()
         rho_0, rho_1 = self._tabulate_rho(k_sorted, k_selected)
-
+        
         # Compute correlation function
         acf = [defaultdict(float) for _ in k_sorted]
         cnt = [defaultdict(float) for _ in k_sorted]

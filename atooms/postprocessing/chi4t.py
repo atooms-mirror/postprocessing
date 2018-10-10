@@ -26,19 +26,27 @@ class Chi4SelfOverlap(Correlation):
     overlap calculation
     """
 
+    symbol = 'chi4qs'
+    short_name = 'chi_4(t)'
+    description = 'dynamic susceptibility of self overlap'
+    phasespace = 'pos-unf'
+
     def __init__(self, trajectory, tgrid=None, norigins=-1, a=0.3,
                  tsamples=60):
-        Correlation.__init__(self, trajectory, tgrid, 'chi_4(t)', 'chi4qs',
-                             'dynamic susceptibility of self overlap', 'pos-unf')
+        Correlation.__init__(self, trajectory, tgrid)
         if tgrid is None:
             self.grid = logx_grid(0.0, self.trajectory.total_time * 0.75, tsamples)
         self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid)
         self.skip = adjust_skip(self.trajectory, norigins)
         self.a_square = a**2
-        self.average = Correlation(self.trajectory, self.grid, 'Q^u(t)', 'qsu',
-                                   'Average of self overlap not normalized')
-        self.variance = Correlation(self.trajectory, self.grid, 'Q_2^u(t)', 'qs2u',
-                                    'Variance self overlap not normalized')
+        self.average = Correlation(self.trajectory, self.grid)
+        self.average.short_name = 'Q^u(t)'
+        self.average.symbol = 'qsu'
+        self.average.description = 'Average of self overlap, not normalized'
+        self.variance = Correlation(self.trajectory, self.grid)
+        self.variance.short_name = 'Q_2^u(t)'
+        self.variance.symbol = 'q2su'
+        self.variance.description = 'Variance of self overlap, not normalized'
 
     def _compute(self):
         # TODO: write general susceptibility
@@ -81,7 +89,7 @@ class Chi4SelfOverlap(Correlation):
             print('# warning : could not find maximum')
 
 
-class Chi4SelfOverlapOptimized(Correlation):
+class Chi4SelfOverlapOptimized(Chi4SelfOverlap):
     """
     Four-point dynamic susceptibility from the time-dependent self
     overlap function.
@@ -89,25 +97,7 @@ class Chi4SelfOverlapOptimized(Correlation):
     Optimized version using fortran 90 extension.
     """
 
-    def __init__(self, trajectory, tgrid=None, norigins=-1, a=0.3,
-                 tsamples=60):
-        Correlation.__init__(self, trajectory, tgrid, 't', ' chi_4(t)', 'chi4qs',
-                             'dynamic susceptibility of self overlap', 'pos-unf')
-        if not self._need_update:
-            return
-        if tgrid is None:
-            self.tgrid = logx_grid(0.0, self.trajectory.total_time * 0.75, tsamples)
-        self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid)
-        self.skip = adjust_skip(self.trajectory, norigins)
-        self.a_square = a**2
-        self.average = Correlation(self.trajectory, self.grid, 't', 'Q^u(t)', 'qsu',
-                                   'Average of self overlap not normalized')
-        self.variance = Correlation(self.trajectory, self.grid, 't', 'Q_2^u(t)', 'qs2u',
-                                    'Variance self overlap not normalized')
-
     def _compute(self):
-        # TODO: write general susceptibility
-        # At this stage, we must copy over the tags
         import atooms.postprocessing.realspace_wrap
         from atooms.postprocessing.realspace_wrap import realspace_module
 
@@ -131,15 +121,3 @@ class Chi4SelfOverlapOptimized(Correlation):
             self.average.value.append(A_av)
             self.variance.value.append(A2_av)
         self.average.grid, self.variance.grid = self.grid, self.grid
-
-    def write(self):
-        # We subclass this to also write down qsu and qsu2
-        super(Chi4SelfOverlapOptimized, self).write()
-        self.average.write()
-        self.variance.write()
-
-    def analyze(self):
-        try:
-            self.results['peak time tau_star'], self.results['peal value chi4_star'] = ifabsmm(self.grid, self.value)[1]
-        except ZeroDivisionError:
-            print('# warning : could not find maximum')

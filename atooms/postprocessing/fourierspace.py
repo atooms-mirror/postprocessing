@@ -91,12 +91,9 @@ class FourierSpaceCorrelation(Correlation):
     prescribed value k_i.
     """
 
-    def __init__(self, trajectory, grid, symbol, short_name,
-                 description, phasespace, nk=8, dk=0.1, kmin=-1, kmax=10,
+    def __init__(self, trajectory, grid, nk=8, dk=0.1, kmin=-1, kmax=10,
                  ksamples=20):
-        super(FourierSpaceCorrelation, self).__init__(trajectory,
-                                                      grid, symbol, short_name,
-                                                      description, phasespace)
+        super(FourierSpaceCorrelation, self).__init__(trajectory, grid)
         # Some additional variables. k0 = smallest wave vectors
         # compatible with the boundary conditions
         self.nk = nk
@@ -105,16 +102,21 @@ class FourierSpaceCorrelation(Correlation):
         self.kmax = kmax
         self.ksamples = ksamples
 
+    def compute(self):
+        # We subclass compute to define k grid at compute time
         # Find k grid. It will be copied over to self.grid at end
-        variables = self.symbol.split('(')[1][:-1]
+        variables = self.short_name.split('(')[1][:-1]
         variables = variables.split(',')
         if len(variables) > 1:
-            self.kgrid = grid[variables.index('k')]
+            self.kgrid = self.grid[variables.index('k')]
         else:
-            self.kgrid = grid
+            self.kgrid = self.grid
 
         # Setup grid once. If cell changes we'll call it again
         self._setup()
+
+        # Now compute
+        super(FourierSpaceCorrelation, self).compute()
 
     def _setup(self, sample=0):
         self.k0 = 2*math.pi/self.trajectory[sample].cell.side
@@ -148,7 +150,8 @@ class FourierSpaceCorrelation(Correlation):
         # This must be consistent with expo_grid() otherwise it wont find the vectors
         kmax = kgrid[-1] + dk[-1]
         kbin_max = 1 + int(kmax / min(k0))
-        # TODO: it would be more elegant to define an iterator over ix, iy, iz for sphere, hemisphere, ... unless kmax is very high it might be more efficient to operate on a 3d grid to construct the vectors
+        # TODO: it would be more elegant to define an iterator over ix, iy, iz for sphere, hemisphere, ...
+        # unless kmax is very high it might be more efficient to operate on a 3d grid to construct the vectors
         kmax_sq = kmax**2
         for ix in range(-kbin_max, kbin_max+1):
             for iy in range(-kbin_max, kbin_max+1):

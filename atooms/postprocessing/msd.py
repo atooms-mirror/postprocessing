@@ -43,6 +43,11 @@ class MeanSquareDisplacement(Correlation):
     and to determine the diffusion time
     """
 
+    symbol = 'msd'
+    short_name = 'dr^2(t)'
+    description = 'mean square displacement'
+    phasespace = 'pos-unf'
+
     def __init__(self, trajectory, tgrid=None, rmax=-1.0, norigins=50,
                  tsamples=30, sigma=1.0):
         # TODO: optimize targeting msd takes a lot of time especially on large systems because of pbc unfolding
@@ -52,8 +57,7 @@ class MeanSquareDisplacement(Correlation):
         self._nblocks = 1  # currently not used
         self._var = None  # currently not used
 
-        Correlation.__init__(self, trajectory, tgrid, 'dr^2(t)', 'msd',
-                             'mean square displacement', ['pos-unf'])
+        Correlation.__init__(self, trajectory, tgrid)
 
         # TODO: subtrajectories should behave well when sampling is logarithmic
         # We redefine trajectory here to avoid unfolding the file if this is not necessary

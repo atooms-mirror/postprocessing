@@ -16,9 +16,13 @@ class NonGaussianParameter(Correlation):
 
     """Non-Gaussian parameter."""
 
+    symbol = 'alpha_2(t)'
+    short_name = 'alpha2'
+    description = 'non-Gaussian parameter'
+    phasespace = ['pos-unf']
+
     def __init__(self, trajectory, tgrid=None, norigins=50, nsamples=30):
-        Correlation.__init__(self, trajectory, tgrid, 'alpha_2(t)', 'alpha2',
-                             "non-Gaussian parameter", ['pos-unf'])
+        Correlation.__init__(self, trajectory, tgrid)
         if self.grid is None:
             self.grid = linear_grid(0.0, self.trajectory.total_time * 0.75, nsamples)
         self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid)

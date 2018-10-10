@@ -41,10 +41,14 @@ class CollectiveOverlap(Correlation):
 
     # TODO: why dont we use PBCed distance here?!
 
+    symbol = 'qt'
+    short_name = 'Q(t)'
+    description = 'collective overlap'
+    phasespace = 'pos'
+
     def __init__(self, trajectory, tgrid=None, tsamples=60, a=0.3,
                  norigins=-1):
-        Correlation.__init__(self, trajectory, tgrid, 'Q(t)', 'qt',
-                             'collective overlap', 'pos')
+        Correlation.__init__(self, trajectory, tgrid)
         self.a_square = a**2
         self.skip = adjust_skip(self.trajectory, norigins)
         if tgrid is None:
@@ -64,10 +68,14 @@ class SelfOverlap(Correlation):
 
     """Time-dependent self overlap."""
 
+    symbol = 'qst'
+    short_name = 'Q_s(t)'
+    description = 'self overlap'
+    phasespace = 'pos-unf'
+
     def __init__(self, trajectory, tgrid=None, norigins=-1, a=0.3,
                  tsamples=60):
-        Correlation.__init__(self, trajectory, tgrid, 'Q_s(t)', 'qst',
-                             'self overlap', 'pos-unf')
+        Correlation.__init__(self, trajectory, tgrid)
         if tgrid is None:
             self.grid = logx_grid(0.0, trajectory.total_time * 0.75, tsamples)
         self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid)

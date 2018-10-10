@@ -21,14 +21,17 @@ class S4ktOverlap(FourierSpaceCorrelation):
     for information on the instance variables.
     """
 
+    symbol = 's4kt'
+    short_name = 'S_4(k,t)'
+    description = '4-point dynamic structure factor from self overlap'
+    phasespace = ['pos', 'pos-unf']
+
     # TODO: refactor a S4k base correlation that forces to implement tabulat method (e.g. overlap, Q_6, voronoi ...)
     # TODO: should we drop this instead and rely on F(k,t) with grandcanonical
 
     def __init__(self, trajectory, tgrid, kgrid=None, norigins=-1,
                  nk=20, dk=0.1, a=0.3, kmin=1.0, kmax=10.0, ksamples=10):
-        FourierSpaceCorrelation.__init__(self, trajectory, [tgrid, kgrid], 'S_4(k,t)', 's4kt',
-                                         '4-point dynamic structure factor from self overlap',
-                                         ['pos', 'pos-unf'],
+        FourierSpaceCorrelation.__init__(self, trajectory, [tgrid, kgrid],
                                          nk, dk, kmin, kmax, ksamples)
         # Setup time grid
         self._discrete_tgrid = setup_t_grid(self.trajectory, tgrid)

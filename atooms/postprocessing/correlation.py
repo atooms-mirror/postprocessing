@@ -114,6 +114,8 @@ def gcf_offset(f, grid, skip, t, x, mask=None):
 
 pp_update = False
 pp_output_path = '{trajectory.filename}.pp.{short_name}.{tag}'
+pp_trj_format = None
+
 
 class Correlation(object):
     """
@@ -157,34 +159,32 @@ class Correlation(object):
     associated to the correlation function. This variable controls the
     internal arrays used to compute the correlation, see `phasespace`.
     """
-
+    symbol = ''
+    """Example: fskt"""
+    short_name = ''
+    """Example: F_s(k,t)"""
+    description = ''
+    """Example: Self intermediate scattering function"""
+    phasespace = None
+    """
+    List of strings or string among ['pos', 'pos-unf', 'vel']. It
+    indicates which variables should be read from the trajectory file.
+    They will be available as self._pos, self._pos_unf, self._vel.
+    """
+    
     def __init__(self, trj, grid, symbol='', short_name='',
-                 description='', phasespace=None, output_path=None, trj_fmt=None):
-        # TODO: we could force trajectory cast if a string is passed
-        # self.symbol =  'F_s(k,t)'
-        # self.short_name = 'fskt'
-        # self.description = 'Self intermediate scattering function'
-        # self.tag = 'A'
-        # self.tag_description = 'of particles A'  # 'of radius field'
+                 description='', phasespace=None, output_path=None):
         if isinstance(trj, str):
-            self.trajectory = Trajectory(trj, mode='r', fmt=trj_fmt)
+            self.trajectory = Trajectory(trj, mode='r', fmt=pp_trj_format)
         else:
             self.trajectory = trj
         self.grid = grid
-        self.symbol = symbol
-        self.short_name = short_name
-        self.description = description
         self.value = []
         self.results = {}
         self.comments = None  # can be modified by user at run time
         self.tag = ''
         self.tag_description = 'the whole system'
         self.output_path = output_path if output_path is not None else pp_output_path
-
-        # Make sure phasespace is a list
-        self._phasespace = phasespace if phasespace is not None else []
-        if not isinstance(phasespace, list) and not isinstance(phasespace, tuple):
-            self._phasespace = [phasespace]
 
         # Callbacks
         self._cbk = []
@@ -217,6 +217,15 @@ class Correlation(object):
         Dump positions and/or velocities at different time frames as a
         list of numpy array.
         """
+        # Ensure phasespace is a list.
+        # It may not be a class variable anymore after this
+        if self.phasespace is None:
+            self.phasespace = ['pos', 'pos-unf', 'vel']
+        if not isinstance(self.phasespace, list) and \
+           not isinstance(self.phasespace, tuple):
+            self.phasespace = [self.phasespace]
+
+        # Setup arrays
         if self.nbodies == 1:
             self._setup_arrays_onebody()
         elif self.nbodies == 2:
@@ -225,19 +234,19 @@ class Correlation(object):
     def _setup_arrays_onebody(self):
         self._pos = []
         self._vel = []
-        if 'pos' in self._phasespace or 'vel' in self._phasespace:
+        if 'pos' in self.phasespace or 'vel' in self.phasespace:
             for s in progress(self.trajectory):
                 # Apply filter if there is one
                 if len(self._cbk) > 0:
                     s = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
-                if 'pos' in self._phasespace:
+                if 'pos' in self.phasespace:
                     self._pos.append(s.dump('pos'))
-                if 'vel' in self._phasespace:
+                if 'vel' in self.phasespace:
                     self._vel.append(s.dump('vel'))
 
         # Dump unfolded positions if requested
         self._pos_unf = []
-        if 'pos-unf' in self._phasespace:
+        if 'pos-unf' in self.phasespace:
             for s in progress(Unfolded(self.trajectory, fixed_cm=True)):
                 # Apply filter if there is one
                 if len(self._cbk) > 0:
@@ -261,20 +270,20 @@ class Correlation(object):
 
         self._pos_0, self._pos_1 = [], []
         self._vel_0, self._vel_1 = [], []
-        if 'pos' in self._phasespace or 'vel' in self._phasespace:
+        if 'pos' in self.phasespace or 'vel' in self.phasespace:
             for s in progress(self.trajectory):
                 s0 = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
                 s1 = self._cbk[1](s, *self._cbk_args[1], **self._cbk_kwargs[1])
-                if 'pos' in self._phasespace:
+                if 'pos' in self.phasespace:
                     self._pos_0.append(s0.dump('pos'))
                     self._pos_1.append(s1.dump('pos'))
-                if 'vel' in self._phasespace:
+                if 'vel' in self.phasespace:
                     self._vel_0.append(s0.dump('vel'))
                     self._vel_1.append(s1.dump('vel'))
 
         # Dump unfolded positions if requested
         self._pos_unf_0, self._pos_unf_1 = [], []
-        if 'pos-unf' in self._phasespace:
+        if 'pos-unf' in self.phasespace:
             for s in progress(Unfolded(self.trajectory)):
                 s0 = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
                 s1 = self._cbk[1](s, *self._cbk_args[1], **self._cbk_kwargs[1])
@@ -378,7 +387,7 @@ class Correlation(object):
 
         # Comment line
         # Extract variables from parenthesis in symbol
-        variables = self.symbol.split('(')[1][:-1]
+        variables = self.short_name.split('(')[1][:-1]
         variables = variables.split(',')
         columns = variables + [self.symbol]
         if len(self.tag_description) > 0:

@@ -25,18 +25,20 @@ class StructureFactor(FourierSpaceCorrelation):
     """
 
     nbodies = 2
+    symbol = 'sk'
+    short_name = 'S(k)'
+    description = 'structure factor'
+    phasespace = ['pos']
 
     def __init__(self, trajectory, kgrid=None, norigins=-1, nk=20,
                  dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
                  trajectory_field=None, field=None):
-        FourierSpaceCorrelation.__init__(self, trajectory, kgrid, 'S(k)',
-                                         'sk', 'structure factor',
-                                         ['pos'], nk, dk, kmin,
-                                         kmax, ksamples)
+        FourierSpaceCorrelation.__init__(self, trajectory, kgrid, nk,
+                                         dk, kmin, kmax, ksamples)
         # TODO: move this up the chain?
         self.skip = adjust_skip(self.trajectory, norigins)
         self._is_cell_variable = None
-        self._field, tag = self._add_field(self.trajectory_field, field)
+        self._field, tag = self._add_field(trajectory_field, field)
         if tag is not None:
             self.tag = tag
             self.tag_description += '%s field' % tag.replace('_', ' ')
@@ -135,7 +137,7 @@ class StructureFactor(FourierSpaceCorrelation):
             self.value_nonorm.append(value)
 
 
-class StructureFactorOptimized(FourierSpaceCorrelation):
+class StructureFactorOptimized(StructureFactor):
     """
     Optimized structure factor.
 
@@ -143,48 +145,10 @@ class StructureFactorOptimized(FourierSpaceCorrelation):
     """
 
     nbodies = 2
-
-    def __init__(self, trajectory, kgrid=None, norigins=-1, nk=20,
-                 dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
-                 trajectory_field=None, field=None):
-        """
-        If `trajectory_field` is not None, the field is read from the last
-        column of this trajectory file, unless the `field` string is
-        provided.
-        """
-        FourierSpaceCorrelation.__init__(self, trajectory, kgrid, 'k', 'S(k)',
-                                         'sk', 'structure factor',
-                                         ['pos'], nk, dk, kmin,
-                                         kmax, ksamples)
-        # TODO: move this up the chain?
-        self.skip = adjust_skip(self.trajectory, norigins)
-        self._is_cell_variable = None
-        self._field, tag = self._add_field(self.trajectory_field, field)
-        if tag is not None:
-            self.tag = tag
-            self.tag_description += '%s field' % tag.replace('_', ' ')
-
-    def _add_field(self, trajectory_field, field):
-        if trajectory_field is None:
-            return None, None
-        else:
-            # TODO: check step consistency 06.09.2017
-            from atooms.trajectory import TrajectoryXYZ
-            with TrajectoryXYZ(trajectory_field) as th:
-                if th.steps != self.trajectory.steps:
-                    raise ValueError('field and traectory are not synced (%s, %s)' % (len(th), len(self.trajectory)))
-                fields = []
-                # This must be a string, not a list
-                unique_field = th._read_metadata(0)['columns']
-                if isinstance(unique_field, list):
-                    # If field is not given, get the last column
-                    if field is None:
-                        unique_field = unique_field[-1]
-                    else:
-                        unique_field = field
-                for s in th:
-                    fields.append(s.dump('particle.%s' % unique_field))
-            return fields, unique_field
+    symbol = 'sk'
+    short_name = 'S(k)'
+    description = 'structure factor'
+    phasespace = ['pos']
 
     def _compute(self):
         from atooms.trajectory.utils import is_cell_variable
@@ -278,10 +242,14 @@ class StructureFactorStats(FourierSpaceCorrelation):
 
     """Wave-vector dependent statistics of structure factor."""
 
+    symbol = 'skstats'
+    short_name = 'S(k)'
+    description = 'structure factor statistics'
+    phasespace = ['pos']
+
     def __init__(self, trajectory, kgrid=None, norigins=-1, nk=1000, dk=1.0, kmin=7.0):
-        FourierSpaceCorrelation.__init__(self, trajectory, kgrid, 'k', 'S(k)', 'skstats',
-                                         'structure factor statistics', ['pos'], \
-                                         nk, dk, kmin, kmin, 1)
+        FourierSpaceCorrelation.__init__(self, trajectory, kgrid, nk,
+                                         dk, kmin, kmin, 1)
         # TODO: move this up the chain?
         self.skip = adjust_skip(self.trajectory, norigins)
 

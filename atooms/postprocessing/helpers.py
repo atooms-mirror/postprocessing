@@ -128,27 +128,27 @@ def adjust_skip(trajectory, n_origin=-1):
             return 1
 
 
+def _templated(entry, template, keep_multiple=False):
+    """
+    Filter a list of entries so as to best match an input
+    template. Lazy, slow version O(N*M).
+
+    Example:
+    --------
+    entry = [1,2,3,4,5,10,20,100]
+    template = [1,7,12,80]
+    templated(entry, template) == [1,5,10,100]
+    """
+    match = []
+    for t in template:
+        def compare(x):
+            return abs(x - t)
+        match.append(min(entry, key=compare))
+    if not keep_multiple:
+        match = list(set(match))
+    return sorted(match)
+
 def setup_t_grid(trajectory, t_grid):
-    def templated(entry, template, keep_multiple=False):
-        """
-        Filter a list of entries so as to best match an input
-        template. Lazy, slow version O(N*M).
-
-        Example:
-        --------
-        entry = [1,2,3,4,5,10,20,100]
-        template = [1,7,12,80]
-        templated(entry, template) == [1,5,10,100]
-        """
-        match = []
-        for t in template:
-            def compare(x):
-                return abs(x - t)
-            match.append(min(entry, key=compare))
-        if not keep_multiple:
-            match = list(set(match))
-        return sorted(match)
-
     # First get all possible time differences
     steps = trajectory.steps
     off_samp = {}
@@ -161,7 +161,7 @@ def setup_t_grid(trajectory, t_grid):
     # difference that match the desired input. This is the grid
     # used internally to calculate the time correlation function.
     i_grid = set([int(round(t/trajectory.timestep)) for t in t_grid])
-    offsets = [off_samp[t] for t in templated(sorted(off_samp.keys()), sorted(i_grid))]
+    offsets = [off_samp[t] for t in _templated(sorted(off_samp.keys()), sorted(i_grid))]
     # TODO: add this as a test
     # check = []
     # for off, i in offsets:

@@ -16,9 +16,13 @@ class StressAutocorrelation(Correlation):
 
     """Stress autocorrelation function."""
 
+    symbol = 'sacf'
+    short_name = 'S(t)'
+    description = 'stress autocorrelation'
+    phasespace = ['vel']
+
     def __init__(self, trajectory, tgrid):
-        Correlation.__init__(self, trajectory, tgrid, 'S(t)', 'sacf',
-                             'stress autocorrelation', ['vel'])
+        Correlation.__init__(self, trajectory, tgrid)
         self._discrete_tgrid = setup_t_grid(self.trajectory, tgrid)
 
     def _get_stress(self):
@@ -29,14 +33,10 @@ class StressAutocorrelation(Correlation):
         self._stress = []
         for i in self.trajectory.samples:
             s = self.trajectory.read(i).interaction.total_stress
-            l = 0
-            # Must be recreated otherwise we just append references to it
             slk = numpy.zeros(ndims)
             for j in range(ndims):
                 for k in range(j+1, ndims):
                     slk[l] = s[j, k] + numpy.sum(mass[:] * self._vel[i][:, j] * self._vel[i][:, k])
-#                    slk[l] = numpy.sum(mass[:] * self._vel[i][:,j] * self._vel[i][:,k])
-                    l += 1
             self._stress.append(slk)
 
     def _compute(self):

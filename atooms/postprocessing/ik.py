@@ -23,13 +23,16 @@ class SpectralDensity(FourierSpaceCorrelation):
     for information on the instance variables.
     """
 
+    symbol = 'ik'
+    short_name = 'I(k)'
+    description = 'spectral density'
+    phasespace = 'pos'
+
     def __init__(self, trajectory, trajectory_radius, kgrid=None,
                  norigins=-1, nk=20, dk=0.1, kmin=-1.0, kmax=15.0,
                  ksamples=30):
-        FourierSpaceCorrelation.__init__(self, trajectory, kgrid, 'I(k)',
-                                         'ik', 'spectral density',
-                                         ['pos'], nk, dk, kmin,
-                                         kmax, ksamples)
+        FourierSpaceCorrelation.__init__(self, trajectory, kgrid, nk,
+                                         dk, kmin, kmax, ksamples)
         # TODO: move this up the chain?
         self.skip = adjust_skip(self.trajectory, norigins)
         self._is_cell_variable = None
