@@ -47,7 +47,7 @@ class CollectiveOverlap(Correlation):
                              'collective overlap', 'pos')
         self.a_square = a**2
         self.skip = adjust_skip(self.trajectory, norigins)
-        if grid is None:
+        if tgrid is None:
             self.grid = logx_grid(0.0, trajectory.total_time * 0.75, tsamples)
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid)
 
@@ -70,7 +70,7 @@ class SelfOverlap(Correlation):
                              'self overlap', 'pos-unf')
         if not self._need_update:
             return
-        if grid is None:
+        if tgrid is None:
             self.grid = logx_grid(0.0, trajectory.total_time * 0.75, tsamples)
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid)
         self.skip = adjust_skip(self.trajectory, norigins)
