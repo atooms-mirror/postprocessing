@@ -84,7 +84,7 @@ class MeanSquareDisplacement(Correlation):
         if self._nblocks > 1:
             v = []
             for sl in partition(self.trajectory, self._nblocks):
-                _, value = gcf_offset(f, self._discrete_tgrid, self.skip,
+                _, value = gcf_offset(msd, self._discrete_tgrid, self.skip,
                                       self.trajectory.steps[sl], self._pos_unf[sl])
                 v.append(value)
         else:
