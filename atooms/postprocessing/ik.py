@@ -7,6 +7,7 @@ import numpy
 
 from .helpers import adjust_skip
 from .fourierspace import FourierSpaceCorrelation, expo_sphere
+from atooms.trajectory import Trajectory
 from atooms.trajectory.utils import is_cell_variable
 
 __all__ = ['SpectralDensity']
@@ -33,7 +34,6 @@ class SpectralDensity(FourierSpaceCorrelation):
         self.skip = adjust_skip(self.trajectory, norigins)
         self._is_cell_variable = None
         # TODO: check step consistency 06.09.2017
-        from atooms.trajectory import TrajectoryXYZ, Trajectory
         with Trajectory(trajectory_radius) as th:
             self._radius = [s.dump('particle.radius') for s in th]
 

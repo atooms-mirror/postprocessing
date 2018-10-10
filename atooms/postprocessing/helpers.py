@@ -176,7 +176,7 @@ def _dump(title, columns=None, command=None, version=None,
     Return a string of comments filled with metadata.
     """
     import datetime
-    import os
+
     date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     if columns is not None:

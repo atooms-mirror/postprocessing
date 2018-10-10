@@ -40,7 +40,7 @@ def acf(grid, skip, t, x):
 
     # Return the ACF with the time differences sorted
     dt = sorted(cf.keys())
-    return dt, [cf[t] / cnt[t] for t in dt], cnt
+    return dt, [cf[ti] / cnt[ti] for ti in dt], cnt
 
 
 def gcf(f, grid, skip, t, x):
@@ -64,7 +64,7 @@ def gcf(f, grid, skip, t, x):
 
     # Return the ACF with the time differences sorted
     dt = sorted(cf.keys())
-    return dt, [cf[t] / cnt[t] for t in dt], [cnt[t] for t in dt]
+    return dt, [cf[ti] / cnt[ti] for ti in dt], [cnt[ti] for ti in dt]
 
 
 def gcf_offset(f, grid, skip, t, x, mask=None):
@@ -91,7 +91,7 @@ def gcf_offset(f, grid, skip, t, x, mask=None):
 
         # Return the ACF with the time differences sorted
         dt = sorted(cf.keys())
-        return dt, [cf[t] / cnt[t] for t in dt] #, [cnt[t] for t in dt]
+        return dt, [cf[ti] / cnt[ti] for ti in dt]
 
     else:
         cf = defaultdict(float)
@@ -106,7 +106,7 @@ def gcf_offset(f, grid, skip, t, x, mask=None):
 
         # Return the ACF with the time differences sorted
         dt = sorted(cf.keys())
-        return dt, [cf[t] / sum([cnt[t] for t in dt])] #, [cnt[t] for t in dt]
+        return dt, [cf[ti] / sum([cnt[ti] for ti in dt])]
 
 
 # TODO: should not be capitalized

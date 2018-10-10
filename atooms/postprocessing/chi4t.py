@@ -114,7 +114,6 @@ class Chi4SelfOverlapOptimized(Correlation):
         from atooms.postprocessing.realspace_wrap import realspace_module
 
         self.average.tag, self.variance.tag = self.tag, self.tag
-        side = self.trajectory.read(0).cell.side
 
         def f(x, y):
             return realspace_module.self_overlap(x, y, numpy.array(self.a_square))

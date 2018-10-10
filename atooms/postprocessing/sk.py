@@ -188,6 +188,9 @@ class StructureFactorOptimized(FourierSpaceCorrelation):
 
     def _compute(self):
         from atooms.trajectory.utils import is_cell_variable
+        import atooms.postprocessing.fourierspace_wrap
+        from atooms.postprocessing.fourierspace_wrap import fourierspace_module
+        
         nsteps = len(self._pos_0)
         # Setup k vectors and tabulate rho
         k_sorted, k_selected = self._decimate_k()
@@ -211,11 +214,10 @@ class StructureFactorOptimized(FourierSpaceCorrelation):
                 expo_1 = expo_0
             else:
                 # Cross correlation
+                # TODO: cross correlation wont work
                 expo_0 = expo_sphere(self.k0, kmax, self._pos_0[i])
                 expo_1 = expo_sphere(self.k0, kmax, self._pos_1[i])
 
-            import atooms.postprocessing.fourierspace_wrap
-            from atooms.postprocessing.fourierspace_wrap import fourierspace_module
             for kk, knorm in enumerate(k_sorted):
                 ikvec = numpy.ndarray((3, len(k_selected[kk])), order='F', dtype=numpy.int32)
                 i = 0

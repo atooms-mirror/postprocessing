@@ -3,7 +3,7 @@
 import atooms.postprocessing as postprocessing
 from atooms.postprocessing.partial import Partial
 from atooms.trajectory import Trajectory
-from atooms.trajectory.decorators import filter_species, change_species
+from atooms.trajectory.decorators import change_species
 from atooms.trajectory.utils import time_when_msd_is
 from atooms.system.particle import distinct_species
 from .helpers import linear_grid, logx_grid
@@ -92,7 +92,6 @@ def ik(input_file, trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0, kmax=15.0,
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         if trajectory_radius is None:
             trajectory_radius = input_file
-            ids = distinct_species(th[-1].particle)
             postprocessing.SpectralDensity(th, trajectory_radius,
                                            kgrid=None, norigins=norigins,
                                            kmin=kmin, kmax=kmax, nk=nk,
@@ -122,8 +121,8 @@ def msd(input_file, msd_target=-1.0, time_target=-1.0, time_target_fraction=-1.0
                                               norigins=norigins,
                                               sigma=sigma).do()
         if len(ids) > 1:
-            p = Partial(postprocessing.MeanSquareDisplacement, ids,
-                        th, tgrid=t_grid, norigins=norigins, sigma=sigma).do()
+            Partial(postprocessing.MeanSquareDisplacement, ids,
+                    th, tgrid=t_grid, norigins=norigins, sigma=sigma).do()
 
 def vacf(input_file, time_target=1.0, tsamples=30, func=linear_grid, fmt=None,
          species_layout=None, *input_files, **global_args):
