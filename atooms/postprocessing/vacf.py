@@ -17,7 +17,7 @@ class VelocityAutocorrelation(Correlation):
 
     symbol = 'vacf'
     short_name = 'Z(t)'
-    description = 'velocity autocorrelation'
+    long_name = 'velocity autocorrelation'
     phasespace = ['vel']
 
     def __init__(self, trajectory, tgrid):

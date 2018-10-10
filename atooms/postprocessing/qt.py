@@ -43,7 +43,7 @@ class CollectiveOverlap(Correlation):
 
     symbol = 'qt'
     short_name = 'Q(t)'
-    description = 'collective overlap'
+    long_name = 'collective overlap'
     phasespace = 'pos'
 
     def __init__(self, trajectory, tgrid=None, tsamples=60, a=0.3,
@@ -70,7 +70,7 @@ class SelfOverlap(Correlation):
 
     symbol = 'qst'
     short_name = 'Q_s(t)'
-    description = 'self overlap'
+    long_name = 'self overlap'
     phasespace = 'pos-unf'
 
     def __init__(self, trajectory, tgrid=None, norigins=-1, a=0.3,

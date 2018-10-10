@@ -18,7 +18,7 @@ class StressAutocorrelation(Correlation):
 
     symbol = 'sacf'
     short_name = 'S(t)'
-    description = 'stress autocorrelation'
+    long_name = 'stress autocorrelation'
     phasespace = ['vel']
 
     def __init__(self, trajectory, tgrid):

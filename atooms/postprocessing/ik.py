@@ -25,7 +25,7 @@ class SpectralDensity(FourierSpaceCorrelation):
 
     symbol = 'ik'
     short_name = 'I(k)'
-    description = 'spectral density'
+    long_name = 'spectral density'
     phasespace = 'pos'
 
     def __init__(self, trajectory, trajectory_radius, kgrid=None,

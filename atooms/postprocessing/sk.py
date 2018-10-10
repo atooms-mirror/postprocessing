@@ -27,7 +27,7 @@ class StructureFactor(FourierSpaceCorrelation):
     nbodies = 2
     symbol = 'sk'
     short_name = 'S(k)'
-    description = 'structure factor'
+    long_name = 'structure factor'
     phasespace = ['pos']
 
     def __init__(self, trajectory, kgrid=None, norigins=-1, nk=20,
@@ -147,7 +147,7 @@ class StructureFactorOptimized(StructureFactor):
     nbodies = 2
     symbol = 'sk'
     short_name = 'S(k)'
-    description = 'structure factor'
+    long_name = 'structure factor'
     phasespace = ['pos']
 
     def _compute(self):
@@ -244,7 +244,7 @@ class StructureFactorStats(FourierSpaceCorrelation):
 
     symbol = 'skstats'
     short_name = 'S(k)'
-    description = 'structure factor statistics'
+    long_name = 'structure factor statistics'
     phasespace = ['pos']
 
     def __init__(self, trajectory, kgrid=None, norigins=-1, nk=1000, dk=1.0, kmin=7.0):

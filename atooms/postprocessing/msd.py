@@ -45,7 +45,7 @@ class MeanSquareDisplacement(Correlation):
 
     symbol = 'msd'
     short_name = 'dr^2(t)'
-    description = 'mean square displacement'
+    long_name = 'mean square displacement'
     phasespace = 'pos-unf'
 
     def __init__(self, trajectory, tgrid=None, rmax=-1.0, norigins=50,

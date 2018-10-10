@@ -18,7 +18,7 @@ class NonGaussianParameter(Correlation):
 
     symbol = 'alpha_2(t)'
     short_name = 'alpha2'
-    description = 'non-Gaussian parameter'
+    long_name = 'non-Gaussian parameter'
     phasespace = ['pos-unf']
 
     def __init__(self, trajectory, tgrid=None, norigins=50, nsamples=30):

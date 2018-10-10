@@ -28,7 +28,7 @@ class Chi4SelfOverlap(Correlation):
 
     symbol = 'chi4qs'
     short_name = 'chi_4(t)'
-    description = 'dynamic susceptibility of self overlap'
+    long_name = 'dynamic susceptibility of self overlap'
     phasespace = 'pos-unf'
 
     def __init__(self, trajectory, tgrid=None, norigins=-1, a=0.3,
@@ -42,11 +42,11 @@ class Chi4SelfOverlap(Correlation):
         self.average = Correlation(self.trajectory, self.grid)
         self.average.short_name = 'Q^u(t)'
         self.average.symbol = 'qsu'
-        self.average.description = 'Average of self overlap, not normalized'
+        self.average.long_name = 'Average of self overlap, not normalized'
         self.variance = Correlation(self.trajectory, self.grid)
         self.variance.short_name = 'Q_2^u(t)'
         self.variance.symbol = 'q2su'
-        self.variance.description = 'Variance of self overlap, not normalized'
+        self.variance.long_name = 'Variance of self overlap, not normalized'
 
     def _compute(self):
         # TODO: write general susceptibility

@@ -81,7 +81,7 @@ class RadialDistributionFunction(Correlation):
     nbodies = 2
     symbol = 'gr'
     short_name = 'g(r)'
-    description = 'radial distribution function'
+    long_name = 'radial distribution function'
     phasespace = 'pos'
 
     def __init__(self, trajectory, rgrid=None, norigins=-1, dr=0.04):

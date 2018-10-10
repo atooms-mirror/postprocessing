@@ -113,7 +113,7 @@ def gcf_offset(f, grid, skip, t, x, mask=None):
 
 
 pp_update = False
-pp_output_path = '{trajectory.filename}.pp.{short_name}.{tag}'
+pp_output_path = '{trajectory.filename}.pp.{symbol}.{tag}'
 pp_trj_format = None
 
 
@@ -163,17 +163,17 @@ class Correlation(object):
     """Example: fskt"""
     short_name = ''
     """Example: F_s(k,t)"""
-    description = ''
+    long_name = ''
     """Example: Self intermediate scattering function"""
-    phasespace = None
+    phasespace = ['pos', 'pos-unf', 'vel']
     """
     List of strings or string among ['pos', 'pos-unf', 'vel']. It
     indicates which variables should be read from the trajectory file.
     They will be available as self._pos, self._pos_unf, self._vel.
     """
     
-    def __init__(self, trj, grid, symbol='', short_name='',
-                 description='', phasespace=None, output_path=None):
+    def __init__(self, trj, grid, output_path=None):
+        # Accept a trajectory-like instance or a path to a trajectory
         if isinstance(trj, str):
             self.trajectory = Trajectory(trj, mode='r', fmt=pp_trj_format)
         else:
@@ -202,7 +202,7 @@ class Correlation(object):
                     self.read()
 
     def __str__(self):
-        return '%s' % self.description
+        return '%s' % self.long_name
 
     def add_filter(self, cbk, *args, **kwargs):
         """Add filter callback `cbk` along with positional and keyword arguments"""
@@ -219,8 +219,6 @@ class Correlation(object):
         """
         # Ensure phasespace is a list.
         # It may not be a class variable anymore after this
-        if self.phasespace is None:
-            self.phasespace = ['pos', 'pos-unf', 'vel']
         if not isinstance(self.phasespace, list) and \
            not isinstance(self.phasespace, tuple):
             self.phasespace = [self.phasespace]
@@ -314,12 +312,12 @@ class Correlation(object):
         self._setup_arrays()
         t[0].stop()
 
-        log.info('computing %s for %s', self.description, self.tag_description)
+        log.info('computing %s for %s', self.long_name, self.tag_description)
         t[1].start()
         self._compute()
         t[1].stop()
 
-        log.info('done %s for %s in %.1f sec [setup:%.0f%%, compute: %.0f%%]', self.description,
+        log.info('done %s for %s in %.1f sec [setup:%.0f%%, compute: %.0f%%]', self.long_name,
                  self.tag_description, t[0].wall_time + t[1].wall_time,
                  t[0].wall_time / (t[0].wall_time + t[1].wall_time) * 100,
                  t[1].wall_time / (t[0].wall_time + t[1].wall_time) * 100)
@@ -394,7 +392,7 @@ class Correlation(object):
             conj = 'of'
         else:
             conj = ''
-        comments = _dump(title='%s %s %s %s' % (self.description, self.symbol, conj, self.tag_description),
+        comments = _dump(title='%s %s %s %s' % (self.long_name, self.short_name, conj, self.tag_description),
                          columns=columns,
                          command='atooms-pp', version=__version__,
                          description=None, note=None,

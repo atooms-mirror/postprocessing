@@ -23,7 +23,7 @@ class S4ktOverlap(FourierSpaceCorrelation):
 
     symbol = 's4kt'
     short_name = 'S_4(k,t)'
-    description = '4-point dynamic structure factor from self overlap'
+    long_name = '4-point dynamic structure factor from self overlap'
     phasespace = ['pos', 'pos-unf']
 
     # TODO: refactor a S4k base correlation that forces to implement tabulat method (e.g. overlap, Q_6, voronoi ...)

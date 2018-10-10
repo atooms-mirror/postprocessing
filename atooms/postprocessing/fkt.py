@@ -27,7 +27,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
 
     symbol = 'fskt'
     short_name = 'F_s(k,t)'
-    description = 'self intermediate scattering function'
+    long_name = 'self intermediate scattering function'
     phasespace = 'pos-unf'
 
     #TODO: xyz files are 2 slower than hdf5 here
@@ -136,7 +136,7 @@ class IntermediateScattering(FourierSpaceCorrelation):
     nbodies = 2
     symbol = 'fkt'
     short_name = 'F(k,t)'
-    description = 'intermediate scattering function'
+    long_name = 'intermediate scattering function'
     phasespace = 'pos'
 
     def __init__(self, trajectory, kgrid=None, tgrid=None, nk=100, dk=0.1, tsamples=60,
