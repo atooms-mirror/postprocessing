@@ -25,7 +25,7 @@ class Chi4SelfOverlap(Correlation):
     - a: distance parameter entering the Heaviside function in the
     overlap calculation
     """
-    
+
     def __init__(self, trajectory, tgrid=None, norigins=-1, a=0.3,
                  tsamples=60):
         Correlation.__init__(self, trajectory, tgrid, 'chi_4(t)', 'chi4qs',
@@ -93,7 +93,7 @@ class Chi4SelfOverlapOptimized(Correlation):
 
     Optimized version using fortran 90 extension.
     """
-    
+
     def __init__(self, trajectory, tgrid=None, norigins=-1, a=0.3,
                  tsamples=60):
         Correlation.__init__(self, trajectory, tgrid, 't', ' chi_4(t)', 'chi4qs',
