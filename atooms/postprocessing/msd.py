@@ -60,14 +60,14 @@ class MeanSquareDisplacement(Correlation):
         # e.g. because we are just sourcing the correlation object from file
         if self.grid is None:
             if rmax > 0.0:
-                self.grid = linear_grid(0.0, min(trajectory.total_time * 1./(1+self._nblocks),
-                                                 trajectory.time_when_msd_is(rmax**2)),
+                self.grid = linear_grid(0.0, min(self.trajectory.total_time * 1./(1+self._nblocks),
+                                                 self.trajectory.time_when_msd_is(rmax**2)),
                                         tsamples)
             else:
-                self.grid = linear_grid(0.0, trajectory.total_time * 1./(1+self._nblocks), tsamples)
+                self.grid = linear_grid(0.0, self.trajectory.total_time * 1./(1+self._nblocks), tsamples)
 
-        self._discrete_tgrid = setup_t_grid(trajectory, self.grid)
-        self.skip = adjust_skip(trajectory, norigins)
+        self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid)
+        self.skip = adjust_skip(self.trajectory, norigins)
 
     def _compute(self):
         # We could compute the individual directions (x,y,z) and

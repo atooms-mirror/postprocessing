@@ -83,7 +83,7 @@ class RadialDistributionFunction(Correlation):
     def __init__(self, trajectory, rgrid=None, norigins=-1, dr=0.04):
         Correlation.__init__(self, trajectory, rgrid, 'g(r)', 'gr',
                              'radial distribution function', 'pos')
-        self.skip = adjust_skip(trajectory, norigins)
+        self.skip = adjust_skip(self.trajectory, norigins)
         self.side = self.trajectory.read(0).cell.side
         if rgrid is not None:
             # Reconstruct bounds of grid for numpy histogram

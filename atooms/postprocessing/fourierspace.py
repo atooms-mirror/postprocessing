@@ -97,9 +97,6 @@ class FourierSpaceCorrelation(Correlation):
         super(FourierSpaceCorrelation, self).__init__(trajectory,
                                                       grid, symbol, short_name,
                                                       description, phasespace)
-        if not self._need_update:
-            return
-
         # Some additional variables. k0 = smallest wave vectors
         # compatible with the boundary conditions
         self.nk = nk

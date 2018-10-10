@@ -9,6 +9,7 @@ import logging
 from collections import defaultdict
 
 import numpy
+from atooms.trajectory import Trajectory
 from atooms.trajectory.decorators import Unfolded
 from atooms.core.utils import Timer
 try:
@@ -111,7 +112,6 @@ def gcf_offset(f, grid, skip, t, x, mask=None):
         return dt, [cf[ti] / sum([cnt[ti] for ti in dt])]
 
 
-# TODO: should not be capitalized
 pp_update = False
 pp_output_path = '{trajectory.filename}.pp.{short_name}.{tag}'
 
@@ -159,14 +159,17 @@ class Correlation(object):
     """
 
     def __init__(self, trj, grid, symbol='', short_name='',
-                 description='', phasespace=None, output_path=None):
+                 description='', phasespace=None, output_path=None, trj_fmt=None):
         # TODO: we could force trajectory cast if a string is passed
         # self.symbol =  'F_s(k,t)'
         # self.short_name = 'fskt'
         # self.description = 'Self intermediate scattering function'
         # self.tag = 'A'
         # self.tag_description = 'of particles A'  # 'of radius field'
-        self.trajectory = trj
+        if isinstance(trj, str):
+            self.trajectory = Trajectory(trj, mode='r', fmt=trj_fmt)
+        else:
+            self.trajectory = trj
         self.grid = grid
         self.symbol = symbol
         self.short_name = short_name
@@ -347,11 +350,11 @@ class Correlation(object):
         with open(self._output_file, 'r') as inp:
             x = numpy.loadtxt(inp, unpack=True)
             if len(x) == 3:
-                self.grid, self.value = x
+                raise ValueError('cannot read 3-columns files yet')
             elif len(x) == 2:
                 self.grid, self.value = x
             else:
-                self.grid, self.value = x[0:2]
+                self.grid, self.value = x[0: 2]
                 warnings.warn("Ignoring some columns in %s" % self._output_file)
 
     def write(self):

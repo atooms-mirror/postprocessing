@@ -35,10 +35,10 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
         # Before setting up the time grid, we need to check periodicity over blocks
         check_block_size(self.trajectory.steps, self.trajectory.block_size)
         if tgrid is None:
-            self.grid[1] = [0.0] + logx_grid(trajectory.timestep,
-                                             trajectory.total_time * 0.75, tsamples)
-        self._discrete_tgrid = setup_t_grid(trajectory, self.grid[1])
-        self.skip = adjust_skip(trajectory, norigins)
+            self.grid[1] = [0.0] + logx_grid(self.trajectory.timestep,
+                                             self.trajectory.total_time * 0.75, tsamples)
+        self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid[1])
+        self.skip = adjust_skip(self.trajectory, norigins)
 
         # Pick up a random, unique set of nk vectors out ot the avilable ones
         # without exceeding maximum number of vectors in shell nkmax
@@ -139,8 +139,8 @@ class IntermediateScattering(FourierSpaceCorrelation):
         # Setup time grid
         check_block_size(self.trajectory.steps, self.trajectory.block_size)
         if tgrid is None:
-            self.grid[1] = logx_grid(0.0, trajectory.total_time * 0.75, tsamples)
-        self._discrete_tgrid = setup_t_grid(trajectory, self.grid[1])
+            self.grid[1] = logx_grid(0.0, self.trajectory.total_time * 0.75, tsamples)
+        self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid[1])
 
     def _tabulate_rho(self, k_sorted, k_selected):
         """

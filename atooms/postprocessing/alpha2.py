@@ -20,9 +20,9 @@ class NonGaussianParameter(Correlation):
         Correlation.__init__(self, trajectory, tgrid, 'alpha_2(t)', 'alpha2',
                              "non-Gaussian parameter", ['pos-unf'])
         if self.grid is None:
-            self.grid = linear_grid(0.0, trajectory.total_time * 0.75, nsamples)
-        self._discrete_tgrid = setup_t_grid(trajectory, self.grid)
-        self.skip = adjust_skip(trajectory, norigins)
+            self.grid = linear_grid(0.0, self.trajectory.total_time * 0.75, nsamples)
+        self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid)
+        self.skip = adjust_skip(self.trajectory, norigins)
 
     def _compute(self):
         def alpha_2(x, y):

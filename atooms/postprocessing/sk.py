@@ -36,7 +36,7 @@ class StructureFactor(FourierSpaceCorrelation):
         # TODO: move this up the chain?
         self.skip = adjust_skip(self.trajectory, norigins)
         self._is_cell_variable = None
-        self._field, tag = self._add_field(trajectory_field, field)
+        self._field, tag = self._add_field(self.trajectory_field, field)
         if tag is not None:
             self.tag = tag
             self.tag_description += '%s field' % tag.replace('_', ' ')
@@ -159,7 +159,7 @@ class StructureFactorOptimized(FourierSpaceCorrelation):
         # TODO: move this up the chain?
         self.skip = adjust_skip(self.trajectory, norigins)
         self._is_cell_variable = None
-        self._field, tag = self._add_field(trajectory_field, field)
+        self._field, tag = self._add_field(self.trajectory_field, field)
         if tag is not None:
             self.tag = tag
             self.tag_description += '%s field' % tag.replace('_', ' ')

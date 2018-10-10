@@ -30,16 +30,14 @@ class Chi4SelfOverlap(Correlation):
                  tsamples=60):
         Correlation.__init__(self, trajectory, tgrid, 'chi_4(t)', 'chi4qs',
                              'dynamic susceptibility of self overlap', 'pos-unf')
-        if not self._need_update:
-            return
         if tgrid is None:
-            self.grid = logx_grid(0.0, trajectory.total_time * 0.75, tsamples)
-        self._discrete_tgrid = setup_t_grid(trajectory, self.grid)
+            self.grid = logx_grid(0.0, self.trajectory.total_time * 0.75, tsamples)
+        self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid)
         self.skip = adjust_skip(self.trajectory, norigins)
         self.a_square = a**2
-        self.average = Correlation(trajectory, self.grid, 'Q^u(t)', 'qsu',
+        self.average = Correlation(self.trajectory, self.grid, 'Q^u(t)', 'qsu',
                                    'Average of self overlap not normalized')
-        self.variance = Correlation(trajectory, self.grid, 'Q_2^u(t)', 'qs2u',
+        self.variance = Correlation(self.trajectory, self.grid, 'Q_2^u(t)', 'qs2u',
                                     'Variance self overlap not normalized')
 
     def _compute(self):
@@ -98,13 +96,13 @@ class Chi4SelfOverlapOptimized(Correlation):
         if not self._need_update:
             return
         if tgrid is None:
-            self.tgrid = logx_grid(0.0, trajectory.total_time * 0.75, tsamples)
-        self._discrete_tgrid = setup_t_grid(trajectory, self.grid)
+            self.tgrid = logx_grid(0.0, self.trajectory.total_time * 0.75, tsamples)
+        self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid)
         self.skip = adjust_skip(self.trajectory, norigins)
         self.a_square = a**2
-        self.average = Correlation(trajectory, self.grid, 't', 'Q^u(t)', 'qsu',
+        self.average = Correlation(self.trajectory, self.grid, 't', 'Q^u(t)', 'qsu',
                                    'Average of self overlap not normalized')
-        self.variance = Correlation(trajectory, self.grid, 't', 'Q_2^u(t)', 'qs2u',
+        self.variance = Correlation(self.trajectory, self.grid, 't', 'Q_2^u(t)', 'qs2u',
                                     'Variance self overlap not normalized')
 
     def _compute(self):

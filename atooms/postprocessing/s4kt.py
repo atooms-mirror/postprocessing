@@ -31,7 +31,7 @@ class S4ktOverlap(FourierSpaceCorrelation):
                                          ['pos', 'pos-unf'],
                                          nk, dk, kmin, kmax, ksamples)
         # Setup time grid
-        self._discrete_tgrid = setup_t_grid(trajectory, tgrid)
+        self._discrete_tgrid = setup_t_grid(self.trajectory, tgrid)
         self.skip = adjust_skip(self.trajectory, norigins)
         self.a_square = a**2
 

@@ -19,7 +19,7 @@ class StressAutocorrelation(Correlation):
     def __init__(self, trajectory, tgrid):
         Correlation.__init__(self, trajectory, tgrid, 'S(t)', 'sacf',
                              'stress autocorrelation', ['vel'])
-        self._discrete_tgrid = setup_t_grid(trajectory, tgrid)
+        self._discrete_tgrid = setup_t_grid(self.trajectory, tgrid)
 
     def _get_stress(self):
         ndims = 3
