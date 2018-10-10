@@ -138,11 +138,13 @@ def setup_t_grid(trajectory, t_grid):
         --------
         entry = [1,2,3,4,5,10,20,100]
         template = [1,7,12,80]
-        setup_t_grid(entry, template) == [1,5,10,100]
+        templated(entry, template) == [1,5,10,100]
         """
-        def _f(x, t):
-            return abs(x-t)
-        match = [min(entry, key=_f) for t in template]
+        match = []
+        for t in template:
+            def compare(x):
+                return abs(x - t)
+            match.append(min(entry, key=compare))
         if not keep_multiple:
             match = list(set(match))
         return sorted(match)
