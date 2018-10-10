@@ -3,12 +3,8 @@
 
 """Base correlation function."""
 
-import sys
 import os
-import copy
 import numpy
-import math
-import random
 import warnings
 import logging
 from collections import defaultdict
@@ -56,19 +52,19 @@ def gcf(f, grid, skip, t, x):
     """
     # Calculate the correlation between time t(i0) and t(i0+i)
     # for all possible pairs (i0,i) provided by grid
-    acf = defaultdict(float)
+    cf = defaultdict(float)
     cnt = defaultdict(int)
     for i in grid:
         # Note: len(x) gives x.shape[0]
         for i0 in range(0, len(x)-i-1, skip):
             # Get the actual time difference
             dt = t[i0+i] - t[i0]
-            acf[dt] += f(x[i0+i], x[i0])
+            cf[dt] += f(x[i0+i], x[i0])
             cnt[dt] += 1
 
     # Return the ACF with the time differences sorted
-    dt = sorted(acf.keys())
-    return dt, [acf[t] / cnt[t] for t in dt], [cnt[t] for t in dt]
+    dt = sorted(cf.keys())
+    return dt, [cf[t] / cnt[t] for t in dt], [cnt[t] for t in dt]
 
 
 def gcf_offset(f, grid, skip, t, x, mask=None):
@@ -83,34 +79,34 @@ def gcf_offset(f, grid, skip, t, x, mask=None):
     # Calculate the correlation between time t(i0) and t(i0+i)
     # for all possible pairs (i0,i) provided by grid
     if mask is None:
-        acf = defaultdict(float)
+        cf = defaultdict(float)
         cnt = defaultdict(int)
         # Standard calculation
         for off, i in progress(grid, total=len(grid)):
             for i0 in range(off, len(x)-i-skip, skip):
                 # Get the actual time difference
                 dt = t[i0+i] - t[i0]
-                acf[dt] += f(x[i0+i], x[i0])
+                cf[dt] += f(x[i0+i], x[i0])
                 cnt[dt] += 1
 
         # Return the ACF with the time differences sorted
-        dt = sorted(acf.keys())
-        return dt, [acf[t] / cnt[t] for t in dt] #, [cnt[t] for t in dt]
+        dt = sorted(cf.keys())
+        return dt, [cf[t] / cnt[t] for t in dt] #, [cnt[t] for t in dt]
 
     else:
-        acf = defaultdict(float)
+        cf = defaultdict(float)
         cnt = defaultdict(list)
         # Filter data at time t_0 according to boolean mask
         for off, i in grid:
             for i0 in range(off, len(x)-i-skip, skip):
                 # Get the actual time difference
                 dt = t[i0+i] - t[i0]
-                acf[dt] += f(x[i0+i][mask[i0]], x[i0][mask[i0]])
+                cf[dt] += f(x[i0+i][mask[i0]], x[i0][mask[i0]])
                 cnt[dt].append(1)  #len(mask[i0]))
 
         # Return the ACF with the time differences sorted
-        dt = sorted(acf.keys())
-        return dt, [acf[t] / sum([cnt[t] for t in dt])] #, [cnt[t] for t in dt]
+        dt = sorted(cf.keys())
+        return dt, [cf[t] / sum([cnt[t] for t in dt])] #, [cnt[t] for t in dt]
 
 
 # TODO: should not be capitalized
@@ -147,7 +143,7 @@ class Correlation(object):
 
     - if `nbodies` is 1: `self._pos` for positions, `self._vel` for
     velocities, `self._unf_pos` for PBC-unfolded positions
-    
+
     - if `nbodies` is 2, an additional suffix that take values 0 or 1
     is added to distinguish the two sets of particles,
     e.g. `self._pos_0` and `self._pos_1`
@@ -159,7 +155,7 @@ class Correlation(object):
     associated to the correlation function. This variable controls the
     internal arrays used to compute the correlation, see `phasespace`.
     """
-    
+
     def __init__(self, trj, grid, symbol='', short_name='',
                  description='', phasespace=None, output_path=None):
         # TODO: we could force trajectory cast if a string is passed
@@ -295,16 +291,16 @@ class Correlation(object):
         This method also returns the tuple `self.grid`, `self.value`.
         """
         if not self._need_update:
-            log.info('skip %s (%s) for %s' % (self.short_name, self.tag, self.trajectory.filename))
+            log.info('skip %s (%s) for %s', self.short_name, self.tag, self.trajectory.filename)
             return
 
-        log.info('setup arrays for %s' % self.tag_description)
+        log.info('setup arrays for %s', self.tag_description)
         t = [Timer(), Timer()]
         t[0].start()
         self._setup_arrays()
         t[0].stop()
 
-        log.info('computing %s for %s' % (self.description, self.tag_description))
+        log.info('computing %s for %s', self.description, self.tag_description)
         t[1].start()
         self._compute()
         t[1].stop()
@@ -390,7 +386,7 @@ class Correlation(object):
                          description=None, note=None,
                          parents=self.trajectory.filename,
                          inline=False)
-        if not self.comments is None:
+        if self.comments is not None:
             comments += self.comments
 
         # Results of analysis

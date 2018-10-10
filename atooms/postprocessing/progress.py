@@ -51,11 +51,11 @@ try:
 
         """Slightly customized tqdm progress bar"""
 
-        def __init__(self, *args, **kwargs):            
+        def __init__(self, *args, **kwargs):
             tqdm.__init__(self, disable=not active,
                           bar_format=bar_format, ncols=ncols, file=sys.stdout, *args, **kwargs)
 
-        def update(self, n):
+        def update(self, n=1):
             if not self.disable:
                 tqdm.update(self, n-self.n)
 

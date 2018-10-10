@@ -3,17 +3,13 @@
 
 """Fourier-space post processing code."""
 
-import sys
 import numpy
 import math
 import random
-import warnings
 from collections import defaultdict
 
-from atooms.trajectory.utils import check_block_size, is_cell_variable
-from .helpers import linear_grid, logx_grid, adjust_skip, setup_t_grid
+from .helpers import linear_grid
 from .correlation import Correlation
-from .qt import self_overlap
 
 
 def expo_sphere(k0, kmax, pos):
@@ -82,7 +78,7 @@ class FourierSpaceCorrelation(Correlation):
 
     """
     Base class for Fourier space correlation functions.
-    
+
     The correlation function is computed for each of the scalar values
     k_i of the provided `kgrid`. If the latter is `None`, the grid is
     built using `ksamples` entries linearly spaced between `kmin` and
@@ -93,7 +89,7 @@ class FourierSpaceCorrelation(Correlation):
     their norm (k_x^2+k_y^2+k_z^2)^{1/2} lies within `dk` of the
     prescribed value k_i.
     """
-    
+
     def __init__(self, trajectory, grid, symbol, short_name,
                  description, phasespace, nk=8, dk=0.1, kmin=-1, kmax=10,
                  ksamples=20):
@@ -203,8 +199,9 @@ class FourierSpaceCorrelation(Correlation):
             av = 0.0
             for i in k_selected[kk]:
                 av += k_norm(self.kvec_centered[knorm][i], self.k0)
-            s.append("# k %g : k_av=%g (nk=%d)" % (knorm, av / len(k_selected[kk]),
-                                                           len(k_selected[kk])))
+            s.append("# k %g : k_av=%g (nk=%d)" % (knorm, av /
+                                                   len(k_selected[kk]),
+                                                   len(k_selected[kk])))
             # for i in k_selected[kk]:
             #     s.append('%s' % (self.kvec_centered[knorm][i] * self.k0))
         return '\n'.join(s)

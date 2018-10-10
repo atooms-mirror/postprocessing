@@ -9,6 +9,7 @@ It uses filters internally.
 
 from .helpers import filter_species
 
+
 class Partial(object):
 
     def __init__(self, corr_cls, species, *args, **kwargs):

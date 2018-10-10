@@ -71,8 +71,8 @@ class StructureFactor(FourierSpaceCorrelation):
         k_sorted, k_selected = self._decimate_k()
         kmax = max(self.kvec.keys()) + self.dk
         cnt = [0 for k in k_sorted]
-        rho_av = [complex(0.,0.) for k in k_sorted]
-        rho2_av = [complex(0.,0.) for k in k_sorted]
+        rho_av = [complex(0., 0.) for k in k_sorted]
+        rho2_av = [complex(0., 0.) for k in k_sorted]
         variable_cell = is_cell_variable(self.trajectory)
         for i in progress(range(0, nsteps, self.skip), total=nsteps // self.skip):
             # If cell changes we have to update the wave vectors
@@ -99,24 +99,24 @@ class StructureFactor(FourierSpaceCorrelation):
                     if not self._field:
                         if expo_0 is expo_1:
                             # Identical species
-                            rho_0 = numpy.sum(expo_0[...,0,ik[0]] *
-                                              expo_0[...,1,ik[1]] *
-                                              expo_0[...,2,ik[2]])
+                            rho_0 = numpy.sum(expo_0[..., 0, ik[0]] *
+                                              expo_0[..., 1, ik[1]] *
+                                              expo_0[..., 2, ik[2]])
                             rho_1 = rho_0
                         else:
                             # Cross correlation
-                            rho_0 = numpy.sum(expo_0[...,0,ik[0]] *
-                                              expo_0[...,1,ik[1]] *
-                                              expo_0[...,2,ik[2]])
-                            rho_1 = numpy.sum(expo_1[...,0,ik[0]] *
-                                              expo_1[...,1,ik[1]] *
-                                              expo_1[...,2,ik[2]])
+                            rho_0 = numpy.sum(expo_0[..., 0, ik[0]] *
+                                              expo_0[..., 1, ik[1]] *
+                                              expo_0[..., 2, ik[2]])
+                            rho_1 = numpy.sum(expo_1[..., 0, ik[0]] *
+                                              expo_1[..., 1, ik[1]] *
+                                              expo_1[..., 2, ik[2]])
                     else:
                         # We have a field as a weight
                         rho_0 = numpy.sum(self._field[i] *
-                                          expo_0[...,0,ik[0]] *
-                                          expo_0[...,1,ik[1]] *
-                                          expo_0[...,2,ik[2]])
+                                          expo_0[..., 0, ik[0]] *
+                                          expo_0[..., 1, ik[1]] *
+                                          expo_0[..., 2, ik[2]])
                         rho_1 = rho_0
                         rho_av[kk] += rho_0
 
@@ -193,8 +193,8 @@ class StructureFactorOptimized(FourierSpaceCorrelation):
         k_sorted, k_selected = self._decimate_k()
         kmax = max(self.kvec.keys()) + self.dk
         cnt = [0 for k in k_sorted]
-        rho_av = [complex(0.,0.) for k in k_sorted]
-        rho2_av = [complex(0.,0.) for k in k_sorted]
+        rho_av = [complex(0., 0.) for k in k_sorted]
+        rho2_av = [complex(0., 0.) for k in k_sorted]
         variable_cell = is_cell_variable(self.trajectory)
         for i in range(0, nsteps, self.skip):
             # If cell changes we have to update the wave vectors
@@ -285,7 +285,7 @@ class StructureFactorStats(FourierSpaceCorrelation):
 
     def _compute(self):
         def skew(x):
-            return numpy.sum((x-numpy.mean(x))**3) / len(x) / numpy.std(x)**3
+            return numpy.sum((x - numpy.mean(x))**3) / len(x) / numpy.std(x)**3
 
         # Setup k vectors and tabulate rho
         k_sorted, k_selected = self._decimate_k()
@@ -294,14 +294,13 @@ class StructureFactorStats(FourierSpaceCorrelation):
         self._mean = []; self._var = []; self._skew = []
         self.grid = list(range(0, nsteps, self.skip))
         for i in range(0, nsteps, self.skip):
-            cnt = 0
             sk = []
             expo = expo_sphere(self.k0, kmax, self._pos[i])
             npart = self._pos[i].shape[0]
             for kk, knorm in enumerate(k_sorted):
                 for k in k_selected[kk]:
                     ik = self.kvec[knorm][k]
-                    rho = numpy.sum(expo[...,0,ik[0]] * expo[...,1,ik[1]] * expo[...,2,ik[2]])
+                    rho = numpy.sum(expo[..., 0, ik[0]] * expo[..., 1, ik[1]] * expo[..., 2, ik[2]])
                     rho2 = rho * rho.conjugate()
                     sk.append(rho2.real / npart)
             self._mean.append(numpy.average(sk))

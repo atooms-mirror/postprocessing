@@ -39,7 +39,9 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid[1])
         self.skip = adjust_skip(trajectory, norigins)
 
-        # TODO: Can this be moved up?
+        # Pick up a random, unique set of nk vectors out ot the avilable ones
+        # without exceeding maximum number of vectors in shell nkmax
+        # TODO: Can this be moved up the chain?
         self.k_sorted, self.k_selected = self._decimate_k()
 
     def _compute(self):
@@ -58,8 +60,8 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
         # is (Npart, Ndim)
         block = min(20, self._pos[0].shape[0])
         kmax = max(self.kvec.keys()) + self.dk
-        acf = [defaultdict(float) for k in self.k_sorted]
-        cnt = [defaultdict(float) for k in self.k_sorted]
+        acf = [defaultdict(float) for _ in self.k_sorted]
+        cnt = [defaultdict(float) for _ in self.k_sorted]
         if self.trajectory.block_size > 1:
             skip = self.trajectory.block_size
         else:
@@ -67,12 +69,8 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
 
         origins = range(0, pos.shape[1], block)
         for j in progress(origins):
-            x = expo_sphere(self.k0, kmax, pos[:, j:j+block, :])
+            x = expo_sphere(self.k0, kmax, pos[:, j:j + block, :])
             for kk, knorm in enumerate(self.k_sorted):
-                # Pick up a random, unique set of nk vectors out ot the avilable ones
-                # without exceeding maximum number of vectors in shell nkmax
-                # TODO: refactor this using _k_decimate()
-                nkmax = len(self.kvec[knorm])
                 for kkk in self.k_selected[kk]:
                     ik = self.kvec[knorm][kkk]
                     for off, i in self._discrete_tgrid:
@@ -143,7 +141,7 @@ class IntermediateScattering(FourierSpaceCorrelation):
             self.grid[1] = logx_grid(0.0, trajectory.total_time * 0.75, tsamples)
         self._discrete_tgrid = setup_t_grid(trajectory, self.grid[1])
 
-    def _tabulate_rho(self, k_sorted, k_selected, f=numpy.sum):
+    def _tabulate_rho(self, k_sorted, k_selected):
         """
         Tabulate densities
         """
@@ -166,7 +164,7 @@ class IntermediateScattering(FourierSpaceCorrelation):
                     ik = self.kvec[knorm][i]
                     rho_0[it][ik] = numpy.sum(expo_0[..., 0, ik[0]] * expo_0[..., 1, ik[1]] * expo_0[..., 2, ik[2]])
                     # Same optimization as above: only calculate rho_1 if needed
-                    if not self._pos_1 is self._pos_0:
+                    if self._pos_1 is not self._pos_0:
                         rho_1[it][ik] = numpy.sum(expo_1[..., 0, ik[0]] * expo_1[..., 1, ik[1]] * expo_1[..., 2, ik[2]])
             # Optimization
             if self._pos_1 is self._pos_0:
@@ -180,8 +178,8 @@ class IntermediateScattering(FourierSpaceCorrelation):
         rho_0, rho_1 = self._tabulate_rho(k_sorted, k_selected)
 
         # Compute correlation function
-        acf = [defaultdict(float) for k in k_sorted]
-        cnt = [defaultdict(float) for k in k_sorted]
+        acf = [defaultdict(float) for _ in k_sorted]
+        cnt = [defaultdict(float) for _ in k_sorted]
         skip = self.trajectory.block_size
         for kk, knorm in enumerate(progress(k_sorted)):
             for j in k_selected[kk]:
@@ -206,8 +204,8 @@ class IntermediateScattering(FourierSpaceCorrelation):
             self.value_nonorm = [[acf[kk][ti] / (cnt[kk][ti]) for ti in times] for kk in range(len(self.grid[0]))]
             self.value = [[v / self.value_nonorm[kk][0] for v in self.value_nonorm[kk]] for kk in range(len(self.grid[0]))]
         else:
-            nav_0 = sum([p.shape[0] for p in self._pos_0]) / len(self._pos_0)
-            nav_1 = sum([p.shape[0] for p in self._pos_1]) / len(self._pos_1)
+            # nav_0 = sum([p.shape[0] for p in self._pos_0]) / len(self._pos_0)
+            # nav_1 = sum([p.shape[0] for p in self._pos_1]) / len(self._pos_1)
             self.value_nonorm = [[acf[kk][ti] / (cnt[kk][ti]) for ti in times] for kk in range(len(self.grid[0]))]
             self.value = [[v / self.value_nonorm[kk][0] for v in self.value_nonorm[kk]] for kk in range(len(self.grid[0]))]
 

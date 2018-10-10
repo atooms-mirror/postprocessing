@@ -7,18 +7,9 @@ import numpy
 
 from .helpers import linear_grid
 from .correlation import Correlation, gcf_offset
-from .helpers import adjust_skip, setup_t_grid
+from .helpers import adjust_skip, setup_t_grid, ifabsmm
 
 __all__ = ['NonGaussianParameter']
-
-
-def non_gaussian_parameter(x, y):
-    if x is y:
-        return 0.0
-    dx2 = (x-y)**2
-    dr2 = numpy.sum(dx2) / float(x.shape[0])
-    dr4 = numpy.sum(numpy.sum(dx2, axis=1)**2) / float(x.shape[0])
-    return 3*dr4 / (5*dr2**2) - 1
 
 
 class NonGaussianParameter(Correlation):
@@ -34,13 +25,19 @@ class NonGaussianParameter(Correlation):
         self.skip = adjust_skip(trajectory, norigins)
 
     def _compute(self):
-        f = non_gaussian_parameter
-        self.grid, self.value = gcf_offset(f, self._discrete_tgrid, self.skip,
+        def alpha_2(x, y):
+            if x is y:
+                return 0.0
+            dx2 = (x - y)**2
+            dr2 = numpy.sum(dx2) / float(x.shape[0])
+            dr4 = numpy.sum(numpy.sum(dx2, axis=1)**2) / float(x.shape[0])
+            return 3 * dr4 / (5 * dr2**2) - 1
+
+        self.grid, self.value = gcf_offset(alpha_2, self._discrete_tgrid, self.skip,
                                            self.trajectory.steps, self._pos_unf)
         self.grid = [ti * self.trajectory.timestep for ti in self.grid]
 
     def analyze(self):
-        from .helpers import ifabsmm
         try:
             self.results['t_star'], self.results['a2_star'] = ifabsmm(self.grid, self.value)[1]
         except ZeroDivisionError:

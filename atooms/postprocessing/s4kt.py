@@ -46,7 +46,6 @@ class S4ktOverlap(FourierSpaceCorrelation):
         """
         Tabulate W
         """
-        nsteps = len(self._pos)
         side = self.trajectory[0].cell.side
         kmax = max(self.kvec.keys()) + self.dk
         nt = range(t_off, len(self._pos)-t, skip)
@@ -56,10 +55,10 @@ class S4ktOverlap(FourierSpaceCorrelation):
             for kk, knorm in enumerate(k_sorted):
                 for i in k_selected[kk]:
                     ik = self.kvec[knorm][i]
-                    if not ik in W:
+                    if ik not in W:
                         W[ik] = numpy.ndarray(len(nt), dtype=complex)
                     W[ik][i_0] = numpy.sum(self_overlap(self._pos_unf[t_0], self._pos_unf[t_0+t], side, self.a_square) *
-                                          expo[...,0,ik[0]] * expo[...,1,ik[1]] * expo[...,2,ik[2]])
+                                          expo[..., 0, ik[0]] * expo[..., 1, ik[1]] * expo[..., 2, ik[2]])
         return W
 
     def _compute(self):
@@ -76,9 +75,8 @@ class S4ktOverlap(FourierSpaceCorrelation):
             W = self._tabulate_W(self.k_sorted, self.k_selected, off, i, self.skip)
 
             # Compute vriance of W
-            cnt = [0 for k in self.k_sorted]
-            w_av = [complex(0., 0.) for k in self.k_sorted]
-            w2_av = [complex(0., 0.) for k in self.k_sorted]
+            w_av = [complex(0., 0.) for _ in self.k_sorted]
+            w2_av = [complex(0., 0.) for _ in self.k_sorted]
             for kk, knorm in enumerate(self.k_sorted):
                 for j in self.k_selected[kk]:
                     ik = self.kvec[knorm][j]

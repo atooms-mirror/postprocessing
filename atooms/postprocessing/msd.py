@@ -26,7 +26,7 @@ def partition(inp, nbl):
 class MeanSquareDisplacement(Correlation):
     """
     Mean square displacement.
-    
+
     If the time grid `tgrid` is None, the latter is redefined in a way
     controlled by the variable `rmax`. If `rmax` is negative
     (default), the time grid is linear between 0 and half of the
@@ -73,21 +73,19 @@ class MeanSquareDisplacement(Correlation):
         # We could compute the individual directions (x,y,z) and
         # average them, which will save time and space and give an
         # estimate of the incertainty.
-        def f_all(x, y):
-            return numpy.sum((x-y)**2) / float(x.shape[0])
-        def f(x, y):
+        def msd(x, y):
             return numpy.sum((x-y)**2) / float(x.shape[0])
 
         # Go for it. Redefine the time grid.
-        self.grid, self.value = gcf_offset(f, self._discrete_tgrid, self.skip,
+        self.grid, self.value = gcf_offset(msd, self._discrete_tgrid, self.skip,
                                            self.trajectory.steps, self._pos_unf)
 
         # Collect results for subtrajectories (nblocks)
         if self._nblocks > 1:
             v = []
             for sl in partition(self.trajectory, self._nblocks):
-                grid, value = gcf_offset(f, self._discrete_tgrid, self.skip,
-                                         self.trajectory.steps[sl], self._pos_unf[sl])
+                _, value = gcf_offset(f, self._discrete_tgrid, self.skip,
+                                      self.trajectory.steps[sl], self._pos_unf[sl])
                 v.append(value)
         else:
             v = [self.value]

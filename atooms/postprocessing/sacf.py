@@ -30,8 +30,8 @@ class StressAutocorrelation(Correlation):
             # Must be recreated otherwise we just append references to it
             slk = numpy.zeros(ndims)
             for j in range(ndims):
-                for k in range(j+1,ndims):
-                    slk[l] = s[j,k] + numpy.sum(mass[:] * self._vel[i][:,j] * self._vel[i][:,k])
+                for k in range(j+1, ndims):
+                    slk[l] = s[j, k] + numpy.sum(mass[:] * self._vel[i][:, j] * self._vel[i][:, k])
 #                    slk[l] = numpy.sum(mass[:] * self._vel[i][:,j] * self._vel[i][:,k])
                     l += 1
             self._stress.append(slk)

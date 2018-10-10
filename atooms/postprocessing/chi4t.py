@@ -39,7 +39,7 @@ class Chi4SelfOverlap(Correlation):
         self.a_square = a**2
         self.average = Correlation(trajectory, self.grid, 'Q^u(t)', 'qsu',
                                    'Average of self overlap not normalized')
-        self.variance = Correlation(trajectory, self.grid, 'Q_2^u(t)','qs2u',
+        self.variance = Correlation(trajectory, self.grid, 'Q_2^u(t)', 'qs2u',
                                     'Variance self overlap not normalized')
 
     def _compute(self):
@@ -77,12 +77,10 @@ class Chi4SelfOverlap(Correlation):
         self.variance.write()
 
     def analyze(self):
-        from .helpers import ifabsmm
         try:
             self.results['peak time tau_star'], self.results['peak height chi4_star'] = ifabsmm(self.grid, self.value)[1]
         except ZeroDivisionError:
             print('# warning : could not find maximum')
-            pass
 
 
 class Chi4SelfOverlapOptimized(Correlation):
@@ -106,7 +104,7 @@ class Chi4SelfOverlapOptimized(Correlation):
         self.a_square = a**2
         self.average = Correlation(trajectory, self.grid, 't', 'Q^u(t)', 'qsu',
                                    'Average of self overlap not normalized')
-        self.variance = Correlation(trajectory, self.grid, 't', 'Q_2^u(t)','qs2u',
+        self.variance = Correlation(trajectory, self.grid, 't', 'Q_2^u(t)', 'qs2u',
                                     'Variance self overlap not normalized')
 
     def _compute(self):
