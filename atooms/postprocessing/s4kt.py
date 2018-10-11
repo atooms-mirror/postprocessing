@@ -38,8 +38,6 @@ class S4ktOverlap(FourierSpaceCorrelation):
         self.a_square = a**2
 
         # Setup k vectors and tabulate rho
-        # TODO: move decimate up the chain?
-        self.k_sorted, self.k_selected = self._decimate_k()
         # Redefine kgrid to give exactly the average wave vectors used.
         # TODO; should we do it for in base?
         self.grid[1] = self._actual_k_grid(self.k_sorted, self.k_selected)

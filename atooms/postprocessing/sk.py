@@ -67,7 +67,7 @@ class StructureFactor(FourierSpaceCorrelation):
 
         nsteps = len(self._pos_0)
         # Setup k vectors and tabulate rho
-        k_sorted, k_selected = self._decimate_k()
+        k_sorted, k_selected = self.k_sorted, self.k_selected
         kmax = max(self.kvec.keys()) + self.dk
         cnt = [0 for k in k_sorted]
         rho_av = [complex(0., 0.) for k in k_sorted]
@@ -154,7 +154,7 @@ class StructureFactorOptimized(StructureFactor):
         
         nsteps = len(self._pos_0)
         # Setup k vectors and tabulate rho
-        k_sorted, k_selected = self._decimate_k()
+        k_sorted, k_selected = self.k_sorted, self.k_selected
         kmax = max(self.kvec.keys()) + self.dk
         cnt = [0 for k in k_sorted]
         rho_av = [complex(0., 0.) for k in k_sorted]
@@ -253,7 +253,7 @@ class StructureFactorStats(FourierSpaceCorrelation):
             return numpy.sum((x - numpy.mean(x))**3) / len(x) / numpy.std(x)**3
 
         # Setup k vectors and tabulate rho
-        k_sorted, k_selected = self._decimate_k()
+        k_sorted, k_selected = self.k_sorted, self.k_selected
         nsteps = len(self._pos)
         kmax = max(self.kvec.keys()) + self.dk
         self._mean = []; self._var = []; self._skew = []

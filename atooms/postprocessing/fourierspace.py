@@ -101,6 +101,7 @@ class FourierSpaceCorrelation(Correlation):
         self.kmin = kmin
         self.kmax = kmax
         self.ksamples = ksamples
+        self.k_sorted, self.k_selected = [], []
 
     def compute(self):
         # We subclass compute to define k grid at compute time
@@ -114,6 +115,10 @@ class FourierSpaceCorrelation(Correlation):
 
         # Setup grid once. If cell changes we'll call it again
         self._setup()
+
+        # Pick up a random, unique set of nk vectors out ot the avilable ones
+        # without exceeding maximum number of vectors in shell nkmax
+        self.k_sorted, self.k_selected = self._decimate_k()
 
         # Now compute
         super(FourierSpaceCorrelation, self).compute()

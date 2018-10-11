@@ -40,7 +40,7 @@ class SpectralDensity(FourierSpaceCorrelation):
     def _compute(self):
         nsteps = len(self._pos)
         # Setup k vectors and tabulate rho
-        k_sorted, k_selected = self._decimate_k()
+        k_sorted, k_selected = self.k_sorted, self.k_selected
         kmax = max(self.kvec.keys()) + self.dk
         cnt = [0 for k in k_sorted]
         # Note: actually rho_av is not calculated because it is negligible

@@ -66,11 +66,6 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
         self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid[1])
 
     def _compute(self):
-        # Pick up a random, unique set of nk vectors out ot the avilable ones
-        # without exceeding maximum number of vectors in shell nkmax
-        # TODO: Can this be moved up the chain?
-        self.k_sorted, self.k_selected = self._decimate_k()
-
         # Throw everything into a big numpy array
         # TODO: remove this redundancy
         self._pos = self._pos_unf
@@ -181,7 +176,7 @@ class IntermediateScattering(FourierSpaceCorrelation):
 
     def _compute(self):
         # Setup k vectors and tabulate densities
-        k_sorted, k_selected = self._decimate_k()
+        k_sorted, k_selected =  self.k_sorted, self.k_selected
         rho_0, rho_1 = self._tabulate_rho(k_sorted, k_selected)
         
         # Compute correlation function
