@@ -337,13 +337,12 @@ class Correlation(object):
         if self.output_path is None:
             filename = None
         else:
-            # Add self. prefix to all attributes
-            path = self.output_path.replace('{', '{0.')
-            try:
-                filename = path.format(self)
-            except:
-                print(path)
-                raise
+            filename = self.output_path.format(symbol=self.symbol,
+                                               short_name=self.short_name,
+                                               long_name=self.long_name.replace(' ', '_'),
+                                               tag=self.tag,
+                                               tag_description=self.tag_description.replace(' ', '_'),
+                                               trajectory=self.trajectory)
             # Strip unpleasant punctuation
             for punct in ['.', '_', '-']:
                 filename = filename.replace(punct * 2, punct)
