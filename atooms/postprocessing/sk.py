@@ -6,7 +6,6 @@
 import numpy
 
 from .progress import progress
-from .helpers import adjust_skip
 from .fourierspace import FourierSpaceCorrelation, expo_sphere
 
 __all__ = ['StructureFactor', 'StructureFactorOptimized', 'StructureFactorStats']
@@ -33,10 +32,8 @@ class StructureFactor(FourierSpaceCorrelation):
     def __init__(self, trajectory, kgrid=None, norigins=-1, nk=20,
                  dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
                  trajectory_field=None, field=None):
-        FourierSpaceCorrelation.__init__(self, trajectory, kgrid, nk,
-                                         dk, kmin, kmax, ksamples)
-        # TODO: move this up the chain?
-        self.skip = adjust_skip(self.trajectory, norigins)
+        FourierSpaceCorrelation.__init__(self, trajectory, kgrid, norigins,
+                                         nk, dk, kmin, kmax, ksamples)
         self._is_cell_variable = None
         self._field, tag = self._add_field(trajectory_field, field)
         if tag is not None:
@@ -248,7 +245,7 @@ class StructureFactorStats(FourierSpaceCorrelation):
     phasespace = ['pos']
 
     def __init__(self, trajectory, kgrid=None, norigins=-1, nk=1000, dk=1.0, kmin=7.0):
-        FourierSpaceCorrelation.__init__(self, trajectory, kgrid, nk,
+        FourierSpaceCorrelation.__init__(self, trajectory, kgrid, norigins, nk,
                                          dk, kmin, kmin, 1)
         # TODO: move this up the chain?
         self.skip = adjust_skip(self.trajectory, norigins)

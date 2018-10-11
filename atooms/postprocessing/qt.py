@@ -7,7 +7,7 @@ import numpy
 
 from .helpers import logx_grid
 from .correlation import Correlation, gcf_offset
-from .helpers import adjust_skip, setup_t_grid
+from .helpers import setup_t_grid
 
 __all__ = ['CollectiveOverlap', 'SelfOverlap']
 
@@ -48,9 +48,8 @@ class CollectiveOverlap(Correlation):
 
     def __init__(self, trajectory, tgrid=None, tsamples=60, a=0.3,
                  norigins=-1):
-        Correlation.__init__(self, trajectory, tgrid)
+        Correlation.__init__(self, trajectory, tgrid, norigins=norigins)
         self.a_square = a**2
-        self.skip = adjust_skip(self.trajectory, norigins)
         if tgrid is None:
             self.grid = logx_grid(0.0, self.trajectory.total_time * 0.75, tsamples)
         self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid)
@@ -75,11 +74,10 @@ class SelfOverlap(Correlation):
 
     def __init__(self, trajectory, tgrid=None, norigins=-1, a=0.3,
                  tsamples=60):
-        Correlation.__init__(self, trajectory, tgrid)
+        Correlation.__init__(self, trajectory, tgrid, norigins=norigins)
         if tgrid is None:
             self.grid = logx_grid(0.0, trajectory.total_time * 0.75, tsamples)
         self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid)
-        self.skip = adjust_skip(self.trajectory, norigins)
         self.a_square = a**2
 
     def _compute(self):

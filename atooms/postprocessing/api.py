@@ -39,7 +39,7 @@ def _compat(args, fmt, species_layout=None):
     return args
 
 def gr(input_file, dr=0.04, grandcanonical=False, fmt=None, species_layout=None,
-       norigins=-1, *input_files, **global_args):
+       norigins=None, *input_files, **global_args):
     """Radial distribution function."""
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
     for th in _get_trajectories([input_file] + list(input_files), global_args):

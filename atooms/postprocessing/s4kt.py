@@ -6,7 +6,7 @@
 import numpy
 
 from .fourierspace import FourierSpaceCorrelation, expo_sphere
-from .helpers import adjust_skip, setup_t_grid
+from .helpers import setup_t_grid
 from .qt import self_overlap
 from .progress import progress
 
@@ -31,11 +31,10 @@ class S4ktOverlap(FourierSpaceCorrelation):
 
     def __init__(self, trajectory, tgrid, kgrid=None, norigins=-1,
                  nk=20, dk=0.1, a=0.3, kmin=1.0, kmax=10.0, ksamples=10):
-        FourierSpaceCorrelation.__init__(self, trajectory, [tgrid, kgrid],
+        FourierSpaceCorrelation.__init__(self, trajectory, [tgrid, kgrid], norigins,
                                          nk, dk, kmin, kmax, ksamples)
         # Setup time grid
         self._discrete_tgrid = setup_t_grid(self.trajectory, tgrid)
-        self.skip = adjust_skip(self.trajectory, norigins)
         self.a_square = a**2
 
         # Setup k vectors and tabulate rho

@@ -7,7 +7,7 @@ import numpy
 
 from .helpers import logx_grid
 from .correlation import Correlation
-from .helpers import adjust_skip, setup_t_grid, ifabsmm
+from .helpers import setup_t_grid, ifabsmm
 from .qt import self_overlap
 from .progress import progress
 
@@ -33,11 +33,10 @@ class Chi4SelfOverlap(Correlation):
 
     def __init__(self, trajectory, tgrid=None, norigins=-1, a=0.3,
                  tsamples=60):
-        Correlation.__init__(self, trajectory, tgrid)
+        Correlation.__init__(self, trajectory, tgrid, norigins=norigins)
         if tgrid is None:
             self.grid = logx_grid(0.0, self.trajectory.total_time * 0.75, tsamples)
         self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid)
-        self.skip = adjust_skip(self.trajectory, norigins)
         self.a_square = a**2
         self.average = Correlation(self.trajectory, self.grid)
         self.average.short_name = 'Q^u(t)'

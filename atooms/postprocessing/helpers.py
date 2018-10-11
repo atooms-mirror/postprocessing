@@ -116,17 +116,39 @@ def filter_all(system):
     return s
 
 
-def adjust_skip(trajectory, n_origin=-1):
-    """ Utility function to set skip so as to keep computation time under control """
-    # TODO: We should also adjust it for Npart
-    if trajectory.block_size > 1:
-        return trajectory.block_size
-    else:
-        if n_origin > 0:
-            return max(1, int(len(trajectory.steps) / float(n_origin)))
-        else:
-            return 1
+def adjust_skip(trajectory, n_origins=None):
+    """
+    Define interval between frames in trajectory so as to achieve a
+    given number of time origins.
 
+    Possible values of n_origins:
+    - None: use euristics to keep the product of steps * particles constant
+    - int: if -1, all origins are used, otherwise if n_origins >= 1 only n_origins
+    - float in the interval (0,1): the fraction of samples to consider as time origins
+    """
+    if n_origins is not None:
+        n_origins = float(n_origins)
+        if trajectory.block_size > 1:
+            # There is logaritmic sampling, we go for the block size
+            skip = trajectory.block_size
+        else:
+            if n_origins < 0:
+                skip = 1  # all origins
+            elif n_origins >= 1:
+                skip = int(len(trajectory.steps) / float(n_origins))
+            else:
+                # A float between 0 and 1
+                skip = int(1 / float(n_origins))
+    else:
+        # Euristics
+        block = 20000
+        skip = int(len(trajectory.steps) * len(trajectory[0].particle) / block)
+
+    # Normalize anyway
+    skip = max(1, skip)
+    skip = min(len(trajectory.steps), skip)
+    
+    return skip
 
 def _templated(entry, template, keep_multiple=False):
     """

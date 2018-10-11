@@ -9,7 +9,6 @@ import numpy
 
 from .helpers import linear_grid
 from .correlation import Correlation
-from .helpers import adjust_skip
 from .progress import progress
 
 __all__ = ['RadialDistributionFunction']
@@ -84,9 +83,8 @@ class RadialDistributionFunction(Correlation):
     long_name = 'radial distribution function'
     phasespace = 'pos'
 
-    def __init__(self, trajectory, rgrid=None, norigins=-1, dr=0.04):
-        Correlation.__init__(self, trajectory, rgrid)
-        self.skip = adjust_skip(self.trajectory, norigins)
+    def __init__(self, trajectory, rgrid=None, norigins=None, dr=0.04):
+        Correlation.__init__(self, trajectory, rgrid, norigins=norigins)
         self.side = self.trajectory.read(0).cell.side
         if rgrid is not None:
             # Reconstruct bounds of grid for numpy histogram

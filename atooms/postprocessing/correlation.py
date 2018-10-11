@@ -17,6 +17,7 @@ try:
 except ImportError:
     from .helpers import _dump
 
+from .helpers import adjust_skip
 from .core import __version__
 from .progress import progress
 
@@ -174,7 +175,7 @@ class Correlation(object):
     They will be available as self._pos, self._pos_unf, self._vel.
     """
     
-    def __init__(self, trj, grid, output_path=None):
+    def __init__(self, trj, grid, output_path=None, norigins=None):
         # Accept a trajectory-like instance or a path to a trajectory
         if isinstance(trj, str):
             self.trajectory = Trajectory(trj, mode='r', fmt=pp_trajectory_format)
@@ -187,6 +188,7 @@ class Correlation(object):
         self.tag = ''
         self.tag_description = 'the whole system'
         self.output_path = output_path if output_path is not None else pp_output_path
+        self.skip = adjust_skip(self.trajectory, norigins)
 
         # Callbacks
         self._cbk = []
@@ -310,6 +312,9 @@ class Correlation(object):
         t[0].stop()
 
         _log.info('computing %s for %s', self.long_name, self.tag_description)
+        _log.info('using %s time origins out of %s', 
+                  len(range(0, len(self.trajectory), self.skip)),
+                  len(self.trajectory))
         t[1].start()
         self._compute()
         t[1].stop()

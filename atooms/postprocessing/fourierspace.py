@@ -91,9 +91,9 @@ class FourierSpaceCorrelation(Correlation):
     prescribed value k_i.
     """
 
-    def __init__(self, trajectory, grid, nk=8, dk=0.1, kmin=-1, kmax=10,
+    def __init__(self, trajectory, grid, norigins=None, nk=8, dk=0.1, kmin=-1, kmax=10,
                  ksamples=20):
-        super(FourierSpaceCorrelation, self).__init__(trajectory, grid)
+        super(FourierSpaceCorrelation, self).__init__(trajectory, grid, norigins=norigins)
         # Some additional variables. k0 = smallest wave vectors
         # compatible with the boundary conditions
         self.nk = nk

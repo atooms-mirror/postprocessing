@@ -9,7 +9,7 @@ from collections import defaultdict
 import numpy
 from atooms.trajectory.utils import check_block_size
 
-from .helpers import logx_grid, adjust_skip, setup_t_grid
+from .helpers import logx_grid, setup_t_grid
 from .correlation import Correlation
 from .fourierspace import FourierSpaceCorrelation, expo_sphere
 from .progress import progress
@@ -55,7 +55,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
     #TODO: xyz files are 2 slower than hdf5 here
     def __init__(self, trajectory, kgrid=None, tgrid=None, nk=8, tsamples=60,
                  dk=0.1, kmin=1.0, kmax=10.0, ksamples=10, norigins=-1):
-        FourierSpaceCorrelation.__init__(self, trajectory, [kgrid, tgrid],
+        FourierSpaceCorrelation.__init__(self, trajectory, [kgrid, tgrid], norigins,
                                          nk, dk, kmin, kmax, ksamples)
         # Setup time grid
         # Before setting up the time grid, we need to check periodicity over blocks
@@ -64,7 +64,6 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
             self.grid[1] = [0.0] + logx_grid(self.trajectory.timestep,
                                              self.trajectory.total_time * 0.75, tsamples)
         self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid[1])
-        self.skip = adjust_skip(self.trajectory, norigins)
 
     def _compute(self):
         # Pick up a random, unique set of nk vectors out ot the avilable ones
@@ -141,14 +140,13 @@ class IntermediateScattering(FourierSpaceCorrelation):
 
     def __init__(self, trajectory, kgrid=None, tgrid=None, nk=100, dk=0.1, tsamples=60,
                  kmin=1.0, kmax=10.0, ksamples=10, norigins=-1):
-        FourierSpaceCorrelation.__init__(self, trajectory, [kgrid, tgrid],
+        FourierSpaceCorrelation.__init__(self, trajectory, [kgrid, tgrid], norigins,
                                          nk, dk, kmin, kmax, ksamples)
         # Setup time grid
         check_block_size(self.trajectory.steps, self.trajectory.block_size)
         if tgrid is None:
             self.grid[1] = logx_grid(0.0, self.trajectory.total_time * 0.75, tsamples)
         self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid[1])
-        self.skip = adjust_skip(self.trajectory, norigins)
 
     def _tabulate_rho(self, k_sorted, k_selected):
         """

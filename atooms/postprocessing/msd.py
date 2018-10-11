@@ -8,7 +8,7 @@ import numpy
 
 from .helpers import linear_grid
 from .correlation import Correlation, gcf_offset
-from .helpers import adjust_skip, setup_t_grid
+from .helpers import setup_t_grid
 
 __all__ = ['MeanSquareDisplacement']
 
@@ -57,7 +57,7 @@ class MeanSquareDisplacement(Correlation):
         self._nblocks = 1  # currently not used
         self._var = None  # currently not used
 
-        Correlation.__init__(self, trajectory, tgrid)
+        Correlation.__init__(self, trajectory, tgrid, norigins=norigins)
 
         # TODO: subtrajectories should behave well when sampling is logarithmic
         # We redefine trajectory here to avoid unfolding the file if this is not necessary
@@ -71,7 +71,6 @@ class MeanSquareDisplacement(Correlation):
                 self.grid = linear_grid(0.0, self.trajectory.total_time * 1./(1+self._nblocks), tsamples)
 
         self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid)
-        self.skip = adjust_skip(self.trajectory, norigins)
 
     def _compute(self):
         # We could compute the individual directions (x,y,z) and
