@@ -37,7 +37,7 @@ class S4ktOverlap(FourierSpaceCorrelation):
         self._discrete_tgrid = setup_t_grid(self.trajectory, tgrid)
         self.a_square = a**2
 
-    def _tabulate_W(self, k_sorted, k_selected, t_off, t, skip):
+    def _tabulate_W(self, kgrid, k_selected, t_off, t, skip):
         """
         Tabulate W
         """
@@ -47,7 +47,7 @@ class S4ktOverlap(FourierSpaceCorrelation):
         W = {}
         for i_0, t_0 in enumerate(nt):
             expo = expo_sphere(self.k0, kmax, self._pos[t_0])
-            for kk, knorm in enumerate(k_sorted):
+            for kk, knorm in enumerate(kgrid):
                 for i in k_selected[kk]:
                     ik = self.kvec[knorm][i]
                     if ik not in W:
@@ -67,12 +67,12 @@ class S4ktOverlap(FourierSpaceCorrelation):
         for off, i  in progress(self._discrete_tgrid):
 
             # as for fkt
-            W = self._tabulate_W(self.k_sorted, self.k_selected, off, i, self.skip)
+            W = self._tabulate_W(self.kgrid, self.k_selected, off, i, self.skip)
 
             # Compute vriance of W
-            w_av = [complex(0., 0.) for _ in self.k_sorted]
-            w2_av = [complex(0., 0.) for _ in self.k_sorted]
-            for kk, knorm in enumerate(self.k_sorted):
+            w_av = [complex(0., 0.) for _ in self.kgrid]
+            w2_av = [complex(0., 0.) for _ in self.kgrid]
+            for kk, knorm in enumerate(self.kgrid):
                 for j in self.k_selected[kk]:
                     ik = self.kvec[knorm][j]
                     # Comupte |<W>|^2  and <W W^*>
@@ -84,4 +84,4 @@ class S4ktOverlap(FourierSpaceCorrelation):
             dt.append(self.trajectory.timestep * (self.trajectory.steps[off+i] - self.trajectory.steps[off]))
             self.value.append([float(w2_av[kk] - (w_av[kk]*w_av[kk].conjugate())) / npart for kk in range(len(self.grid[1]))])
         self.grid[0] = dt
-        self.grid[1] = k_sorted
+        self.grid[1] = kgrid

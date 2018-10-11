@@ -67,17 +67,17 @@ class StructureFactor(FourierSpaceCorrelation):
 
         nsteps = len(self._pos_0)
         # Setup k vectors and tabulate rho
-        k_sorted, k_selected = self.k_sorted, self.k_selected
+        kgrid, k_selected = self.kgrid, self.k_selected
         kmax = max(self.kvec.keys()) + self.dk
-        cnt = [0 for k in k_sorted]
-        rho_av = [complex(0., 0.) for k in k_sorted]
-        rho2_av = [complex(0., 0.) for k in k_sorted]
+        cnt = [0 for k in kgrid]
+        rho_av = [complex(0., 0.) for k in kgrid]
+        rho2_av = [complex(0., 0.) for k in kgrid]
         variable_cell = is_cell_variable(self.trajectory)
         for i in progress(range(0, nsteps, self.skip), total=nsteps // self.skip):
             # If cell changes we have to update the wave vectors
             if variable_cell:
                 self._setup(i)
-                k_sorted, k_selected = self._decimate_k()
+                kgrid, k_selected = self._decimate_k()
                 kmax = max(self.kvec.keys()) + self.dk
 
             # Tabulate exponentials
@@ -91,7 +91,7 @@ class StructureFactor(FourierSpaceCorrelation):
                 expo_0 = expo_sphere(self.k0, kmax, self._pos_0[i])
                 expo_1 = expo_sphere(self.k0, kmax, self._pos_1[i])
 
-            for kk, knorm in enumerate(k_sorted):
+            for kk, knorm in enumerate(kgrid):
                 for k in k_selected[kk]:
                     ik = self.kvec[knorm][k]
                     # In the absence of a microscopic field, rho_av = (0, 0)
@@ -125,7 +125,7 @@ class StructureFactor(FourierSpaceCorrelation):
         # Normalization.
         npart_0 = sum([p.shape[0] for p in self._pos_0]) / float(len(self._pos_0))
         npart_1 = sum([p.shape[0] for p in self._pos_1]) / float(len(self._pos_1))
-        self.grid = k_sorted
+        self.grid = kgrid
         self.value, self.value_nonorm = [], []
         for kk in range(len(self.grid)):
             norm = float(npart_0 * npart_1)**0.5
@@ -154,17 +154,17 @@ class StructureFactorOptimized(StructureFactor):
         
         nsteps = len(self._pos_0)
         # Setup k vectors and tabulate rho
-        k_sorted, k_selected = self.k_sorted, self.k_selected
+        kgrid, k_selected = self.kgrid, self.k_selected
         kmax = max(self.kvec.keys()) + self.dk
-        cnt = [0 for k in k_sorted]
-        rho_av = [complex(0., 0.) for k in k_sorted]
-        rho2_av = [complex(0., 0.) for k in k_sorted]
+        cnt = [0 for k in kgrid]
+        rho_av = [complex(0., 0.) for k in kgrid]
+        rho2_av = [complex(0., 0.) for k in kgrid]
         variable_cell = is_cell_variable(self.trajectory)
         for i in range(0, nsteps, self.skip):
             # If cell changes we have to update the wave vectors
             if variable_cell:
                 self._setup(i)
-                k_sorted, k_selected = self._decimate_k()
+                kgrid, k_selected = self._decimate_k()
                 kmax = max(self.kvec.keys()) + self.dk
 
             # Tabulate exponentials
@@ -179,7 +179,7 @@ class StructureFactorOptimized(StructureFactor):
                 expo_0 = expo_sphere(self.k0, kmax, self._pos_0[i])
                 expo_1 = expo_sphere(self.k0, kmax, self._pos_1[i])
 
-            for kk, knorm in enumerate(k_sorted):
+            for kk, knorm in enumerate(kgrid):
                 ikvec = numpy.ndarray((3, len(k_selected[kk])), order='F', dtype=numpy.int32)
                 i = 0
                 for k in k_selected[kk]:
@@ -192,7 +192,7 @@ class StructureFactorOptimized(StructureFactor):
                 rho2_av[kk] += numpy.sum(rho_0 * rho_1.conjugate())
                 cnt[kk] += rho.shape[0]
 
-        #     for kk, knorm in enumerate(k_sorted):
+        #     for kk, knorm in enumerate(kgrid):
         #         for k in k_selected[kk]:
         #             ik = self.kvec[knorm][k]
         #             # In the absence of a microscopic field, rho_av = (0, 0)
@@ -226,7 +226,7 @@ class StructureFactorOptimized(StructureFactor):
         # Normalization.
         npart_0 = sum([p.shape[0] for p in self._pos_0]) / float(len(self._pos_0))
         npart_1 = sum([p.shape[0] for p in self._pos_1]) / float(len(self._pos_1))
-        self.grid = k_sorted
+        self.grid = kgrid
         self.value, self.value_nonorm = [], []
         for kk in range(len(self.grid)):
             norm = float(npart_0 * npart_1)**0.5
@@ -253,7 +253,7 @@ class StructureFactorStats(FourierSpaceCorrelation):
             return numpy.sum((x - numpy.mean(x))**3) / len(x) / numpy.std(x)**3
 
         # Setup k vectors and tabulate rho
-        k_sorted, k_selected = self.k_sorted, self.k_selected
+        kgrid, k_selected = self.kgrid, self.k_selected
         nsteps = len(self._pos)
         kmax = max(self.kvec.keys()) + self.dk
         self._mean = []; self._var = []; self._skew = []
@@ -262,7 +262,7 @@ class StructureFactorStats(FourierSpaceCorrelation):
             sk = []
             expo = expo_sphere(self.k0, kmax, self._pos[i])
             npart = self._pos[i].shape[0]
-            for kk, knorm in enumerate(k_sorted):
+            for kk, knorm in enumerate(kgrid):
                 for k in k_selected[kk]:
                     ik = self.kvec[knorm][k]
                     rho = numpy.sum(expo[..., 0, ik[0]] * expo[..., 1, ik[1]] * expo[..., 2, ik[2]])

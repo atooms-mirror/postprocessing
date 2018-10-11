@@ -40,22 +40,22 @@ class SpectralDensity(FourierSpaceCorrelation):
     def _compute(self):
         nsteps = len(self._pos)
         # Setup k vectors and tabulate rho
-        k_sorted, k_selected = self.k_sorted, self.k_selected
+        kgrid, k_selected = self.kgrid, self.k_selected
         kmax = max(self.kvec.keys()) + self.dk
-        cnt = [0 for k in k_sorted]
+        cnt = [0 for k in kgrid]
         # Note: actually rho_av is not calculated because it is negligible
-        rho_av = [complex(0., 0.) for k in k_sorted]
-        rho2_av = [complex(0., 0.) for k in k_sorted]
+        rho_av = [complex(0., 0.) for k in kgrid]
+        rho2_av = [complex(0., 0.) for k in kgrid]
         cell_variable = is_cell_variable(self.trajectory)
         for i in range(0, nsteps, self.skip):
             # If cell changes we have to update
             if cell_variable:
                 self._setup(i)
-                k_sorted, k_selected = self._decimate_k()
+                kgrid, k_selected = self._decimate_k()
                 kmax = max(self.kvec.keys()) + self.dk
 
             expo = expo_sphere(self.k0, kmax, self._pos[i])
-            for kk, knorm in enumerate(k_sorted):
+            for kk, knorm in enumerate(kgrid):
                 for k in k_selected[kk]:
                     ik = self.kvec[knorm][k]
                     Ri = self._radius[i]
@@ -66,7 +66,7 @@ class SpectralDensity(FourierSpaceCorrelation):
 
         # Normalization.
         volume = numpy.average([s.cell.volume for s in self.trajectory])
-        self.grid = k_sorted
+        self.grid = kgrid
         self.value = [(rho2_av[kk] / cnt[kk] - rho_av[kk]*rho_av[kk].conjugate() / cnt[kk]**2).real / volume
                       for kk in range(len(self.grid))]
         self.value_nonorm = [rho2_av[kk].real / cnt[kk]

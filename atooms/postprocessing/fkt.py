@@ -81,8 +81,8 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
         # is (Npart, Ndim)
         block = min(20, self._pos[0].shape[0])
         kmax = max(self.kvec.keys()) + self.dk
-        acf = [defaultdict(float) for _ in self.k_sorted]
-        cnt = [defaultdict(float) for _ in self.k_sorted]
+        acf = [defaultdict(float) for _ in self.kgrid]
+        cnt = [defaultdict(float) for _ in self.kgrid]
         if self.trajectory.block_size > 1:
             skip = self.trajectory.block_size
         else:
@@ -91,7 +91,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
         origins = range(0, pos.shape[1], block)
         for j in progress(origins):
             x = expo_sphere(self.k0, kmax, pos[:, j:j + block, :])
-            for kk, knorm in enumerate(self.k_sorted):
+            for kk, knorm in enumerate(self.kgrid):
                 for kkk in self.k_selected[kk]:
                     ik = self.kvec[knorm][kkk]
                     for off, i in self._discrete_tgrid:
@@ -103,10 +103,10 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
                                                      x[i0+i, :, 2, ik[2]]*x[i0, :, 2, ik[2]].conjugate()).real
                             cnt[kk][dt] += x.shape[1]
 
-        t_sorted = sorted(acf[0].keys())
-        self.grid[0] = self.k_sorted
-        self.grid[1] = [ti*self.trajectory.timestep for ti in t_sorted]
-        self.value = [[acf[kk][ti] / cnt[kk][ti] for ti in t_sorted] for kk in range(len(self.grid[0]))]
+        tgrid = sorted(acf[0].keys())
+        self.grid[0] = self.kgrid
+        self.grid[1] = [ti*self.trajectory.timestep for ti in tgrid]
+        self.value = [[acf[kk][ti] / cnt[kk][ti] for ti in tgrid] for kk in range(len(self.grid[0]))]
         self.value = [[self.value[kk][i] / self.value[kk][0] for i in range(len(self.value[kk]))] for kk in range(len(self.grid[0]))]
 
     def analyze(self):
@@ -143,7 +143,7 @@ class IntermediateScattering(FourierSpaceCorrelation):
             self.grid[1] = logx_grid(0.0, self.trajectory.total_time * 0.75, tsamples)
         self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid[1])
 
-    def _tabulate_rho(self, k_sorted, k_selected):
+    def _tabulate_rho(self, kgrid, k_selected):
         """
         Tabulate densities
         """
@@ -161,7 +161,7 @@ class IntermediateScattering(FourierSpaceCorrelation):
                 expo_1 = expo_sphere(self.k0, kmax, self._pos_1[it])
 
             # Tabulate densities rho_0, rho_1
-            for kk, knorm in enumerate(k_sorted):
+            for kk, knorm in enumerate(kgrid):
                 for i in k_selected[kk]:
                     ik = self.kvec[knorm][i]
                     rho_0[it][ik] = numpy.sum(expo_0[..., 0, ik[0]] * expo_0[..., 1, ik[1]] * expo_0[..., 2, ik[2]])
@@ -176,14 +176,14 @@ class IntermediateScattering(FourierSpaceCorrelation):
 
     def _compute(self):
         # Setup k vectors and tabulate densities
-        k_sorted, k_selected =  self.k_sorted, self.k_selected
-        rho_0, rho_1 = self._tabulate_rho(k_sorted, k_selected)
+        kgrid, k_selected =  self.kgrid, self.k_selected
+        rho_0, rho_1 = self._tabulate_rho(kgrid, k_selected)
         
         # Compute correlation function
-        acf = [defaultdict(float) for _ in k_sorted]
-        cnt = [defaultdict(float) for _ in k_sorted]
+        acf = [defaultdict(float) for _ in kgrid]
+        cnt = [defaultdict(float) for _ in kgrid]
         skip = self.trajectory.block_size
-        for kk, knorm in enumerate(progress(k_sorted)):
+        for kk, knorm in enumerate(progress(kgrid)):
             for j in k_selected[kk]:
                 ik = self.kvec[knorm][j]
                 for off, i in self._discrete_tgrid:
@@ -196,7 +196,7 @@ class IntermediateScattering(FourierSpaceCorrelation):
 
         # Normalization
         times = sorted(acf[0].keys())
-        self.grid[0] = k_sorted
+        self.grid[0] = kgrid
         self.grid[1] = [ti*self.trajectory.timestep for ti in times]
         if self._pos_0 is self._pos_1:
             # First normalize by cnt (time counts), then by value at t=0
