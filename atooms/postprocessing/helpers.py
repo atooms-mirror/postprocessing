@@ -140,7 +140,7 @@ def adjust_skip(trajectory, n_origins=None):
                 skip = int(len(trajectory.steps) / float(n_origins))
             else:
                 # A float between 0 and 1
-                skip = int(1 / float(n_origins))
+                skip = int(1 / n_origins)
     else:
         # Euristics
         block = 20000
