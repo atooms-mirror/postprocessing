@@ -21,7 +21,9 @@ from .core import __version__
 from .progress import progress
 
 
-log = logging.getLogger(__name__)
+pp_output_path = '{trajectory.filename}.pp.{symbol}.{tag}'
+pp_trajectory_format = None
+_log = logging.getLogger(__name__)
 
 
 def acf(grid, skip, t, x):
@@ -112,11 +114,6 @@ def gcf_offset(f, grid, skip, t, x, mask=None):
         return dt, [cf[ti] / sum([cnt[ti] for ti in dt])]
 
 
-pp_update = False
-pp_output_path = '{trajectory.filename}.pp.{symbol}.{tag}'
-pp_trajectory_format = None
-
-
 class Correlation(object):
     """
     Base class for correlation functions.
@@ -196,16 +193,6 @@ class Correlation(object):
         self._cbk_args = []
         self._cbk_kwargs = []
 
-        # If update mode is on, we will only do the calculation if the trajectory
-        # file is newer than any of the provided files
-        self._need_update = True
-        if pp_update:
-            if os.path.exists(self._output_file) and self._output_file == '/dev/stdout':
-                if os.path.getmtime(self.trajectory.filename) < \
-                   os.path.getmtime(self._output_file):
-                    self._need_update = False
-                    self.read()
-
     def __str__(self):
         return '%s' % self.long_name
 
@@ -216,6 +203,15 @@ class Correlation(object):
         self._cbk.append(cbk)
         self._cbk_args.append(args)
         self._cbk_kwargs.append(kwargs)
+
+    def need_update(self):
+        """Check if the trajectory file is newer than the output file"""
+        need = True
+        if os.path.exists(self._output_file) and self._output_file != '/dev/stdout':
+            if os.path.getmtime(self.trajectory.filename) < \
+               os.path.getmtime(self._output_file):                
+                need = False
+        return need
 
     def _setup_arrays(self):
         """
@@ -307,22 +303,18 @@ class Correlation(object):
         It wraps the _compute() method implemented by subclasses.
         This method also returns the tuple `self.grid`, `self.value`.
         """
-        if not self._need_update:
-            log.info('skip %s (%s) for %s', self.short_name, self.tag, self.trajectory.filename)
-            return
-
-        log.info('setup arrays for %s', self.tag_description)
+        _log.info('setup arrays for %s', self.tag_description)
         t = [Timer(), Timer()]
         t[0].start()
         self._setup_arrays()
         t[0].stop()
 
-        log.info('computing %s for %s', self.long_name, self.tag_description)
+        _log.info('computing %s for %s', self.long_name, self.tag_description)
         t[1].start()
         self._compute()
         t[1].stop()
 
-        log.info('done %s for %s in %.1f sec [setup:%.0f%%, compute: %.0f%%]', self.long_name,
+        _log.info('done %s for %s in %.1f sec [setup:%.0f%%, compute: %.0f%%]', self.long_name,
                  self.tag_description, t[0].wall_time + t[1].wall_time,
                  t[0].wall_time / (t[0].wall_time + t[1].wall_time) * 100,
                  t[1].wall_time / (t[0].wall_time + t[1].wall_time) * 100)
@@ -420,17 +412,23 @@ class Correlation(object):
             numpy.savetxt(fh, dump, fmt="%g")
             fh.flush()
 
-    def do(self):
+    def do(self, update=False):
         """
         Do the full template pattern: compute, analyze and write the
         correlation function.
         """
+        if update and not self.need_update():
+            self.read()
+            return
+
         self.compute()
+
         try:
             self.analyze()
         except ImportError as e:
-            print('Could not analyze due to missing modules, continuing...')
-            print(e.message)
+            _log.warn('Could not analyze due to missing modules, continuing...')
+            _log.warn(e.message)
+
         self.write()
 
     def __call__(self):

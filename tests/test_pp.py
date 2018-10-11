@@ -119,6 +119,16 @@ class TestFourierSpace(unittest.TestCase):
         ref_value = numpy.array([0.075820086512828039, 0.065300213310725302, 0.082485082309989494])
         self.assertLess(deviation(p.value, ref_value), 0.04)
 
+    def test_sk_update(self):
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        t = trajectory.TrajectoryXYZ(f)
+        p = postprocessing.StructureFactor(t, kmin=-1, kmax=4, ksamples=3, dk=0.2)
+        p.do(update=False)
+        p = postprocessing.StructureFactor(t, kmin=-1, kmax=4, ksamples=3, dk=0.2)
+        p.do(update=True)
+        ref_value = numpy.array([0.075820086512828039, 0.065300213310725302, 0.082485082309989494])
+        self.assertLess(deviation(p.value, ref_value), 0.04)
+
     def test_sk_fixgrid(self):
         # TODO: this test fails with python 3 (small deviations)
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
