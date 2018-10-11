@@ -114,7 +114,7 @@ def gcf_offset(f, grid, skip, t, x, mask=None):
 
 pp_update = False
 pp_output_path = '{trajectory.filename}.pp.{symbol}.{tag}'
-pp_trj_format = None
+pp_trajectory_format = None
 
 
 class Correlation(object):
@@ -159,6 +159,11 @@ class Correlation(object):
     associated to the correlation function. This variable controls the
     internal arrays used to compute the correlation, see `phasespace`.
     """
+    static = False
+    """
+    Turn this to `True` is the correlation function is static,
+    i.e. not time-dependent. This may enable some optimizations.
+    """
     symbol = ''
     """Example: fskt"""
     short_name = ''
@@ -175,7 +180,7 @@ class Correlation(object):
     def __init__(self, trj, grid, output_path=None):
         # Accept a trajectory-like instance or a path to a trajectory
         if isinstance(trj, str):
-            self.trajectory = Trajectory(trj, mode='r', fmt=pp_trj_format)
+            self.trajectory = Trajectory(trj, mode='r', fmt=pp_trajectory_format)
         else:
             self.trajectory = trj
         self.grid = grid
