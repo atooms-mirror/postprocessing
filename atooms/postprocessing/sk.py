@@ -247,8 +247,6 @@ class StructureFactorStats(FourierSpaceCorrelation):
     def __init__(self, trajectory, kgrid=None, norigins=-1, nk=1000, dk=1.0, kmin=7.0):
         FourierSpaceCorrelation.__init__(self, trajectory, kgrid, norigins, nk,
                                          dk, kmin, kmin, 1)
-        # TODO: move this up the chain?
-        self.skip = adjust_skip(self.trajectory, norigins)
 
     def _compute(self):
         def skew(x):
