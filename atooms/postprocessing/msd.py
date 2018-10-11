@@ -50,54 +50,34 @@ class MeanSquareDisplacement(Correlation):
 
     def __init__(self, trajectory, tgrid=None, rmax=-1.0, norigins=50,
                  tsamples=30, sigma=1.0):
-        # TODO: optimize targeting msd takes a lot of time especially on large systems because of pbc unfolding
-        # TODO: memory is leaking when sourcing and analyzing many files!
         self.rmax = rmax
         self.sigma = sigma
-        self._nblocks = 1  # currently not used
-        self._var = None  # currently not used
-
+        self.tsamples = tsamples
         Correlation.__init__(self, trajectory, tgrid, norigins=norigins)
 
-        # TODO: subtrajectories should behave well when sampling is logarithmic
-        # We redefine trajectory here to avoid unfolding the file if this is not necessary
-        # e.g. because we are just sourcing the correlation object from file
-        if self.grid is None:
-            if rmax > 0.0:
-                self.grid = linear_grid(0.0, min(self.trajectory.total_time * 1./(1+self._nblocks),
-                                                 self.trajectory.time_when_msd_is(rmax**2)),
-                                        tsamples)
-            else:
-                self.grid = linear_grid(0.0, self.trajectory.total_time * 1./(1+self._nblocks), tsamples)
-
-        self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid)
-
     def _compute(self):
-        # We could compute the individual directions (x,y,z) and
-        # average them, which will save time and space and give an
-        # estimate of the incertainty.
+        # We postpone time grid definition to compute to avoid
+        # unfolding the trajectory twice when targeting the rmsd
+
         def msd(x, y):
             return numpy.sum((x-y)**2) / float(x.shape[0])
 
-        # Go for it. Redefine the time grid.
+        if self.grid is None:
+            t_max = self.trajectory.total_time
+            if self.rmax > 0.0:
+                msd_total = msd(self._pos_unf[-1], self._pos_unf[0]) 
+                frac = self.rmax**2 / msd_total
+                t_target = frac * t_max
+                self.grid = linear_grid(0.0, min(t_max, t_target), self.tsamples)
+            else:
+                self.grid = linear_grid(0.0, t_max, self.tsamples)
+        self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid)
+
+
+        # Note that the grid is redefined
         self.grid, self.value = gcf_offset(msd, self._discrete_tgrid, self.skip,
                                            self.trajectory.steps, self._pos_unf)
-
-        # Collect results for subtrajectories (nblocks)
-        if self._nblocks > 1:
-            v = []
-            for sl in partition(self.trajectory, self._nblocks):
-                _, value = gcf_offset(msd, self._discrete_tgrid, self.skip,
-                                      self.trajectory.steps[sl], self._pos_unf[sl])
-                v.append(value)
-        else:
-            v = [self.value]
-
-        # Compute variance to provide diffusion coefficient fit with weights
-        # Currently not used
-        self._var = numpy.std(v, axis=0) #[x if x>0 else 1e-100 for x in numpy.std(v, axis=0)]
-
-        # Update real time grid
+        # Update grid to real time
         self.grid = [ti * self.trajectory.timestep for ti in self.grid]
 
     def analyze(self):
@@ -109,17 +89,11 @@ class MeanSquareDisplacement(Correlation):
             self.analysis['diffusive time tau_D'] = None
 
         where = numpy.array(self.value) > self.sigma**2
-
-        if list(where).count(True) < 2:
+        if sum(where) < 2:
             log.warn('could not fit MSD: not enough data above sigma')
             return
 
-        try:
-            from .helpers import linear_fit
-        except ImportError:
-            log.warn('could not fit MSD: missing fitting modules')
-            return
-
+        from .helpers import linear_fit
         diffusion = linear_fit(numpy.array(self.grid)[where],
                                numpy.array(self.value)[where])
         ndim = self.trajectory.read(0).number_of_dimensions

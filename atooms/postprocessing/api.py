@@ -4,7 +4,6 @@ import atooms.postprocessing as postprocessing
 from atooms.postprocessing.partial import Partial
 from atooms.trajectory import Trajectory
 from atooms.trajectory.decorators import change_species
-from atooms.trajectory.utils import time_when_msd_is
 from atooms.system.particle import distinct_species
 
 from .helpers import linear_grid, logx_grid
@@ -98,32 +97,26 @@ def ik(input_file, trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0, kmax=15.0,
                                            kmin=kmin, kmax=kmax, nk=nk,
                                            ksamples=ksamples).do()
 
-def msd(input_file, msd_target=-1.0, time_target=-1.0, time_target_fraction=-1.0,
+def msd(input_file, time_target=-1.0, time_target_fraction=-1.0,
         tsamples=30, norigins=50, sigma=1.0, func=linear_grid, rmsd_target=-1.0,
         fmt=None, species_layout=None, *input_files, **global_args):
     """Mean square displacement."""
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         dt = th.timestep
-        if rmsd_target > 0:
-            t_grid = [0.0] + func(dt, time_when_msd_is(th, rmsd_target**2),
-                                  tsamples)
+        if time_target > 0:
+            t_grid = [0.0] + func(dt, min(th.total_time, time_target), tsamples)
+        elif time_target_fraction > 0:
+            t_grid = [0.0] + func(dt, time_target_fraction*th.total_time, tsamples)
         else:
-            if time_target > 0:
-                t_grid = [0.0] + func(dt, min(th.total_time,
-                                              time_target), tsamples)
-            elif time_target_fraction > 0:
-                t_grid = [0.0] + func(dt, time_target_fraction*th.total_time,
-                                      tsamples)
-            else:
-                t_grid = [0.0] + func(dt, th.steps[-1]*dt, tsamples)
+            t_grid = None
         ids = distinct_species(th[-1].particle)
         postprocessing.MeanSquareDisplacement(th, tgrid=t_grid,
                                               norigins=norigins,
-                                              sigma=sigma).do()
+                                              sigma=sigma, rmax=rmsd_target).do()
         if len(ids) > 1:
             Partial(postprocessing.MeanSquareDisplacement, ids,
-                    th, tgrid=t_grid, norigins=norigins, sigma=sigma).do()
+                    th, tgrid=t_grid, norigins=norigins, sigma=sigma, rmax=rmsd_target).do()
 
 def vacf(input_file, time_target=1.0, tsamples=30, func=linear_grid, fmt=None,
          species_layout=None, *input_files, **global_args):
