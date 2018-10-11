@@ -19,6 +19,7 @@ parser.add_argument('--output', dest='output', default='{trajectory.filename}.pp
 parser.add_argument('--verbose', action='store_true', dest='verbose', help='verbose output')
 parser.add_argument('--debug', action='store_true', dest='debug', help='debug output')
 parser.add_argument('--species-layout', dest='species_layout', help='force species layout to F, C or A')
+parser.add_argument('--norigins', dest='norigins', help='time origins for averages. Default: heuristics')
 argh.add_commands(parser, [msd, vacf, fkt, fskt, chi4qs, chi4qs_opti, gr, sk, skopti, ik])
 args = parser.parse_args()
 

@@ -324,6 +324,7 @@ class Correlation(object):
                  self.tag_description, t[0].wall_time + t[1].wall_time,
                  t[0].wall_time / (t[0].wall_time + t[1].wall_time) * 100,
                  t[1].wall_time / (t[0].wall_time + t[1].wall_time) * 100)
+        _log.info('')
 
         return self.grid, self.value
 

@@ -146,7 +146,7 @@ def adjust_skip(trajectory, n_origins=None):
         block = 20000
         skip = int(len(trajectory.steps) * len(trajectory[0].particle) / block)
 
-    # Normalize anyway
+    # Normalize anyway and make it even
     skip = max(1, skip)
     skip = min(len(trajectory.steps), skip)
     
