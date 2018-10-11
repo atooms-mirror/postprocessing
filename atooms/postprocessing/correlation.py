@@ -194,7 +194,7 @@ class Correlation(object):
         self._cbk_kwargs = []
 
     def __str__(self):
-        return '%s' % self.long_name
+        return '{} at <{}>'.format(self.long_name, id(self))
 
     def add_filter(self, cbk, *args, **kwargs):
         """Add filter callback `cbk` along with positional and keyword arguments"""
