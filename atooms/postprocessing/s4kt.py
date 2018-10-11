@@ -37,11 +37,6 @@ class S4ktOverlap(FourierSpaceCorrelation):
         self._discrete_tgrid = setup_t_grid(self.trajectory, tgrid)
         self.a_square = a**2
 
-        # Setup k vectors and tabulate rho
-        # Redefine kgrid to give exactly the average wave vectors used.
-        # TODO; should we do it for in base?
-        self.grid[1] = self._actual_k_grid(self.k_sorted, self.k_selected)
-
     def _tabulate_W(self, k_sorted, k_selected, t_off, t, skip):
         """
         Tabulate W
@@ -89,3 +84,4 @@ class S4ktOverlap(FourierSpaceCorrelation):
             dt.append(self.trajectory.timestep * (self.trajectory.steps[off+i] - self.trajectory.steps[off]))
             self.value.append([float(w2_av[kk] - (w_av[kk]*w_av[kk].conjugate())) / npart for kk in range(len(self.grid[1]))])
         self.grid[0] = dt
+        self.grid[1] = k_sorted

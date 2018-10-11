@@ -96,6 +96,8 @@ class FourierSpaceCorrelation(Correlation):
         super(FourierSpaceCorrelation, self).__init__(trajectory, grid, norigins=norigins)
         # Some additional variables. k0 = smallest wave vectors
         # compatible with the boundary conditions
+        # TODO: document the additional data structures used to store k vectors
+        # TODO: streamline k vectors data structures
         self.nk = nk
         self.dk = dk
         self.kmin = kmin
@@ -119,7 +121,9 @@ class FourierSpaceCorrelation(Correlation):
         # Pick up a random, unique set of nk vectors out ot the avilable ones
         # without exceeding maximum number of vectors in shell nkmax
         self.k_sorted, self.k_selected = self._decimate_k()
-
+        # We redefine the grid because of slight differences on the
+        # average k norms appear after decimation.
+        self.kgrid = self._actual_k_grid(self.k_sorted, self.k_selected)
         # Now compute
         super(FourierSpaceCorrelation, self).compute()
 
@@ -213,6 +217,11 @@ class FourierSpaceCorrelation(Correlation):
         return '\n'.join(s)
 
     def _actual_k_grid(self, k_sorted, k_selected):
+        """
+        Return exactly the average wave vectors from the selected ones
+        
+        Used to redefine the k grid.
+        """
         k_grid = []
         for kk, knorm in enumerate(k_sorted):
             av = 0.0
