@@ -39,8 +39,6 @@ class CollectiveOverlap(Correlation):
 
     """Time-dependent collective overlap."""
 
-    # TODO: why dont we use PBCed distance here?!
-
     symbol = 'qt'
     short_name = 'Q(t)'
     long_name = 'collective overlap'
