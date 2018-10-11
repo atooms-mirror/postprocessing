@@ -70,10 +70,12 @@ def linear_fit(xdata, ydata):
 
     a = (n * sxy - sx * sy) / (n * sxx - sx**2)
     b = sy / n - a * sx / n
-    s = (n*syy - sy**2 - a**2 * (n*sxx - sx**2)) / (n*dof)
+    if dof > 0:
+        s = (n*syy - sy**2 - a**2 * (n*sxx - sx**2)) / (n*dof)
+    else:
+        s = 0.0
     sa = n * s / (n*sxx - sx**2)
     sb = sa * sxx / n
-
     return a, b, sqrt(sa), sqrt(sb)
 
 
