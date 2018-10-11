@@ -43,6 +43,6 @@ class NonGaussianParameter(Correlation):
 
     def analyze(self):
         try:
-            self.results['t_star'], self.results['a2_star'] = ifabsmm(self.grid, self.value)[1]
+            self.analysis['t_star'], self.analysis['a2_star'] = ifabsmm(self.grid, self.value)[1]
         except ZeroDivisionError:
             pass

@@ -105,9 +105,9 @@ class MeanSquareDisplacement(Correlation):
         # Get the time when MSD equals sigma**2
         try:
             from .helpers import feqc
-            self.results['diffusive time tau_D'] = feqc(self.grid, self.value, self.sigma**2)[0]
-        except:
-            self.results['diffusive time tau_D'] = None
+            self.analysis['diffusive time tau_D'] = feqc(self.grid, self.value, self.sigma**2)[0]
+        except ValueError:
+            self.analysis['diffusive time tau_D'] = None
 
         where = numpy.array(self.value) > self.sigma**2
 
@@ -124,4 +124,4 @@ class MeanSquareDisplacement(Correlation):
         diffusion = linear_fit(numpy.array(self.grid)[where],
                                numpy.array(self.value)[where])
         ndim = self.trajectory.read(0).number_of_dimensions
-        self.results['diffusion coefficient D'] = diffusion[0] / (2*ndim)
+        self.analysis['diffusion coefficient D'] = diffusion[0] / (2*ndim)

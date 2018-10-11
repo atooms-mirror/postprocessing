@@ -93,6 +93,6 @@ class SelfOverlap(Correlation):
     def analyze(self):
         try:
             from .helpers import feqc
-            self.results['tau'] = feqc(self.grid, self.value, 1 / numpy.exp(1.0))[0]
-        except:
-            self.results['tau'] = None
+            self.analysis['tau'] = feqc(self.grid, self.value, 1 / numpy.exp(1.0))[0]
+        except ValueError:
+            self.analysis['tau'] = None

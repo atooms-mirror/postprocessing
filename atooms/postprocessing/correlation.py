@@ -182,7 +182,7 @@ class Correlation(object):
             self.trajectory = trj
         self.grid = grid
         self.value = []
-        self.results = {}
+        self.analysis = {}
         self.comments = None  # can be modified by user at run time
         self.tag = ''
         self.tag_description = 'the whole system'
@@ -314,6 +314,7 @@ class Correlation(object):
         self._compute()
         t[1].stop()
 
+        _log.info('output file %s', self._output_file)
         _log.info('done %s for %s in %.1f sec [setup:%.0f%%, compute: %.0f%%]', self.long_name,
                  self.tag_description, t[0].wall_time + t[1].wall_time,
                  t[0].wall_time / (t[0].wall_time + t[1].wall_time) * 100,
@@ -326,7 +327,7 @@ class Correlation(object):
         pass
 
     def analyze(self):
-        """Subclasses may implement this and store the results in the self.results dictonary"""
+        """Subclasses may implement this and store the results in the self.analysis dictonary"""
         pass
 
     @property
@@ -400,7 +401,7 @@ class Correlation(object):
 
         # Results of analysis
         analysis = ""
-        for x, f in self.results.items():
+        for x, f in self.analysis.items():
             if f is not None:
                 analysis += '# %s: %s\n' % (x, f)
 

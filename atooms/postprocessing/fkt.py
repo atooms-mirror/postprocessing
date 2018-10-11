@@ -17,6 +17,28 @@ from .progress import progress
 __all__ = ['SelfIntermediateScattering', 'IntermediateScattering']
 
 
+def _write_tau(out, db):
+    # Custom writing of relaxation times
+    out.write('# title: relaxation times tau(k) as a function of k\n')
+    out.write('# columns: k, tau(k)\n')
+    out.write('# note: tau is the time at which the correlation function has decayed to 1/e\n')
+    for k, tau in db['relaxation times tau'].items():
+        if tau is None:
+            out.write('%g\n' % k)
+        else:
+            out.write('%g %g\n' % (k, tau))
+
+def _extract_tau(k, t, f):
+    from .helpers import feqc
+    tau = {}
+    for i, k in enumerate(k):
+        try:
+            tau[k] = feqc(t, f[i], 1 / numpy.exp(1.0))[0]
+        except ValueError:
+            tau[k] = None
+    return tau
+
+
 class SelfIntermediateScattering(FourierSpaceCorrelation):
     """
     Self part of the intermediate scattering function.
@@ -94,35 +116,13 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
         self.value = [[self.value[kk][i] / self.value[kk][0] for i in range(len(self.value[kk]))] for kk in range(len(self.grid[0]))]
 
     def analyze(self):
-        try:
-            from .helpers import feqc
-        except ImportError:
-            return
-
-        self.tau = {}
-        for i, k in enumerate(self.grid[0]):
-            try:
-                self.tau[k] = feqc(self.grid[1], self.value[i], 1/numpy.exp(1.0))[0]
-            except ValueError:
-                self.tau[k] = None
+        self.analysis['relaxation times tau'] = _extract_tau(self.grid[0], self.grid[1], self.value)
 
     def write(self):
         Correlation.write(self)
-        if self._output_file == '/dev/stdout':
-            out = sys.stdout
-        else:
-            out = open(self._output_file + '.tau', 'w')
-
-        # some header
-        # custom writing of taus (could be refactored)
-        for k in self.tau:
-            if self.tau[k] is None:
-                out.write('%12g\n' % k)
-            else:
-                out.write('%12g %12g\n' % (k, self.tau[k]))
-
-        if out is not sys.stdout:
-            out.close()
+        if self._output_file != '/dev/stdout':
+            with open(self._output_file + '.tau', 'w') as out:
+                _write_tau(out, self.analysis)
 
 
 class IntermediateScattering(FourierSpaceCorrelation):
@@ -219,30 +219,10 @@ class IntermediateScattering(FourierSpaceCorrelation):
             self.value = [[v / self.value_nonorm[kk][0] for v in self.value_nonorm[kk]] for kk in range(len(self.grid[0]))]
 
     def analyze(self):
-        from .helpers import feqc
-        self.tau = {}
-        for i, k in enumerate(self.grid[0]):
-            try:
-                self.tau[k] = feqc(self.grid[1], self.value[i], 1/numpy.exp(1.0))[0]
-            except ValueError:
-                self.tau[k] = None
+        self.analysis['relaxation times tau'] = _extract_tau(self.grid[0], self.grid[1], self.value)
 
     def write(self):
         Correlation.write(self)
-
-        # TODO: refactor
-        if self._output_file == '/dev/stdout':
-            out = sys.stdout
-        else:
-            out = open(self._output_file + '.tau', 'w')
-
-        # Some header
-        # Custom writing of taus (could be refactored)
-        for k in self.tau:
-            if self.tau[k] is None:
-                out.write('%12g\n' % k)
-            else:
-                out.write('%12g %12g\n' % (k, self.tau[k]))
-
-        if out is not sys.stdout:
-            out.close()
+        if self._output_file != '/dev/stdout':
+            with open(self._output_file + '.tau', 'w') as out:
+                _write_tau(out, self.analysis)
