@@ -16,6 +16,8 @@ atooms can be processed, for instance most "xyz" trajectory files
 should work fine. The correlation functions can be computed using
 either the command line script `pp.py` or directly from python.
 
+![terminal](docs/anim.gif)
+
 Example: we compute the radial distribution function g(r) for the trajectory
 file `trajectory.xyz` contained in the `data/` directory
 
