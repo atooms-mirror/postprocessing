@@ -220,9 +220,18 @@ class TestFourierSpace(unittest.TestCase):
             p.compute()
 
     def test_fkt_partial(self):
+        # TODO: add check
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         t = trajectory.TrajectoryXYZ(f)
         p = postprocessing.IntermediateScattering(t, [4, 7.3, 10], nk=40)
+        p.add_filter(filter_species, 'A')
+        p.compute()
+
+    def test_fskt_partial(self):
+        # TODO: add check
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        t = trajectory.TrajectoryXYZ(f)
+        p = postprocessing.SelfIntermediateScattering(t, [4, 7.3, 10], nk=40, norigins=0.2)
         p.add_filter(filter_species, 'A')
         p.compute()
 
