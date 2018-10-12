@@ -48,7 +48,7 @@ def gr(input_file, dr=0.04, grandcanonical=False, fmt=None, species_layout=None,
         postprocessing.RadialDistributionFunction(th, dr=dr, norigins=global_args['norigins']).do()
         ids = distinct_species(th[-1].particle)
         if len(ids) > 1:
-            Partial(postprocessing.RadialDistributionFunction, ids, th, dr=dr, norigins=norigins).do()
+            Partial(postprocessing.RadialDistributionFunction, ids, th, dr=dr, norigins=global_args['norigins']).do()
 
 def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30, species_layout=None,
        grandcanonical=False, fmt=None,
