@@ -91,9 +91,10 @@ class FourierSpaceCorrelation(Correlation):
     prescribed value k_i.
     """
 
-    def __init__(self, trajectory, grid, norigins=None, nk=8, dk=0.1, kmin=-1, kmax=10,
-                 ksamples=20):
-        super(FourierSpaceCorrelation, self).__init__(trajectory, grid, norigins=norigins)
+    def __init__(self, trajectory, grid, norigins=None, nk=8, dk=0.1,
+                 kmin=-1, kmax=10, ksamples=20):
+        super(FourierSpaceCorrelation, self).__init__(trajectory,
+                                                      grid, norigins=norigins)
         # Some additional variables. k0 = smallest wave vectors
         # compatible with the boundary conditions
         # TODO: document the additional data structures used to store k vectors
@@ -103,7 +104,10 @@ class FourierSpaceCorrelation(Correlation):
         self.kmin = kmin
         self.kmax = kmax
         self.ksamples = ksamples
-        self.k_sorted, self.k_selected = [], []
+        self.kgrid = []
+        self.k_selected = []
+        self.k0 = 0.0
+        self.kvec, self.kvec_centered = None, None
 
     def compute(self):
         # We subclass compute to define k grid at compute time
@@ -159,12 +163,14 @@ class FourierSpaceCorrelation(Correlation):
         """
         kvec = defaultdict(list)
         kvec_centered = defaultdict(list)
-        # With elongated box, we choose the smallest k0 component to setup the integer grid
-        # This must be consistent with expo_grid() otherwise it wont find the vectors
+        # With elongated box, we choose the smallest k0 component to
+        # setup the integer grid. This must be consistent with
+        # expo_grid() otherwise it wont find the vectors
         kmax = kgrid[-1] + dk[-1]
         kbin_max = 1 + int(kmax / min(k0))
-        # TODO: it would be more elegant to define an iterator over ix, iy, iz for sphere, hemisphere, ...
-        # unless kmax is very high it might be more efficient to operate on a 3d grid to construct the vectors
+        # TODO: it would be more elegant an iterator over ix, iy, iz for sphere, hemisphere, ...
+        # unless kmax is very high it might be more efficient to
+        # operate on a 3d grid to construct the vectors
         kmax_sq = kmax**2
         for ix in range(-kbin_max, kbin_max+1):
             for iy in range(-kbin_max, kbin_max+1):
@@ -224,7 +230,7 @@ class FourierSpaceCorrelation(Correlation):
     def _actual_k_grid(self, kgrid, k_selected):
         """
         Return exactly the average wave vectors from the selected ones
-        
+
         Used to redefine the k grid.
         """
         k_grid = []
