@@ -7,7 +7,11 @@ Fake decorator to compute partial correlation functions.
 It uses filters internally.
 """
 
+import logging
+
 from .helpers import filter_species
+
+_log = logging.getLogger(__name__)
 
 
 class Partial(object):
