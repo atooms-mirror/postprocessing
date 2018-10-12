@@ -21,7 +21,7 @@ class StressAutocorrelation(Correlation):
     long_name = 'stress autocorrelation'
     phasespace = ['vel']
 
-    def __init__(self, trajectory, tgrid; norigins=norigins):
+    def __init__(self, trajectory, tgrid, norigins=norigins):
         Correlation.__init__(self, trajectory, tgrid, norigins=norigins)
         self._discrete_tgrid = setup_t_grid(self.trajectory, tgrid)
 
