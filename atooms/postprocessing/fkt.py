@@ -65,20 +65,16 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
         self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid[1])
 
     def _compute(self):
-        # Throw everything into a big numpy array
-        # TODO: remove this redundancy
-        self._pos = self._pos_unf
-        pos = numpy.ndarray((len(self._pos), ) + self._pos[0].shape)
-        for i in range(len(self._pos)):
-            pos[i, :, :] = self._pos[i]
-
+        # Throw everything into a big numpy array (nframes, npos, ndim)
+        pos = numpy.array(self._pos_unf)
+            
         # To optimize without wasting too much memory (we really have
         # troubles here) we group particles in blocks and tabulate the
         # exponentials over time this is more memory consuming but we
         # can optimize the inner loop.  even better we could change
         # order in the tabulated expo array to speed things up shape
         # is (Npart, Ndim)
-        block = min(20, self._pos[0].shape[0])
+        block = min(20, self._pos_unf[0].shape[0])
         kmax = max(self.kvec.keys()) + self.dk
         acf = [defaultdict(float) for _ in self.kgrid]
         cnt = [defaultdict(float) for _ in self.kgrid]
