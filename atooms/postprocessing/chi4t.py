@@ -14,7 +14,7 @@ from .progress import progress
 
 __all__ = ['Chi4SelfOverlap', 'Chi4SelfOverlapOptimized']
 
-log = logging.getLogger(__name__)
+_log = logging.getLogger(__name__)
 
 
 class Chi4SelfOverlap(Correlation):
@@ -52,14 +52,14 @@ class Chi4SelfOverlap(Correlation):
 
     def _compute(self):
         # TODO: write general susceptibility
-        # At this stage, we must copy over the tags
-        self.average.tag, self.variance.tag = self.tag, self.tag
-        side = self.trajectory.read(0).cell.side
 
         def f(x, y):
             return self_overlap(x, y, side, self.a_square).sum()
 
+        side = self.trajectory.read(0).cell.side
         self.grid = []
+        # At this stage, we can copy the tags
+        self.average.tag, self.variance.tag = self.tag, self.tag
         for off, i in progress(self._discrete_tgrid):
             A, A2, cnt = 0.0, 0.0, 0
             for i0 in range(off, len(self._pos_unf)-i-self.skip, self.skip):
@@ -100,15 +100,13 @@ class Chi4SelfOverlapOptimized(Chi4SelfOverlap):
     """
 
     def _compute(self):
-        import atooms.postprocessing.realspace_wrap
         from atooms.postprocessing.realspace_wrap import realspace_module
-
-        self.average.tag, self.variance.tag = self.tag, self.tag
 
         def f(x, y):
             return realspace_module.self_overlap(x, y, numpy.array(self.a_square))
 
         self.grid = []
+        self.average.tag, self.variance.tag = self.tag, self.tag
         for off, i in progress(self._discrete_tgrid):
             A, A2, cnt = 0.0, 0.0, 0
             for i0 in range(off, len(self._pos_unf)-i-self.skip, self.skip):

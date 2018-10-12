@@ -21,22 +21,23 @@ class StressAutocorrelation(Correlation):
     long_name = 'stress autocorrelation'
     phasespace = ['vel']
 
-    def __init__(self, trajectory, tgrid, norigins=norigins):
+    def __init__(self, trajectory, tgrid, norigins=None):
         Correlation.__init__(self, trajectory, tgrid, norigins=norigins)
         self._discrete_tgrid = setup_t_grid(self.trajectory, tgrid)
 
     def _get_stress(self):
         ndims = 3
         p = self.trajectory.read(0).particle
-        V = self.trajectory.read(0).cell.volume
         mass = numpy.array([pi.mass for pi in p])
         self._stress = []
         for i in self.trajectory.samples:
             s = self.trajectory.read(i).interaction.total_stress
             slk = numpy.zeros(ndims)
+            l = 0
             for j in range(ndims):
                 for k in range(j+1, ndims):
                     slk[l] = s[j, k] + numpy.sum(mass[:] * self._vel[i][:, j] * self._vel[i][:, k])
+                    l += 1
             self._stress.append(slk)
 
     def _compute(self):

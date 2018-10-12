@@ -149,7 +149,6 @@ class StructureFactorOptimized(StructureFactor):
 
     def _compute(self):
         from atooms.trajectory.utils import is_cell_variable
-        import atooms.postprocessing.fourierspace_wrap
         from atooms.postprocessing.fourierspace_wrap import fourierspace_module
         
         nsteps = len(self._pos_0)

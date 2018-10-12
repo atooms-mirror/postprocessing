@@ -3,7 +3,6 @@
 
 """Intermediate scattering function."""
 
-import sys
 from collections import defaultdict
 
 import numpy
