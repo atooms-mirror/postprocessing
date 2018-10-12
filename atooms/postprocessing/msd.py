@@ -12,15 +12,7 @@ from .helpers import setup_t_grid
 
 __all__ = ['MeanSquareDisplacement']
 
-log = logging.getLogger(__name__)
-
-
-def partition(inp, nbl):
-    nel = len(inp) // nbl
-    a = []
-    for i in range(nbl):
-        a.append(slice(i * nel, (i+1) * nel))
-    return a
+_log = logging.getLogger(__name__)
 
 
 class MeanSquareDisplacement(Correlation):
@@ -48,7 +40,7 @@ class MeanSquareDisplacement(Correlation):
     long_name = 'mean square displacement'
     phasespace = 'pos-unf'
 
-    def __init__(self, trajectory, tgrid=None, rmax=-1.0, norigins=50,
+    def __init__(self, trajectory, tgrid=None, rmax=-1.0, norigins=None,
                  tsamples=30, sigma=1.0):
         self.rmax = rmax
         self.sigma = sigma
@@ -90,7 +82,7 @@ class MeanSquareDisplacement(Correlation):
 
         where = numpy.array(self.value) > self.sigma**2
         if sum(where) < 2:
-            log.warn('could not fit MSD: not enough data above sigma')
+            _log.warn('could not fit MSD: not enough data above sigma')
             return
 
         from .helpers import linear_fit

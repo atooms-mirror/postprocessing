@@ -156,8 +156,6 @@ class TestFourierSpace(unittest.TestCase):
             t.add_callback(deformation, 1e-3)
             p = postprocessing.StructureFactor(t, list(range(1,10)))
             p.compute()
-        # for x, y, z, w in zip(p.grid, p1.grid, p.value, p1.value):
-        #     print x, y, z, w
 
     def test_sk_partial(self):
         # TODO: this test fails with python 3 (small deviations)

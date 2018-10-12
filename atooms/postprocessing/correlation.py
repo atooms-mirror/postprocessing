@@ -4,7 +4,6 @@
 """Base correlation function."""
 
 import os
-import warnings
 import logging
 from collections import defaultdict
 
@@ -21,10 +20,12 @@ from .helpers import adjust_skip
 from .core import __version__
 from .progress import progress
 
+__all__ = ['acf', 'gcf', 'gcf_offset', 'Correlation',
+           'pp_output_path', 'pp_trajectory_format']
 
+_log = logging.getLogger(__name__)
 pp_output_path = '{trajectory.filename}.pp.{symbol}.{tag}'
 pp_trajectory_format = None
-_log = logging.getLogger(__name__)
 
 
 def acf(grid, skip, t, x):
@@ -365,7 +366,7 @@ class Correlation(object):
                 self.grid, self.value = x
             else:
                 self.grid, self.value = x[0: 2]
-                warnings.warn("Ignoring some columns in %s" % self._output_file)
+                _log.warn("Ignoring some columns in %s", self._output_file)
 
     def write(self):
         """Write the correlation function and the analysis data to file"""

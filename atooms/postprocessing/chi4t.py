@@ -3,6 +3,7 @@
 
 """Four-point dynamic susceptibility."""
 
+import logging
 import numpy
 
 from .helpers import logx_grid
@@ -12,6 +13,8 @@ from .qt import self_overlap
 from .progress import progress
 
 __all__ = ['Chi4SelfOverlap', 'Chi4SelfOverlapOptimized']
+
+log = logging.getLogger(__name__)
 
 
 class Chi4SelfOverlap(Correlation):
@@ -85,7 +88,7 @@ class Chi4SelfOverlap(Correlation):
         try:
             self.analysis['peak time tau_star'], self.analysis['peak height chi4_star'] = ifabsmm(self.grid, self.value)[1]
         except ZeroDivisionError:
-            print('# warning : could not find maximum')
+            _log.warning('could not find maximum')
 
 
 class Chi4SelfOverlapOptimized(Chi4SelfOverlap):

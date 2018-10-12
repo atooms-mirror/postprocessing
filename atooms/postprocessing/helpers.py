@@ -152,6 +152,7 @@ def adjust_skip(trajectory, n_origins=None):
     
     return skip
 
+
 def _templated(entry, template, keep_multiple=False):
     """
     Filter a list of entries so as to best match an input
@@ -172,6 +173,7 @@ def _templated(entry, template, keep_multiple=False):
         match = list(set(match))
     return sorted(match)
 
+
 def setup_t_grid(trajectory, t_grid):
     # First get all possible time differences
     steps = trajectory.steps
@@ -186,13 +188,15 @@ def setup_t_grid(trajectory, t_grid):
     # used internally to calculate the time correlation function.
     i_grid = set([int(round(t/trajectory.timestep)) for t in t_grid])
     offsets = [off_samp[t] for t in _templated(sorted(off_samp.keys()), sorted(i_grid))]
-    # TODO: add this as a test
-    # check = []
-    # for off, i in offsets:
-    #     for i0 in xrange(off, len(trajectory)-i, trajectory.block_size):
-    #         check.append(trajectory.steps[i0+i] - trajectory.steps[i0])
-    # print sorted(set(check)), sorted(dt)
     return offsets
+
+
+def partition(inp, nbl):
+    nel = len(inp) // nbl
+    a = []
+    for i in range(nbl):
+        a.append(slice(i * nel, (i+1) * nel))
+    return a
 
 
 def _dump(title, columns=None, command=None, version=None,
