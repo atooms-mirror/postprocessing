@@ -100,7 +100,11 @@ class Chi4SelfOverlapOptimized(Chi4SelfOverlap):
     """
 
     def _compute(self):
-        from atooms.postprocessing.realspace_wrap import realspace_module
+        try:
+            from atooms.postprocessing.realspace_wrap import realspace_module
+        except ImportError:
+            _log.error('f90 wrapper missing or not functioning')
+            raise
 
         def f(x, y):
             return realspace_module.self_overlap(x, y, numpy.array(self.a_square))

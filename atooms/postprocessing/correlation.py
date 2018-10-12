@@ -175,7 +175,7 @@ class Correlation(object):
     indicates which variables should be read from the trajectory file.
     They will be available as self._pos, self._pos_unf, self._vel.
     """
-    
+
     def __init__(self, trj, grid, output_path=None, norigins=None):
         # Accept a trajectory-like instance or a path to a trajectory
         if isinstance(trj, str):
@@ -212,7 +212,7 @@ class Correlation(object):
         need = True
         if os.path.exists(self._output_file) and self._output_file != '/dev/stdout':
             if os.path.getmtime(self.trajectory.filename) < \
-               os.path.getmtime(self._output_file):                
+               os.path.getmtime(self._output_file):
                 need = False
         return need
 
@@ -313,7 +313,7 @@ class Correlation(object):
         t[0].stop()
 
         _log.info('computing %s for %s', self.long_name, self.tag_description)
-        _log.info('using %s time origins out of %s', 
+        _log.info('using %s time origins out of %s',
                   len(range(0, len(self.trajectory), self.skip)),
                   len(self.trajectory))
         t[1].start()
@@ -322,9 +322,9 @@ class Correlation(object):
 
         _log.info('output file %s', self._output_file)
         _log.info('done %s for %s in %.1f sec [setup:%.0f%%, compute: %.0f%%]', self.long_name,
-                 self.tag_description, t[0].wall_time + t[1].wall_time,
-                 t[0].wall_time / (t[0].wall_time + t[1].wall_time) * 100,
-                 t[1].wall_time / (t[0].wall_time + t[1].wall_time) * 100)
+                  self.tag_description, t[0].wall_time + t[1].wall_time,
+                  t[0].wall_time / (t[0].wall_time + t[1].wall_time) * 100,
+                  t[1].wall_time / (t[0].wall_time + t[1].wall_time) * 100)
         _log.info('')
 
         return self.grid, self.value

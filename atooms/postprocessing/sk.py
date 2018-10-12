@@ -3,12 +3,15 @@
 
 """Structure factor."""
 
+import logging
 import numpy
 
 from .progress import progress
 from .fourierspace import FourierSpaceCorrelation, expo_sphere
 
 __all__ = ['StructureFactor', 'StructureFactorOptimized']
+
+_log = logging.getLogger(__name__)
 
 
 class StructureFactor(FourierSpaceCorrelation):
@@ -149,8 +152,12 @@ class StructureFactorOptimized(StructureFactor):
 
     def _compute(self):
         from atooms.trajectory.utils import is_cell_variable
-        from atooms.postprocessing.fourierspace_wrap import fourierspace_module
-        
+        try:
+            from atooms.postprocessing.fourierspace_wrap import fourierspace_module
+        except ImportError:
+            _log.error('f90 wrapper missing or not functioning')
+            raise
+
         nsteps = len(self._pos_0)
         # Setup k vectors and tabulate rho
         kgrid, k_selected = self.kgrid, self.k_selected
