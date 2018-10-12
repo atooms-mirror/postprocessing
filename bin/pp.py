@@ -21,6 +21,7 @@ parser = argparse.ArgumentParser()
 parser = add_first_last_skip(parser)
 parser.add_argument('--fmt', dest='fmt', help='fmt')
 parser.add_argument('--output', dest='output', default='{trajectory.filename}.pp.{symbol}.{tag}', help='output path, default {pp.trajectory.filename}.pp.{pp.symbol}.{pp.tag}')
+parser.add_argument('--quiet', action='store_true', dest='verbose', help='quiet output')
 parser.add_argument('--verbose', action='store_true', dest='verbose', help='verbose output')
 parser.add_argument('--debug', action='store_true', dest='debug', help='debug output')
 parser.add_argument('--species-layout', dest='species_layout', help='force species layout to F, C or A')
@@ -41,6 +42,8 @@ elif args.debug:
     setup_logging('atooms.postprocessing', level=10)
 else:
     setup_logging('atooms', level=40)
-    setup_logging('atooms.postprocessing', level=40)
+    setup_logging('atooms.postprocessing', level=20)
+    import atooms.postprocessing.progress
+    atooms.postprocessing.progress.active = True
 
 argh.dispatching.dispatch(parser)
