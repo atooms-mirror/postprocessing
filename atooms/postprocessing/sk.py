@@ -8,7 +8,7 @@ import numpy
 from .progress import progress
 from .fourierspace import FourierSpaceCorrelation, expo_sphere
 
-__all__ = ['StructureFactor', 'StructureFactorOptimized', 'StructureFactorStats']
+__all__ = ['StructureFactor', 'StructureFactorOptimized']
 
 
 class StructureFactor(FourierSpaceCorrelation):
