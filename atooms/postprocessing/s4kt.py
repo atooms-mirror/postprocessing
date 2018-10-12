@@ -22,7 +22,7 @@ class S4ktOverlap(FourierSpaceCorrelation):
     """
 
     symbol = 's4kt'
-    short_name = 'S_4(k,t)'
+    short_name = 'S_4(t,k)'
     long_name = '4-point dynamic structure factor from self overlap'
     phasespace = ['pos', 'pos-unf']
 
@@ -57,16 +57,13 @@ class S4ktOverlap(FourierSpaceCorrelation):
         return W
 
     def _compute(self):
-        # Make sure there is only one time in tgrid.
+        # We expect there is only one time in tgrid.
         # We could easily workaround it by outer looping over i
         # We do not expect to do it for many times (typically we show S_4(k,tau_alpha) vs k)
-        # if len(self._discrete_tgrid) > 1:
-        #     raise ValueError('There should be only one time for S4kt')
         dt = []
         self.value = []
-        for off, i  in progress(self._discrete_tgrid):
-
-            # as for fkt
+        for off, i in progress(self._discrete_tgrid):
+            # As for fkt
             W = self._tabulate_W(self.kgrid, self.k_selected, off, i, self.skip)
 
             # Compute vriance of W
@@ -83,5 +80,5 @@ class S4ktOverlap(FourierSpaceCorrelation):
             npart = self._pos[0].shape[0]
             dt.append(self.trajectory.timestep * (self.trajectory.steps[off+i] - self.trajectory.steps[off]))
             self.value.append([float(w2_av[kk] - (w_av[kk]*w_av[kk].conjugate())) / npart for kk in range(len(self.grid[1]))])
+        self.grid[1] = self.kgrid
         self.grid[0] = dt
-        self.grid[1] = kgrid
