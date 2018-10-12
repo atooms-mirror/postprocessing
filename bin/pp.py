@@ -1,9 +1,14 @@
 #!/usr/bin/env python
+# PYTHON_ARGCOMPLETE_OK
 
 """Post processing script."""
 
 import argh
 import argparse
+try:
+    import argcomplete
+except:
+    argcomplete = None
 from atooms.core.utils import setup_logging
 from atooms.core.utils import add_first_last_skip
 import atooms.postprocessing as postprocessing
@@ -21,6 +26,8 @@ parser.add_argument('--debug', action='store_true', dest='debug', help='debug ou
 parser.add_argument('--species-layout', dest='species_layout', help='force species layout to F, C or A')
 parser.add_argument('--norigins', dest='norigins', help='time origins for averages. Default: heuristics')
 argh.add_commands(parser, [msd, vacf, fkt, fskt, chi4qs, chi4qs_opti, gr, sk, skopti, ik])
+if argcomplete is not None:
+    argcomplete.autocomplete(parser)
 args = parser.parse_args()
 
 postprocessing.correlation.pp_output_path = args.output 
