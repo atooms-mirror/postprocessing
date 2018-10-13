@@ -138,11 +138,12 @@ class FourierSpaceCorrelation(Correlation):
         self.kgrid, self.selection = self._decimate_k()
         # We redefine the grid because of slight differences on the
         # average k norms appear after decimation.
-        self.kgrid = self._actual_k_grid(self.kgrid, self.selection)
-        # We have got to fix the keys: just pop them to the their new positions
-        # We have got to sort both of them (better check len's))
+        self.kgrid = self._actual_k_grid()
+        # We must fix the keys: just pop them to the their new positions
+        # We sort both of them (better check len's)
         for k, kv in zip(sorted(self.kgrid), sorted(self.kvector)):
             self.kvector[k] = self.kvector.pop(kv)
+
         # Now compute
         super(FourierSpaceCorrelation, self).compute()
 
@@ -226,27 +227,27 @@ class FourierSpaceCorrelation(Correlation):
             selection.append(random.sample(list(range(nkmax)), min(self.nk, nkmax)))
         return kgrid, selection
 
-    def report(self, kgrid, selection):
+    def report(self):
         s = []
-        for kk, knorm in enumerate(kgrid):
+        for kk, knorm in enumerate(self.kgrid):
             av = 0.0
-            for i in selection[kk]:
+            for i in self.selection[kk]:
                 av += _k_norm(self.kvector[knorm][i], self.k0, self._kbin_max)
             s.append("# k %g : k_av=%g (nk=%d)" % (knorm, av /
-                                                   len(selection[kk]),
-                                                   len(selection[kk])))
+                                                   len(self.selection[kk]),
+                                                   len(self.selection[kk])))
         return '\n'.join(s)
 
-    def _actual_k_grid(self, kgrid, selection):
+    def _actual_k_grid(self):
         """
         Return exactly the average wave vectors from the selected ones
 
         Used to redefine the k grid.
         """
         k_grid = []
-        for kk, knorm in enumerate(kgrid):
+        for kk, knorm in enumerate(self.kgrid):
             av = 0.0
-            for i in selection[kk]:
+            for i in self.selection[kk]:
                 av += _k_norm(self.kvector[knorm][i], self.k0, self._kbin_max)
-            k_grid.append(av / len(selection[kk]))
+            k_grid.append(av / len(self.selection[kk]))
         return k_grid
