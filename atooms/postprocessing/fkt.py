@@ -75,7 +75,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
         # order in the tabulated expo array to speed things up shape
         # is (Npart, Ndim)
         block = min(20, self._pos_unf[0].shape[0])
-        kmax = max(self.kvec.keys()) + self.dk
+        kmax = max(self.kvector.keys()) + self.dk
         acf = [defaultdict(float) for _ in self.kgrid]
         cnt = [defaultdict(float) for _ in self.kgrid]
         if self.trajectory.block_size > 1:
@@ -87,8 +87,8 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
         for j in progress(origins):
             x = expo_sphere(self.k0, kmax, pos[:, j:j + block, :])
             for kk, knorm in enumerate(self.kgrid):
-                for kkk in self.k_selected[kk]:
-                    ik = self.kvec[knorm][kkk]
+                for kkk in self.selection[kk]:
+                    ik = self.kvector[knorm][kkk]
                     for off, i in self._discrete_tgrid:
                         for i0 in range(off, x.shape[0]-i, skip):
                             # Get the actual time difference. steps must be accessed efficiently (cached!)
@@ -138,12 +138,12 @@ class IntermediateScattering(FourierSpaceCorrelation):
             self.grid[1] = logx_grid(0.0, self.trajectory.total_time * 0.75, tsamples)
         self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid[1])
 
-    def _tabulate_rho(self, kgrid, k_selected):
+    def _tabulate_rho(self, kgrid, selection):
         """
         Tabulate densities
         """
         nsteps = len(self._pos_0)
-        kmax = max(self.kvec.keys()) + self.dk
+        kmax = max(self.kvector.keys()) + self.dk
         rho_0 = [defaultdict(complex) for it in range(nsteps)]
         rho_1 = [defaultdict(complex) for it in range(nsteps)]
         for it in range(nsteps):
@@ -157,8 +157,8 @@ class IntermediateScattering(FourierSpaceCorrelation):
 
             # Tabulate densities rho_0, rho_1
             for kk, knorm in enumerate(kgrid):
-                for i in k_selected[kk]:
-                    ik = self.kvec[knorm][i]
+                for i in selection[kk]:
+                    ik = self.kvector[knorm][i]
                     rho_0[it][ik] = numpy.sum(expo_0[..., 0, ik[0]] * expo_0[..., 1, ik[1]] * expo_0[..., 2, ik[2]])
                     # Same optimization as above: only calculate rho_1 if needed
                     if self._pos_1 is not self._pos_0:
@@ -171,16 +171,16 @@ class IntermediateScattering(FourierSpaceCorrelation):
 
     def _compute(self):
         # Setup k vectors and tabulate densities
-        kgrid, k_selected =  self.kgrid, self.k_selected
-        rho_0, rho_1 = self._tabulate_rho(kgrid, k_selected)
+        kgrid, selection =  self.kgrid, self.selection
+        rho_0, rho_1 = self._tabulate_rho(kgrid, selection)
         
         # Compute correlation function
         acf = [defaultdict(float) for _ in kgrid]
         cnt = [defaultdict(float) for _ in kgrid]
         skip = self.trajectory.block_size
         for kk, knorm in enumerate(progress(kgrid)):
-            for j in k_selected[kk]:
-                ik = self.kvec[knorm][j]
+            for j in selection[kk]:
+                ik = self.kvector[knorm][j]
                 for off, i in self._discrete_tgrid:
                     for i0 in range(off, len(rho_0)-i, skip):
                         # Get the actual time difference

@@ -116,9 +116,9 @@ class FourierSpaceCorrelation(Correlation):
         self.kmax = kmax
         self.ksamples = ksamples
         self.kgrid = []
-        self.k_selected = []
+        self.selection = []
         self.k0 = 0.0
-        self.kvec = None
+        self.kvector = None
 
     def compute(self):
         # We subclass compute to define k grid at compute time
@@ -135,14 +135,14 @@ class FourierSpaceCorrelation(Correlation):
 
         # Pick up a random, unique set of nk vectors out ot the avilable ones
         # without exceeding maximum number of vectors in shell nkmax
-        self.kgrid, self.k_selected = self._decimate_k()
+        self.kgrid, self.selection = self._decimate_k()
         # We redefine the grid because of slight differences on the
         # average k norms appear after decimation.
-        self.kgrid = self._actual_k_grid(self.kgrid, self.k_selected)
+        self.kgrid = self._actual_k_grid(self.kgrid, self.selection)
         # We have got to fix the keys: just pop them to the their new positions
         # We have got to sort both of them (better check len's))
-        for k, kv in zip(sorted(self.kgrid), sorted(self.kvec)):
-            self.kvec[k] = self.kvec.pop(kv)
+        for k, kv in zip(sorted(self.kgrid), sorted(self.kvector)):
+            self.kvector[k] = self.kvector.pop(kv)
         # Now compute
         super(FourierSpaceCorrelation, self).compute()
 
@@ -162,7 +162,7 @@ class FourierSpaceCorrelation(Correlation):
                 self.kgrid[0] = min(self.k0)
 
         # Setup the grid of wave-vectors
-        self.kvec = self._setup_grid_sphere(len(self.kgrid)*[self.dk],
+        self.kvector = self._setup_grid_sphere(len(self.kgrid)*[self.dk],
                                             self.kgrid, self.k0)
 
     def _setup_grid_sphere(self, dk, kgrid, k0):
@@ -219,25 +219,25 @@ class FourierSpaceCorrelation(Correlation):
         # Setting the seed here once so as to get the same set
         # independent of filters.
         random.seed(1)
-        kgrid = sorted(self.kvec.keys())
-        k_selected = []
+        kgrid = sorted(self.kvector.keys())
+        selection = []
         for knorm in kgrid:
-            nkmax = len(self.kvec[knorm])
-            k_selected.append(random.sample(list(range(nkmax)), min(self.nk, nkmax)))
-        return kgrid, k_selected
+            nkmax = len(self.kvector[knorm])
+            selection.append(random.sample(list(range(nkmax)), min(self.nk, nkmax)))
+        return kgrid, selection
 
-    def report(self, kgrid, k_selected):
+    def report(self, kgrid, selection):
         s = []
         for kk, knorm in enumerate(kgrid):
             av = 0.0
-            for i in k_selected[kk]:
-                av += _k_norm(self.kvec[knorm][i], self.k0, self._kbin_max)
+            for i in selection[kk]:
+                av += _k_norm(self.kvector[knorm][i], self.k0, self._kbin_max)
             s.append("# k %g : k_av=%g (nk=%d)" % (knorm, av /
-                                                   len(k_selected[kk]),
-                                                   len(k_selected[kk])))
+                                                   len(selection[kk]),
+                                                   len(selection[kk])))
         return '\n'.join(s)
 
-    def _actual_k_grid(self, kgrid, k_selected):
+    def _actual_k_grid(self, kgrid, selection):
         """
         Return exactly the average wave vectors from the selected ones
 
@@ -246,7 +246,7 @@ class FourierSpaceCorrelation(Correlation):
         k_grid = []
         for kk, knorm in enumerate(kgrid):
             av = 0.0
-            for i in k_selected[kk]:
-                av += _k_norm(self.kvec[knorm][i], self.k0, self._kbin_max)
-            k_grid.append(av / len(k_selected[kk]))
+            for i in selection[kk]:
+                av += _k_norm(self.kvector[knorm][i], self.k0, self._kbin_max)
+            k_grid.append(av / len(selection[kk]))
         return k_grid

@@ -37,19 +37,19 @@ class S4ktOverlap(FourierSpaceCorrelation):
         self._discrete_tgrid = setup_t_grid(self.trajectory, tgrid)
         self.a_square = a**2
 
-    def _tabulate_W(self, kgrid, k_selected, t_off, t, skip):
+    def _tabulate_W(self, kgrid, selection, t_off, t, skip):
         """
         Tabulate W
         """
         side = self.trajectory[0].cell.side
-        kmax = max(self.kvec.keys()) + self.dk
+        kmax = max(self.kvector.keys()) + self.dk
         nt = range(t_off, len(self._pos)-t, skip)
         W = {}
         for i_0, t_0 in enumerate(nt):
             expo = expo_sphere(self.k0, kmax, self._pos[t_0])
             for kk, knorm in enumerate(kgrid):
-                for i in k_selected[kk]:
-                    ik = self.kvec[knorm][i]
+                for i in selection[kk]:
+                    ik = self.kvector[knorm][i]
                     if ik not in W:
                         W[ik] = numpy.ndarray(len(nt), dtype=complex)
                     W[ik][i_0] = numpy.sum(self_overlap(self._pos_unf[t_0], self._pos_unf[t_0+t], side, self.a_square) *
@@ -64,14 +64,14 @@ class S4ktOverlap(FourierSpaceCorrelation):
         self.value = []
         for off, i in progress(self._discrete_tgrid):
             # As for fkt
-            W = self._tabulate_W(self.kgrid, self.k_selected, off, i, self.skip)
+            W = self._tabulate_W(self.kgrid, self.selection, off, i, self.skip)
 
             # Compute vriance of W
             w_av = [complex(0., 0.) for _ in self.kgrid]
             w2_av = [complex(0., 0.) for _ in self.kgrid]
             for kk, knorm in enumerate(self.kgrid):
-                for j in self.k_selected[kk]:
-                    ik = self.kvec[knorm][j]
+                for j in self.selection[kk]:
+                    ik = self.kvector[knorm][j]
                     # Comupte |<W>|^2  and <W W^*>
                     w_av[kk] = numpy.average(W[ik])
                     w2_av[kk] = numpy.average(W[ik] * W[ik].conjugate())

@@ -40,8 +40,8 @@ class SpectralDensity(FourierSpaceCorrelation):
     def _compute(self):
         nsteps = len(self._pos)
         # Setup k vectors and tabulate rho
-        kgrid, k_selected = self.kgrid, self.k_selected
-        kmax = max(self.kvec.keys()) + self.dk
+        kgrid, selection = self.kgrid, self.selection
+        kmax = max(self.kvector.keys()) + self.dk
         cnt = [0 for k in kgrid]
         # Note: actually rho_av is not calculated because it is negligible
         rho_av = [complex(0., 0.) for k in kgrid]
@@ -51,13 +51,13 @@ class SpectralDensity(FourierSpaceCorrelation):
             # If cell changes we have to update
             if cell_variable:
                 self._setup(i)
-                kgrid, k_selected = self._decimate_k()
-                kmax = max(self.kvec.keys()) + self.dk
+                kgrid, selection = self._decimate_k()
+                kmax = max(self.kvector.keys()) + self.dk
 
             expo = expo_sphere(self.k0, kmax, self._pos[i])
             for kk, knorm in enumerate(kgrid):
-                for k in k_selected[kk]:
-                    ik = self.kvec[knorm][k]
+                for k in selection[kk]:
+                    ik = self.kvector[knorm][k]
                     Ri = self._radius[i]
                     mk = 4 * numpy.pi / knorm**3 * (numpy.sin(knorm*Ri) - (knorm*Ri) * numpy.cos(knorm*Ri))
                     rho = numpy.sum(mk * expo[..., 0, ik[0]] * expo[..., 1, ik[1]] * expo[..., 2, ik[2]])

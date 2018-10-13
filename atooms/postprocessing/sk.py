@@ -70,8 +70,8 @@ class StructureFactor(FourierSpaceCorrelation):
 
         nsteps = len(self._pos_0)
         # Setup k vectors and tabulate rho
-        kgrid, k_selected = self.kgrid, self.k_selected
-        kmax = max(self.kvec.keys()) + self.dk
+        kgrid, selection = self.kgrid, self.selection
+        kmax = max(self.kvector.keys()) + self.dk
         cnt = [0 for k in kgrid]
         rho_av = [complex(0., 0.) for k in kgrid]
         rho2_av = [complex(0., 0.) for k in kgrid]
@@ -80,8 +80,8 @@ class StructureFactor(FourierSpaceCorrelation):
             # If cell changes we have to update the wave vectors
             if variable_cell:
                 self._setup(i)
-                kgrid, k_selected = self._decimate_k()
-                kmax = max(self.kvec.keys()) + self.dk
+                kgrid, selection = self._decimate_k()
+                kmax = max(self.kvector.keys()) + self.dk
 
             # Tabulate exponentials
             # Note: tabulating and computing takes about the same time
@@ -95,8 +95,8 @@ class StructureFactor(FourierSpaceCorrelation):
                 expo_1 = expo_sphere(self.k0, kmax, self._pos_1[i])
 
             for kk, knorm in enumerate(kgrid):
-                for k in k_selected[kk]:
-                    ik = self.kvec[knorm][k]
+                for k in selection[kk]:
+                    ik = self.kvector[knorm][k]
                     # In the absence of a microscopic field, rho_av = (0, 0)
                     if not self._field:
                         if expo_0 is expo_1:
@@ -160,8 +160,8 @@ class StructureFactorOptimized(StructureFactor):
 
         nsteps = len(self._pos_0)
         # Setup k vectors and tabulate rho
-        kgrid, k_selected = self.kgrid, self.k_selected
-        kmax = max(self.kvec.keys()) + self.dk
+        kgrid, selection = self.kgrid, self.selection
+        kmax = max(self.kvector.keys()) + self.dk
         cnt = [0 for k in kgrid]
         rho_av = [complex(0., 0.) for k in kgrid]
         rho2_av = [complex(0., 0.) for k in kgrid]
@@ -170,8 +170,8 @@ class StructureFactorOptimized(StructureFactor):
             # If cell changes we have to update the wave vectors
             if variable_cell:
                 self._setup(i)
-                kgrid, k_selected = self._decimate_k()
-                kmax = max(self.kvec.keys()) + self.dk
+                kgrid, selection = self._decimate_k()
+                kmax = max(self.kvector.keys()) + self.dk
 
             # Tabulate exponentials
             # Note: tabulating and computing takes about the same time
@@ -186,10 +186,10 @@ class StructureFactorOptimized(StructureFactor):
                 expo_1 = expo_sphere(self.k0, kmax, self._pos_1[i])
 
             for kk, knorm in enumerate(kgrid):
-                ikvec = numpy.ndarray((3, len(k_selected[kk])), order='F', dtype=numpy.int32)
+                ikvec = numpy.ndarray((3, len(selection[kk])), order='F', dtype=numpy.int32)
                 i = 0
-                for k in k_selected[kk]:
-                    ikvec[:, i] = self.kvec[knorm][k]
+                for k in selection[kk]:
+                    ikvec[:, i] = self.kvector[knorm][k]
                     i += 1
                 rho = numpy.zeros(ikvec.shape[1], dtype=numpy.complex128)
                 fourierspace_module.sk_bare(expo_0, ikvec, rho)
@@ -199,8 +199,8 @@ class StructureFactorOptimized(StructureFactor):
                 cnt[kk] += rho.shape[0]
 
         #     for kk, knorm in enumerate(kgrid):
-        #         for k in k_selected[kk]:
-        #             ik = self.kvec[knorm][k]
+        #         for k in selection[kk]:
+        #             ik = self.kvector[knorm][k]
         #             # In the absence of a microscopic field, rho_av = (0, 0)
         #             if not self._field:
         #                 if expo_0 is expo_1:
