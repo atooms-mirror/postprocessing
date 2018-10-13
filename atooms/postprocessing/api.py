@@ -37,6 +37,8 @@ def _compat(args, fmt, species_layout=None):
         args['species_layout'] = species_layout
     if 'norigins' not in args:
         args['norigins'] = None
+    if 'fast' not in args:
+        args['fast'] = False
     return args
 
 def gr(input_file, dr=0.04, grandcanonical=False, fmt=None, species_layout=None,
@@ -55,33 +57,20 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30, species_lay
        trajectory_field=None, field=None, *input_files, **global_args):
     """Structure factor."""
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
-    for th in _get_trajectories([input_file] + list(input_files), global_args):
-        ids = distinct_species(th[-1].particle)
-        postprocessing.StructureFactor(th, None, norigins=global_args['norigins'],
-                                       trajectory_field=trajectory_field,
-                                       field=field, kmin=kmin,
-                                       kmax=kmax, nk=nk,
-                                       ksamples=ksamples).do()
-        if len(ids) > 1 and trajectory_field is None:
-            Partial(postprocessing.StructureFactor, ids, th, None,
-                    norigins=global_args['norigins'], kmin=kmin,
-                    kmax=kmax, nk=nk,
-                    ksamples=ksamples).do()
+    if global_args['fast']:
+        backend = postprocessing.StructureFactorOpti
+    else:
+        backend = postprocessing.StructureFactor
 
-def skopti(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30, species_layout=None,
-           species=None, grandcanonical=False, fmt=None,
-           trajectory_field=None, field=None, *input_files, **global_args):
-    """Structure factor."""
-    global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         ids = distinct_species(th[-1].particle)
-        postprocessing.StructureFactorOptimized(th, None, norigins=global_args['norigins'],
-                                                trajectory_field=trajectory_field,
-                                                field=field, kmin=kmin,
-                                                kmax=kmax, nk=nk,
-                                                ksamples=ksamples).do()
+        backend(th, None, norigins=global_args['norigins'],
+                trajectory_field=trajectory_field,
+                field=field, kmin=kmin,
+                kmax=kmax, nk=nk,
+                ksamples=ksamples).do()
         if len(ids) > 1 and trajectory_field is None:
-            Partial(postprocessing.StructureFactor, ids, th, None,
+            Partial(backend, ids, th, None,
                     norigins=global_args['norigins'], kmin=kmin,
                     kmax=kmax, nk=nk,
                     ksamples=ksamples).do()
@@ -167,6 +156,12 @@ def fskt(input_file, time_target=1e9, tsamples=60, kmin=7.0, kmax=8.0, ksamples=
 def chi4qs(input_file, tsamples=60, a=0.3, time_target=-1.0, fmt=None, species_layout=None, total=False, *input_files, **global_args):
     """Dynamic susceptibility of self overlap."""
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
+
+    if global_args['fast']:
+        backend = postprocessing.Chi4SelfOverlapOpti
+    else:
+        backend = postprocessing.Chi4SelfOverlap
+    
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         func = logx_grid
         if time_target > 0:
@@ -175,19 +170,7 @@ def chi4qs(input_file, tsamples=60, a=0.3, time_target=-1.0, fmt=None, species_l
             time_target = th.total_time * 0.75
         t_grid = [0.0] + func(th.timestep, time_target, tsamples)
         if total:
-            postprocessing.Chi4SelfOverlap(th, t_grid, a=a, norigins=global_args['norigins']).do()
+            backend(th, t_grid, a=a, norigins=global_args['norigins']).do()
         ids = distinct_species(th[0].particle)
         if not total and len(ids) > 1:
-            Partial(postprocessing.Chi4SelfOverlap, ids, th, t_grid, a=a, norigins=global_args['norigins']).do()
-
-def chi4qs_opti(input_file, tsamples=60, a=0.3, fmt=None, species_layout=None, *input_files, **global_args):
-    """Dynamic susceptibility of self overlap."""
-    global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
-    for th in _get_trajectories([input_file] + list(input_files), global_args):
-        func = logx_grid
-        time_target = th.total_time * 0.75
-        t_grid = [0.0] + func(th.timestep, time_target, tsamples)
-        postprocessing.Chi4SelfOverlapOpti(th, t_grid, a=a, norigins=global_args['norigins']).do()
-        ids = distinct_species(th[0].particle)
-        if len(ids) > 1:
-            Partial(postprocessing.Chi4SelfOverlapOptimized, ids, th, t_grid, a=a, norigins=global_args['norigins']).do()
+            Partial(backend, ids, th, t_grid, a=a, norigins=global_args['norigins']).do()
