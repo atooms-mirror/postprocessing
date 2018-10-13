@@ -198,37 +198,6 @@ class StructureFactorOptimized(StructureFactor):
                 rho2_av[kk] += numpy.sum(rho_0 * rho_1.conjugate())
                 cnt[kk] += rho.shape[0]
 
-        #     for kk, knorm in enumerate(kgrid):
-        #         for k in selection[kk]:
-        #             ik = self.kvector[knorm][k]
-        #             # In the absence of a microscopic field, rho_av = (0, 0)
-        #             if not self._field:
-        #                 if expo_0 is expo_1:
-        #                     # Identical species
-        #                     rho_0 = numpy.sum(expo_0[...,0,ik[0]] *
-        #                                       expo_0[...,1,ik[1]] *
-        #                                       expo_0[...,2,ik[2]])
-        #                     rho_1 = rho_0
-        #                 else:
-        #                     # Cross correlation
-        #                     rho_0 = numpy.sum(expo_0[...,0,ik[0]] *
-        #                                       expo_0[...,1,ik[1]] *
-        #                                       expo_0[...,2,ik[2]])
-        #                     rho_1 = numpy.sum(expo_1[...,0,ik[0]] *
-        #                                       expo_1[...,1,ik[1]] *
-        #                                       expo_1[...,2,ik[2]])
-        #             else:
-        #                 # We have a field as a weight
-        #                 rho_0 = numpy.sum(self._field[i] *
-        #                                   expo_0[...,0,ik[0]] *
-        #                                   expo_0[...,1,ik[1]] *
-        #                                   expo_0[...,2,ik[2]])
-        #                 rho_1 = rho_0
-        #                 rho_av[kk] += rho_0
-
-        #             rho2_av[kk] += (rho_0 * rho_1.conjugate())
-        #             cnt[kk] += 1
-
         # Normalization.
         npart_0 = sum([p.shape[0] for p in self._pos_0]) / float(len(self._pos_0))
         npart_1 = sum([p.shape[0] for p in self._pos_1]) / float(len(self._pos_1))
