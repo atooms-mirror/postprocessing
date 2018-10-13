@@ -4,6 +4,7 @@
 """Fourier-space post processing code."""
 
 import math
+import logging
 import random
 from collections import defaultdict
 
@@ -11,6 +12,10 @@ import numpy
 
 from .helpers import linear_grid
 from .correlation import Correlation
+
+__all__ = ['expo_sphere', 'expo_sphere_safe', 'FourierSpaceCorrelation']
+
+_log = logging.getLogger(__name__)
 
 
 def expo_sphere(k0, kmax, pos):
@@ -45,6 +50,7 @@ def expo_sphere(k0, kmax, pos):
 
     return expo
 
+
 def expo_sphere_safe(k0, kmax, pos):
     """
     Returns the exponentials of the input positions for each k.
@@ -68,11 +74,16 @@ def expo_sphere_safe(k0, kmax, pos):
 
     return expo
 
-def k_norm(ik, k0):
+
+def _k_norm(ik, k0, offset):
     if isinstance(k0, list) or isinstance(k0, numpy.ndarray):
-        return math.sqrt((k0[0]*ik[0])**2 + (k0[1]*ik[1])**2 + (k0[2]*ik[2])**2)
+        return math.sqrt((k0[0] * (ik[0] - offset))**2 +
+                         (k0[1] * (ik[1] - offset))**2 +
+                         (k0[2] * (ik[2] - offset))**2)
     else:
-        return math.sqrt(float(ik[0]**2 + ik[1]**2 + ik[2]**2)) * k0
+        return math.sqrt(float((ik[0]-offset)**2 +
+                               (ik[1]-offset)**2 +
+                               (ik[2]-offset)**2)) * k0
 
 
 class FourierSpaceCorrelation(Correlation):
@@ -107,7 +118,7 @@ class FourierSpaceCorrelation(Correlation):
         self.kgrid = []
         self.k_selected = []
         self.k0 = 0.0
-        self.kvec, self.kvec_centered = None, None
+        self.kvec = None
 
     def compute(self):
         # We subclass compute to define k grid at compute time
@@ -151,8 +162,8 @@ class FourierSpaceCorrelation(Correlation):
                 self.kgrid[0] = min(self.k0)
 
         # Setup the grid of wave-vectors
-        self.kvec, self.kvec_centered = self._setup_grid_sphere(len(self.kgrid)*[self.dk],
-                                                                self.kgrid, self.k0)
+        self.kvec = self._setup_grid_sphere(len(self.kgrid)*[self.dk],
+                                            self.kgrid, self.k0)
 
     def _setup_grid_sphere(self, dk, kgrid, k0):
         """
@@ -162,12 +173,12 @@ class FourierSpaceCorrelation(Correlation):
         Returns a dictonary of lists of wavevectors, one entry for each element in the grid.
         """
         kvec = defaultdict(list)
-        kvec_centered = defaultdict(list)
         # With elongated box, we choose the smallest k0 component to
         # setup the integer grid. This must be consistent with
         # expo_grid() otherwise it wont find the vectors
         kmax = kgrid[-1] + dk[-1]
-        kbin_max = 1 + int(kmax / min(k0))
+        self._kbin_max = 1 + int(kmax / min(k0))
+        kbin_max = self._kbin_max  # shortcut
         # TODO: it would be more elegant an iterator over ix, iy, iz for sphere, hemisphere, ...
         # unless kmax is very high it might be more efficient to
         # operate on a 3d grid to construct the vectors
@@ -189,13 +200,12 @@ class FourierSpaceCorrelation(Correlation):
                     for ki, dki in zip(kgrid, dk):
                         if abs(knorm - ki) < dki:
                             kvec[ki].append((ix+kbin_max, iy+kbin_max, iz+kbin_max))
-                            kvec_centered[ki].append((ix, iy, iz))
                             break
 
-        # if len(kvec.keys()) != len(kgrid):
-        #     _log.info('some k points could not be found')
+        if len(kvec.keys()) != len(kgrid):
+            _log.warning('some entries in the kgrid had no matching k-vector')
 
-        return kvec, kvec_centered
+        return kvec
 
     def _decimate_k(self):
         """
@@ -221,7 +231,7 @@ class FourierSpaceCorrelation(Correlation):
         for kk, knorm in enumerate(kgrid):
             av = 0.0
             for i in k_selected[kk]:
-                av += k_norm(self.kvec_centered[knorm][i], self.k0)
+                av += _k_norm(self.kvec[knorm][i], self.k0, self._kbin_max)
             s.append("# k %g : k_av=%g (nk=%d)" % (knorm, av /
                                                    len(k_selected[kk]),
                                                    len(k_selected[kk])))
@@ -237,6 +247,6 @@ class FourierSpaceCorrelation(Correlation):
         for kk, knorm in enumerate(kgrid):
             av = 0.0
             for i in k_selected[kk]:
-                av += k_norm(self.kvec_centered[knorm][i], self.k0)
+                av += _k_norm(self.kvec[knorm][i], self.k0, self._kbin_max)
             k_grid.append(av / len(k_selected[kk]))
         return k_grid
