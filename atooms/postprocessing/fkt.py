@@ -67,7 +67,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
     def _compute(self):
         # Throw everything into a big numpy array (nframes, npos, ndim)
         pos = numpy.array(self._pos_unf)
-            
+
         # To optimize without wasting too much memory (we really have
         # troubles here) we group particles in blocks and tabulate the
         # exponentials over time this is more memory consuming but we
@@ -173,7 +173,7 @@ class IntermediateScattering(FourierSpaceCorrelation):
         # Setup k vectors and tabulate densities
         kgrid, selection =  self.kgrid, self.selection
         rho_0, rho_1 = self._tabulate_rho(kgrid, selection)
-        
+
         # Compute correlation function
         acf = [defaultdict(float) for _ in kgrid]
         cnt = [defaultdict(float) for _ in kgrid]

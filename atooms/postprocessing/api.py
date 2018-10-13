@@ -40,7 +40,7 @@ def _compat(args, fmt, species_layout=None):
     return args
 
 def gr(input_file, dr=0.04, grandcanonical=False, fmt=None, species_layout=None,
-        *input_files, **global_args):
+       *input_files, **global_args):
     """Radial distribution function."""
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
@@ -69,8 +69,8 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30, species_lay
                     ksamples=ksamples).do()
 
 def skopti(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30, species_layout=None,
-       species=None, grandcanonical=False, fmt=None,
-       trajectory_field=None, field=None, *input_files, **global_args):
+           species=None, grandcanonical=False, fmt=None,
+           trajectory_field=None, field=None, *input_files, **global_args):
     """Structure factor."""
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
     for th in _get_trajectories([input_file] + list(input_files), global_args):

@@ -149,7 +149,7 @@ def adjust_skip(trajectory, n_origins=None):
     # Normalize anyway and make it even
     skip = max(1, skip)
     skip = min(len(trajectory.steps), skip)
-    
+
     return skip
 
 

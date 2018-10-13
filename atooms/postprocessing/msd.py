@@ -57,7 +57,7 @@ class MeanSquareDisplacement(Correlation):
         if self.grid is None:
             t_max = self.trajectory.total_time
             if self.rmax > 0.0:
-                msd_total = msd(self._pos_unf[-1], self._pos_unf[0]) 
+                msd_total = msd(self._pos_unf[-1], self._pos_unf[0])
                 frac = self.rmax**2 / msd_total
                 t_target = frac * t_max
                 self.grid = linear_grid(0.0, min(t_max, t_target), self.tsamples)

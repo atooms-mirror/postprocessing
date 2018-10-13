@@ -23,7 +23,7 @@ class Partial(object):
         self.partial = {}
         self.nbodies = corr_cls.nbodies
         self.species = species
-        
+
         if self.nbodies == 1:
             for i in range(len(self.species)):
                 isp = self.species[i]
