@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # This file is part of atooms
-# Copyright 2010-2014, Daniele Coslovich
+# Copyright 2010-2018, Daniele Coslovich
 
 """Stress autocorrelation function."""
 
