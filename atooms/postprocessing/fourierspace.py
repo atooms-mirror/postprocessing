@@ -116,9 +116,9 @@ class FourierSpaceCorrelation(Correlation):
         self.kmax = kmax
         self.ksamples = ksamples
         self.kgrid = []
-        self.selection = []
         self.k0 = 0.0
-        self.kvector = None
+        self.kvector = {}
+        self.selection = []
 
     def compute(self):
         # We subclass compute to define k grid at compute time
@@ -162,10 +162,11 @@ class FourierSpaceCorrelation(Correlation):
                 self.kgrid[0] = min(self.k0)
 
         # Setup the grid of wave-vectors
-        self.kvector = self._setup_grid_sphere(len(self.kgrid)*[self.dk],
-                                            self.kgrid, self.k0)
+        self.kvector, self._kbin_max = self._setup_grid_sphere(len(self.kgrid) * [self.dk],
+                                                               self.kgrid, self.k0)
 
-    def _setup_grid_sphere(self, dk, kgrid, k0):
+    @staticmethod
+    def _setup_grid_sphere(dk, kgrid, k0):
         """
         Setup wave vector grid with spherical average (no symmetry),
         picking up vectors that fit into shells of width dk centered around
@@ -177,8 +178,7 @@ class FourierSpaceCorrelation(Correlation):
         # setup the integer grid. This must be consistent with
         # expo_grid() otherwise it wont find the vectors
         kmax = kgrid[-1] + dk[-1]
-        self._kbin_max = 1 + int(kmax / min(k0))
-        kbin_max = self._kbin_max  # shortcut
+        kbin_max = 1 + int(kmax / min(k0))
         # TODO: it would be more elegant an iterator over ix, iy, iz for sphere, hemisphere, ...
         # unless kmax is very high it might be more efficient to
         # operate on a 3d grid to construct the vectors
@@ -205,7 +205,7 @@ class FourierSpaceCorrelation(Correlation):
         if len(kvec.keys()) != len(kgrid):
             _log.warning('some entries in the kgrid had no matching k-vector')
 
-        return kvec
+        return kvec, kbin_max
 
     def _decimate_k(self):
         """
