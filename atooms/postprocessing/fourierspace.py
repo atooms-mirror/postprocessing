@@ -119,6 +119,7 @@ class FourierSpaceCorrelation(Correlation):
         self.k0 = 0.0
         self.kvector = {}
         self.selection = []
+        self._kbin_max = 0
 
     def compute(self):
         # We subclass compute to define k grid at compute time
