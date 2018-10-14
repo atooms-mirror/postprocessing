@@ -4,6 +4,7 @@
 import logging
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
+from .correlation import *
 from .partial import *
 
 # Real space correlation functions
@@ -19,3 +20,8 @@ from .fkt import *
 from .ik import *
 from .s4kt import *
 from .sk import *
+
+# Global variables
+pp_output_path = '{trajectory.filename}.pp.{symbol}.{tag}'
+pp_trajectory_format = None
+
