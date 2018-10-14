@@ -34,6 +34,16 @@ def filter_selected_ids(s, ids):
 def deviation(x, y):
     return (numpy.sum((x-y)**2)/len(x))**0.5
 
+class Test(unittest.TestCase):
+
+    def test_name(self):
+        default = postprocessing.core.pp_output_path
+        postprocessing.core.pp_output_path = '{trajectory.filename}.pp.{short_name}.{tag_description}'
+        corr = postprocessing.SelfIntermediateScattering('data/trajectory.xyz')
+        self.assertEqual(corr._output_file, 'data/trajectory.xyz.pp.F_s(k,t).the_whole_system')
+        self.assertEqual(corr.grid_name, ['k', 't'])
+        postprocessing.core.pp_output_path = default
+        
 class TestRealSpace(unittest.TestCase):
 
     def setUp(self):
@@ -119,6 +129,24 @@ class TestFourierSpace(unittest.TestCase):
         ref_value = numpy.array([0.075820086512828039, 0.065300213310725302, 0.082485082309989494])
         self.assertLess(deviation(p.value, ref_value), 0.04)
 
+    def test_sk_opti(self):
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        t = trajectory.TrajectoryXYZ(f)
+        p = postprocessing.StructureFactorOptimized(t, kmin=-1, kmax=4, ksamples=3, dk=0.2)
+        p.compute()
+        ref_value = numpy.array([0.075820086512828039, 0.065300213310725302, 0.082485082309989494])
+        self.assertLess(deviation(p.value, ref_value), 0.05)
+
+    def test_sk_update(self):
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        t = trajectory.TrajectoryXYZ(f)
+        p = postprocessing.StructureFactor(t, kmin=-1, kmax=4, ksamples=3, dk=0.2)
+        p.do(update=False)
+        p = postprocessing.StructureFactor(t, kmin=-1, kmax=4, ksamples=3, dk=0.2)
+        p.do(update=True)
+        ref_value = numpy.array([0.075820086512828039, 0.065300213310725302, 0.082485082309989494])
+        self.assertLess(deviation(p.value, ref_value), 0.04)
+
     def test_sk_fixgrid(self):
         # TODO: this test fails with python 3 (small deviations)
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
@@ -146,8 +174,6 @@ class TestFourierSpace(unittest.TestCase):
             t.add_callback(deformation, 1e-3)
             p = postprocessing.StructureFactor(t, list(range(1,10)))
             p.compute()
-        # for x, y, z, w in zip(p.grid, p1.grid, p.value, p1.value):
-        #     print x, y, z, w
 
     def test_sk_partial(self):
         # TODO: this test fails with python 3 (small deviations)
@@ -204,9 +230,18 @@ class TestFourierSpace(unittest.TestCase):
             p.compute()
 
     def test_fkt_partial(self):
+        # TODO: add check
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         t = trajectory.TrajectoryXYZ(f)
         p = postprocessing.IntermediateScattering(t, [4, 7.3, 10], nk=40)
+        p.add_filter(filter_species, 'A')
+        p.compute()
+
+    def test_fskt_partial(self):
+        # TODO: add check
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        t = trajectory.TrajectoryXYZ(f)
+        p = postprocessing.SelfIntermediateScattering(t, [4, 7.3, 10], nk=40, norigins=0.2)
         p.add_filter(filter_species, 'A')
         p.compute()
 

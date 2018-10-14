@@ -3,12 +3,13 @@
 
 """Radial distribution function."""
 
-import numpy
 import math
+
+import numpy
 
 from .helpers import linear_grid
 from .correlation import Correlation
-from .helpers import adjust_skip
+from .progress import progress
 
 __all__ = ['RadialDistributionFunction']
 
@@ -19,6 +20,7 @@ def gr_kernel(x, y, L):
     r = r - numpy.rint(r/L) * L
     return numpy.sqrt(numpy.sum(r**2, axis=1))
 
+
 def gr_kernel_square(x, y, L):
     """Return square distances."""
     # r is an array of array distances
@@ -26,8 +28,10 @@ def gr_kernel_square(x, y, L):
     r = r - numpy.rint(r/L) * L
     return numpy.sum(r**2, axis=1)
 
+
 def pairs_newton_hist(f, x, y, L, bins):
-    """Apply function f to all pairs in x[i] and y[j] and update the
+    """
+    Apply function f to all pairs in x[i] and y[j] and update the
     |hist| histogram using the |bins| bin edges.
     """
     hist, bins = numpy.histogram([], bins)
@@ -43,8 +47,10 @@ def pairs_newton_hist(f, x, y, L, bins):
         hist += hist_tmp
     return hist
 
+
 def pairs_hist(f, x, y, L, bins):
-    """Apply function f to all pairs in x[i] and y[j] and update the
+    """
+    Apply function f to all pairs in x[i] and y[j] and update the
     |hist| histogram using the |bins| bin edges.
     """
     hist, bins = numpy.histogram([], bins)
@@ -56,7 +62,6 @@ def pairs_hist(f, x, y, L, bins):
 
 
 class RadialDistributionFunction(Correlation):
-
     """
     Radial distribution function.
 
@@ -73,11 +78,13 @@ class RadialDistributionFunction(Correlation):
     """
 
     nbodies = 2
+    symbol = 'gr'
+    short_name = 'g(r)'
+    long_name = 'radial distribution function'
+    phasespace = 'pos'
 
-    def __init__(self, trajectory, rgrid=None, norigins=-1, dr=0.04):
-        Correlation.__init__(self, trajectory, rgrid, 'g(r)', 'gr',
-                             'radial distribution function', 'pos')
-        self.skip = adjust_skip(trajectory, norigins)
+    def __init__(self, trajectory, rgrid=None, norigins=None, dr=0.04):
+        Correlation.__init__(self, trajectory, rgrid, norigins=norigins)
         self.side = self.trajectory.read(0).cell.side
         if rgrid is not None:
             # Reconstruct bounds of grid for numpy histogram
@@ -86,7 +93,11 @@ class RadialDistributionFunction(Correlation):
                 self.grid.append(rgrid[i] - (rgrid[1] - rgrid[0]) / 2)
             self.grid.append(rgrid[-1] + (rgrid[1] - rgrid[0]) / 2)
         else:
-            self.grid = linear_grid(0.0, self.side[0] / 2.0, dr)
+            if len(self.side.shape) > 0:
+                L = self.side[0]
+            else:
+                L = self.side
+            self.grid = linear_grid(0.0, L / 2.0, dr)
 
     def _compute(self):
         ncfg = len(self.trajectory)
@@ -98,7 +109,8 @@ class RadialDistributionFunction(Correlation):
 
         gr_all = []
         _, r = numpy.histogram([], bins=self.grid)
-        for i in range(0, ncfg, self.skip):
+        origins = range(0, ncfg, self.skip)
+        for i in progress(origins):
             self.side = self.trajectory.read(i).cell.side
             if len(self._pos_0[i]) == 0 or len(self._pos_1[i]) == 0:
                 continue

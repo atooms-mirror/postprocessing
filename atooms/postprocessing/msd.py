@@ -3,31 +3,22 @@
 
 """Mean square displacement."""
 
-import numpy
 import logging
+import numpy
 
 from .helpers import linear_grid
 from .correlation import Correlation, gcf_offset
-from .helpers import adjust_skip, setup_t_grid
+from .helpers import setup_t_grid
 
 __all__ = ['MeanSquareDisplacement']
 
-log = logging.getLogger(__name__)
-
-
-def partition(inp, nbl):
-    nel = len(inp) // nbl
-    a = []
-    for i in range(nbl):
-        a.append(slice(i * nel, (i+1) * nel))
-    return a
+_log = logging.getLogger(__name__)
 
 
 class MeanSquareDisplacement(Correlation):
-
     """
     Mean square displacement.
-    
+
     If the time grid `tgrid` is None, the latter is redefined in a way
     controlled by the variable `rmax`. If `rmax` is negative
     (default), the time grid is linear between 0 and half of the
@@ -44,80 +35,58 @@ class MeanSquareDisplacement(Correlation):
     and to determine the diffusion time
     """
 
-    def __init__(self, trajectory, tgrid=None, rmax=-1.0, norigins=50,
+    symbol = 'msd'
+    short_name = 'dr^2(t)'
+    long_name = 'mean square displacement'
+    phasespace = 'pos-unf'
+
+    def __init__(self, trajectory, tgrid=None, rmax=-1.0, norigins=None,
                  tsamples=30, sigma=1.0):
-        # TODO: optimize targeting msd takes a lot of time especially on large systems because of pbc unfolding
-        # TODO: memory is leaking when sourcing and analyzing many files!
         self.rmax = rmax
         self.sigma = sigma
-        self._nblocks = 1  # currently not used
-        self._var = None  # currently not used
-
-        Correlation.__init__(self, trajectory, tgrid, 'dr^2(t)', 'msd',
-                             'mean square displacement', ['pos-unf'])
-
-        # TODO: subtrajectories should behave well when sampling is logarithmic
-        # We redefine trajectory here to avoid unfolding the file if this is not necessary
-        # e.g. because we are just sourcing the correlation object from file
-        if self.grid is None:
-            if rmax > 0.0:
-                self.grid = linear_grid(0.0, min(trajectory.total_time * 1./(1+self._nblocks),
-                                                 trajectory.time_when_msd_is(rmax**2)),
-                                        tsamples)
-            else:
-                self.grid = linear_grid(0.0, trajectory.total_time * 1./(1+self._nblocks), tsamples)
-
-        self._discrete_tgrid = setup_t_grid(trajectory, self.grid)
-        self.skip = adjust_skip(trajectory, norigins)
+        self.tsamples = tsamples
+        Correlation.__init__(self, trajectory, tgrid, norigins=norigins)
 
     def _compute(self):
-        # We could compute the individual directions (x,y,z) and
-        # average them, which will save time and space and give an
-        # estimate of the incertainty.
-        def f_all(x, y):
-            return numpy.sum((x-y)**2) / float(x.shape[0])
-        def f(x, y):
+        # We postpone time grid definition to compute to avoid
+        # unfolding the trajectory twice when targeting the rmsd
+
+        def msd(x, y):
             return numpy.sum((x-y)**2) / float(x.shape[0])
 
-        # Go for it. Redefine the time grid.
-        self.grid, self.value = gcf_offset(f, self._discrete_tgrid, self.skip,
+        if self.grid is None:
+            t_max = self.trajectory.total_time
+            if self.rmax > 0.0:
+                msd_total = msd(self._pos_unf[-1], self._pos_unf[0])
+                frac = self.rmax**2 / msd_total
+                t_target = frac * t_max
+                self.grid = linear_grid(0.0, min(t_max, t_target), self.tsamples)
+            else:
+                self.grid = linear_grid(0.0, t_max, self.tsamples)
+        self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid)
+
+
+        # Note that the grid is redefined
+        self.grid, self.value = gcf_offset(msd, self._discrete_tgrid, self.skip,
                                            self.trajectory.steps, self._pos_unf)
-
-        # Collect results for subtrajectories (nblocks)
-        v = []
-        for sl in partition(self.trajectory, self._nblocks):
-            grid, value = gcf_offset(f, self._discrete_tgrid, self.skip,
-                                     self.trajectory.steps[sl], self._pos_unf[sl])
-            v.append(value)
-
-        # Compute variance to provide diffusion coefficient fit with weights
-        # Currently not used
-        self._var = numpy.std(v, axis=0) #[x if x>0 else 1e-100 for x in numpy.std(v, axis=0)]
-
-        # Update real time grid
+        # Update grid to real time
         self.grid = [ti * self.trajectory.timestep for ti in self.grid]
 
     def analyze(self):
         # Get the time when MSD equals sigma**2
         try:
             from .helpers import feqc
-            self.results['diffusive time tau_D'] = feqc(self.grid, self.value, self.sigma**2)[0]
-        except:
-            self.results['diffusive time tau_D'] = None
+            self.analysis['diffusive time tau_D'] = feqc(self.grid, self.value, self.sigma**2)[0]
+        except ValueError:
+            self.analysis['diffusive time tau_D'] = None
 
         where = numpy.array(self.value) > self.sigma**2
-
-        if list(where).count(True) < 2:
-            log.warn('could not fit MSD: not enough data above sigma')
+        if sum(where) < 2:
+            _log.warn('could not fit MSD: not enough data above sigma')
             return
 
-        try:
-            from .helpers import linear_fit
-        except ImportError:
-            log.warn('could not fit MSD: missing fitting modules')
-            return
-
+        from .helpers import linear_fit
         diffusion = linear_fit(numpy.array(self.grid)[where],
                                numpy.array(self.value)[where])
         ndim = self.trajectory.read(0).number_of_dimensions
-        self.results['diffusion coefficient D'] = diffusion[0] / (2*ndim)
+        self.analysis['diffusion coefficient D'] = diffusion[0] / (2*ndim)

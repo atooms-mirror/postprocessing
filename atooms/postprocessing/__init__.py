@@ -1,9 +1,10 @@
 # This file is part of atooms
-# Copyright 2010-2014, Daniele Coslovich
+# Copyright 2010-2018, Daniele Coslovich
 
 import logging
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
+from .correlation import *
 from .partial import *
 
 # Real space correlation functions
@@ -19,3 +20,5 @@ from .fkt import *
 from .ik import *
 from .s4kt import *
 from .sk import *
+
+
