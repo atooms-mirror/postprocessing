@@ -1,14 +1,14 @@
 Post processing
 ==================
-Python post processing tools to compute static and dynamic correlation functions from particle simulations. Supported correlation functions:
-- real space: radial distribution function, mean square displacement, time-dependent overlap, ...
+Python post processing tools to compute static and dynamic correlation functions from particle simulations:
+- Real space: radial distribution function, mean square displacement, time-dependent overlap, ...
 - Fourier space: structure factor, intermediate scattering function, dynamic susceptibility, ...
 
 This package relies on [atooms](https://gitlab.info-ufr.univ-montp2.fr/atooms/postprocessing.git) to read trajectory files.
 
 Quick start
 ------------
-Installation is easy (see below for more details)
+Installation is easy (see [Installation] for more details)
 ```
 pip install atooms-pp
 ```
@@ -27,7 +27,7 @@ In the example above, we used 20% of the available
 time frames via the flag `--norigins`. Without it, atooms-pp applies an heuristics to determine the number of time frames required to achieve a reasonable data quality.
 
 The results of the calculation are stored in `data/trajectory.xyz.pp.sk`. If
-multiple particle species are present, say A and B, the program will create additional files for
+the system is a mixture of different types of particles, say A and B, the program will create additional files for
 partial correlations, named `trajectory.xyz.pp.sk.A-A`, `trajectory.xyz.pp.sk.B-B` and `trajectory.xyz.pp.sk.A-B`.
 
 The same calculation can be done from python:
@@ -41,7 +41,7 @@ with Trajectory('data/trajectory.xyz') as t:
      p.do()
 ```
 
-See the tutorials under `docs/` for more details.
+Checkout the [tutorial](https://www.coulomb.univ-montp2.fr/perso/daniele.coslovich/pp_notebook/) and [notebook](https://gitlab.info-ufr.univ-montp2.fr/atooms/postprocessing/raw/develop/docs/tutorial.ipynb) for more details.
 
 Requirements
 ------------
@@ -63,4 +63,4 @@ git clone https://gitlab.info-ufr.univ-montp2.fr/atooms/postprocessing.git
 cd postprocessing
 make user
 ```
-The commands above will install `pp.py` under `~/.local/bin`. Make sure this folder is in your `$PATH`.
+The commands above will install `pp.py` under `~/.local/bin`. Make sure this folder is in your `$PATH`. To install system-wide, `sudo make install`.
