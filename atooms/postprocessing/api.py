@@ -176,8 +176,9 @@ def fskt(input_file, time_target=-1.0, time_target_fraction=0.75,
             Partial(postprocessing.SelfIntermediateScattering, ids,
                     th, k_grid, t_grid, nk, dk=dk, norigins=global_args['norigins']).do()
 
-def chi4qs(input_file, tsamples=60, a=0.3, time_target=-1.0, fmt=None,
-           species_layout=None, total=False, *input_files, **global_args):
+def chi4qs(input_file, tsamples=60, a=0.3, time_target=-1.0,
+           time_target_fraction=0.75, fmt=None, species_layout=None,
+           total=False, *input_files, **global_args):
     """Dynamic susceptibility of self overlap"""
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
 
@@ -194,7 +195,6 @@ def chi4qs(input_file, tsamples=60, a=0.3, time_target=-1.0, fmt=None,
             t_grid = [0.0] + func(th.timestep, time_target_fraction*th.total_time, tsamples)
         else:
             t_grid = None
-        t_grid = [0.0] + func(th.timestep, time_target, tsamples)
         if total:
             backend(th, t_grid, a=a, norigins=global_args['norigins']).do()
         ids = distinct_species(th[0].particle)
