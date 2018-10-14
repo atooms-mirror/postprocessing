@@ -53,8 +53,7 @@ def gr(input_file, dr=0.04, grandcanonical=False, fmt=None, species_layout=None,
             Partial(postprocessing.RadialDistributionFunction, ids, th, dr=dr, norigins=global_args['norigins']).do()
 
 def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30, species_layout=None,
-       grandcanonical=False, fmt=None,
-       trajectory_field=None, field=None, *input_files, **global_args):
+       fmt=None, trajectory_field=None, field=None, *input_files, **global_args):
     """Structure factor."""
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
     if global_args['fast']:
@@ -67,17 +66,17 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30, species_lay
         backend(th, None, norigins=global_args['norigins'],
                 trajectory_field=trajectory_field,
                 field=field, kmin=kmin,
-                kmax=kmax, nk=nk,
+                kmax=kmax, nk=nk, dk=dk,
                 ksamples=ksamples).do()
         if len(ids) > 1 and trajectory_field is None:
             Partial(backend, ids, th, None,
                     norigins=global_args['norigins'], kmin=kmin,
-                    kmax=kmax, nk=nk,
+                    kmax=kmax, nk=nk, dk=dk,
                     ksamples=ksamples).do()
 
 def ik(input_file, trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0, kmax=15.0,
-       ksamples=30, verbose=False, grandcanonical=False,
-       fmt=None, species_layout=None, *input_files, **global_args):
+       ksamples=30, fmt=None, species_layout=None,
+       *input_files, **global_args):
     """Spectral density,"""
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
@@ -85,11 +84,11 @@ def ik(input_file, trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0, kmax=15.0,
             trajectory_radius = input_file
             postprocessing.SpectralDensity(th, trajectory_radius,
                                            kgrid=None, norigins=global_args['norigins'],
-                                           kmin=kmin, kmax=kmax, nk=nk,
+                                           kmin=kmin, kmax=kmax, nk=nk, dk=dk,
                                            ksamples=ksamples).do()
 
 def msd(input_file, time_target=-1.0, time_target_fraction=-1.0,
-        tsamples=30, norigins=50, sigma=1.0, func=linear_grid, rmsd_target=-1.0,
+        tsamples=30, sigma=1.0, func=linear_grid, rmsd_target=-1.0,
         fmt=None, species_layout=None, *input_files, **global_args):
     """Mean square displacement."""
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
@@ -133,9 +132,10 @@ def fkt(input_file, time_target=1e9, tsamples=60, kmin=7.0, kmax=7.0, ksamples=1
             Partial(postprocessing.IntermediateScattering, ids, th, k_grid, t_grid,
                     nk=nk, dk=dk).do()
 
-def fskt(input_file, time_target=1e9, tsamples=60, kmin=7.0, kmax=8.0, ksamples=1,
-         dk=0.1, nk=8, tag_by_name=False, func=None,
-         fmt=None, species_layout=None, total=False, *input_files, **global_args):
+def fskt(input_file, time_target=1e9, tsamples=60, kmin=7.0, kmax=8.0,
+         ksamples=1, dk=0.1, nk=8, func=None, fmt=None,
+         species_layout=None, total=False, *input_files,
+         **global_args):
     """Self intermediate scattering function."""
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
@@ -153,7 +153,8 @@ def fskt(input_file, time_target=1e9, tsamples=60, kmin=7.0, kmax=8.0, ksamples=
             Partial(postprocessing.SelfIntermediateScattering, ids,
                     th, k_grid, t_grid, nk, dk=dk, norigins=global_args['norigins']).do()
 
-def chi4qs(input_file, tsamples=60, a=0.3, time_target=-1.0, fmt=None, species_layout=None, total=False, *input_files, **global_args):
+def chi4qs(input_file, tsamples=60, a=0.3, time_target=-1.0, fmt=None,
+           species_layout=None, total=False, *input_files, **global_args):
     """Dynamic susceptibility of self overlap."""
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
 
@@ -161,7 +162,7 @@ def chi4qs(input_file, tsamples=60, a=0.3, time_target=-1.0, fmt=None, species_l
         backend = postprocessing.Chi4SelfOverlapOpti
     else:
         backend = postprocessing.Chi4SelfOverlap
-    
+
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         func = logx_grid
         if time_target > 0:

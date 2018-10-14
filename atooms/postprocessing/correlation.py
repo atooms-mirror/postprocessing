@@ -196,6 +196,16 @@ class Correlation(object):
         self._cbk_args = []
         self._cbk_kwargs = []
 
+        # Lists for one body correlations
+        self._pos = []
+        self._vel = []
+        self._pos_unf = []
+
+        # Lists for two-body correlations
+        self._pos_0, self._pos_1 = [], []
+        self._vel_0, self._vel_1 = [], []
+        self._pos_unf_0, self._pos_unf_1 = [], []
+
     def __str__(self):
         return '{} at <{}>'.format(self.long_name, id(self))
 
@@ -234,8 +244,7 @@ class Correlation(object):
             self._setup_arrays_twobody()
 
     def _setup_arrays_onebody(self):
-        self._pos = []
-        self._vel = []
+        """Setup list of numpy arrays for one-body correlations."""
         if 'pos' in self.phasespace or 'vel' in self.phasespace:
             for s in progress(self.trajectory):
                 # Apply filter if there is one
@@ -247,7 +256,6 @@ class Correlation(object):
                     self._vel.append(s.dump('vel'))
 
         # Dump unfolded positions if requested
-        self._pos_unf = []
         if 'pos-unf' in self.phasespace:
             for s in progress(Unfolded(self.trajectory, fixed_cm=True)):
                 # Apply filter if there is one
@@ -255,23 +263,14 @@ class Correlation(object):
                     s = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
                 self._pos_unf.append(s.dump('pos'))
 
-        # If trajectory is grandcanonical, we make sure all samples
-        # have non-zero particles and raise an exception.
-        for data in [self._pos]:
-            if len(data) > 0:
-                if 0 in [len(p) for p in self._pos]:
-                    pass
-                    #raise ValueError('cannot handle null samples in GC trajectory')
-
     def _setup_arrays_twobody(self):
+        """Setup list of numpy arrays for two-body correlations."""
         if len(self._cbk) <= 1:
             self._setup_arrays_onebody()
             self._pos_0 = self._pos
             self._pos_1 = self._pos
             return
 
-        self._pos_0, self._pos_1 = [], []
-        self._vel_0, self._vel_1 = [], []
         if 'pos' in self.phasespace or 'vel' in self.phasespace:
             for s in progress(self.trajectory):
                 s0 = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
@@ -284,20 +283,12 @@ class Correlation(object):
                     self._vel_1.append(s1.dump('vel'))
 
         # Dump unfolded positions if requested
-        self._pos_unf_0, self._pos_unf_1 = [], []
         if 'pos-unf' in self.phasespace:
             for s in progress(Unfolded(self.trajectory)):
                 s0 = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
                 s1 = self._cbk[1](s, *self._cbk_args[1], **self._cbk_kwargs[1])
                 self._pos_unf_0.append(s0.dump('pos'))
                 self._pos_unf_1.append(s1.dump('pos'))
-
-        # If trajectory is grandcanonical, we make sure all samples
-        # have non-zero particles and raise an exception.
-        for data in [self._pos_0, self._pos_1]:
-            if 0 in [len(p) for p in data]:
-                #raise ValueError('cannot handle null samples in GC trajectory')
-                pass
 
     def compute(self):
         """
@@ -321,7 +312,8 @@ class Correlation(object):
         t[1].stop()
 
         _log.info('output file %s', self._output_file)
-        _log.info('done %s for %s in %.1f sec [setup:%.0f%%, compute: %.0f%%]', self.long_name,
+        _log.info('done %s for %s in %.1f sec [setup:%.0f%%, compute: %.0f%%]',
+                  self.long_name,
                   self.tag_description, t[0].wall_time + t[1].wall_time,
                   t[0].wall_time / (t[0].wall_time + t[1].wall_time) * 100,
                   t[1].wall_time / (t[0].wall_time + t[1].wall_time) * 100)
@@ -334,7 +326,10 @@ class Correlation(object):
         pass
 
     def analyze(self):
-        """Subclasses may implement this and store the results in the self.analysis dictonary"""
+        """
+        Subclasses may implement this and store the results in the
+        self.analysis dictonary
+        """
         pass
 
     @property
