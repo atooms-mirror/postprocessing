@@ -16,8 +16,8 @@ class NonGaussianParameter(Correlation):
 
     """Non-Gaussian parameter."""
 
-    symbol = 'alpha_2(t)'
-    short_name = 'alpha2'
+    symbol = 'alpha2'
+    short_name = 'alpha_2(t)'
     long_name = 'non-Gaussian parameter'
     phasespace = ['pos-unf']
 

@@ -62,7 +62,7 @@ def gcf(f, grid, skip, t, x):
     cnt = defaultdict(int)
     for i in grid:
         # Note: len(x) gives x.shape[0]
-        for i0 in range(0, len(x)-i-1, skip):
+        for i0 in progress(range(0, len(x)-i-1, skip)):
             # Get the actual time difference
             dt = t[i0+i] - t[i0]
             cf[dt] += f(x[i0+i], x[i0])

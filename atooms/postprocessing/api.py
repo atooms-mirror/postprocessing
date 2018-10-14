@@ -121,10 +121,12 @@ def vacf(input_file, time_target=1.0, tsamples=30, func=linear_grid, fmt=None,
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         t_grid = [0.0] + func(th.timestep, time_target, tsamples)
-        postprocessing.VelocityAutocorrelation(th, t_grid).do()
+        postprocessing.VelocityAutocorrelation(th, t_grid,
+                                               norigins=global_args['norigins']).do()
         ids = distinct_species(th[-1].particle)
         if len(ids) > 1:
-            Partial(postprocessing.VelocityAutocorrelation, ids, th, t_grid).do()
+            Partial(postprocessing.VelocityAutocorrelation, ids, th,
+                    t_grid, norigins=global_args['norigins']).do()
 
 def fkt(input_file, time_target=1e9, tsamples=60, kmin=7.0, kmax=7.0, ksamples=1,
         dk=0.1, nk=100, tag_by_name=False, func=logx_grid, fmt=None,
@@ -182,3 +184,14 @@ def chi4qs(input_file, tsamples=60, a=0.3, time_target=-1.0, fmt=None,
         ids = distinct_species(th[0].particle)
         if not total and len(ids) > 1:
             Partial(backend, ids, th, t_grid, a=a, norigins=global_args['norigins']).do()
+
+def alpha2(input_file, time_target=1e9, tsamples=60, func=logx_grid, fmt=None,
+         species_layout=None, *input_files, **global_args):
+    """Non-Gaussian parameter"""
+    global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
+    for th in _get_trajectories([input_file] + list(input_files), global_args):
+        t_grid = [0.0] + func(th.timestep, time_target, tsamples)
+        postprocessing.NonGaussianParameter(th, t_grid, norigins=global_args['norigins']).do()
+        ids = distinct_species(th[-1].particle)
+        if len(ids) > 1:
+            Partial(postprocessing.NonGaussianParameter, ids, th, t_grid, norigins=global_args['norigins']).do()
