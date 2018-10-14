@@ -59,8 +59,9 @@ def gr(input_file, dr=0.04, grandcanonical=False, fmt=None, species_layout=None,
         if len(ids) > 1:
             Partial(postprocessing.RadialDistributionFunction, ids, th, dr=dr, norigins=global_args['norigins']).do()
 
-def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30, species_layout=None,
-       fmt=None, trajectory_field=None, field=None, *input_files, **global_args):
+def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
+       species_layout=None, fmt=None, trajectory_field=None,
+       field=None, *input_files, **global_args):
     """Structure factor"""
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
     if global_args['fast']:
@@ -94,7 +95,7 @@ def ik(input_file, trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0, kmax=15.0,
                                            kmin=kmin, kmax=kmax, nk=nk, dk=dk,
                                            ksamples=ksamples).do()
 
-def msd(input_file, time_target=-1.0, time_target_fraction=-1.0,
+def msd(input_file, time_target=-1.0, time_target_fraction=0.75,
         tsamples=30, sigma=1.0, func=linear_grid, rmsd_target=-1.0,
         fmt=None, species_layout=None, *input_files, **global_args):
     """Mean square displacement"""
@@ -115,12 +116,18 @@ def msd(input_file, time_target=-1.0, time_target_fraction=-1.0,
             Partial(postprocessing.MeanSquareDisplacement, ids,
                     th, tgrid=t_grid, norigins=global_args['norigins'], sigma=sigma, rmax=rmsd_target).do()
 
-def vacf(input_file, time_target=1.0, tsamples=30, func=linear_grid, fmt=None,
-         species_layout=None, *input_files, **global_args):
+def vacf(input_file, time_target=-1.0, time_target_fraction=0.10,
+         tsamples=30, func=linear_grid, fmt=None, species_layout=None,
+         *input_files, **global_args):
     """Velocity autocorrelation function"""
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
-        t_grid = [0.0] + func(th.timestep, time_target, tsamples)
+        if time_target > 0:
+            t_grid = [0.0] + func(th.timestep, min(th.total_time, time_target), tsamples)
+        elif time_target_fraction > 0:
+            t_grid = [0.0] + func(th.timestep, time_target_fraction*th.total_time, tsamples)
+        else:
+            t_grid = None
         postprocessing.VelocityAutocorrelation(th, t_grid,
                                                norigins=global_args['norigins']).do()
         ids = distinct_species(th[-1].particle)
@@ -128,31 +135,38 @@ def vacf(input_file, time_target=1.0, tsamples=30, func=linear_grid, fmt=None,
             Partial(postprocessing.VelocityAutocorrelation, ids, th,
                     t_grid, norigins=global_args['norigins']).do()
 
-def fkt(input_file, time_target=1e9, tsamples=60, kmin=7.0, kmax=7.0, ksamples=1,
-        dk=0.1, nk=100, tag_by_name=False, func=logx_grid, fmt=None,
+def fkt(input_file, time_target=-1.0, time_target_fraction=0.75,
+        tsamples=60, kmin=7.0, kmax=7.0, ksamples=1, dk=0.1, nk=100,
+        tag_by_name=False, func=logx_grid, fmt=None,
         species_layout=None, *input_files, **global_args):
     """Total intermediate scattering function"""
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
-        t_grid = [0.0] + func(th.timestep, time_target, tsamples)
+        if time_target > 0:
+            t_grid = [0.0] + func(th.timestep, time_target, tsamples)
+        elif time_target_fraction > 0:
+            t_grid = [0.0] + func(th.timestep, time_target_fraction*th.total_time, tsamples)
+        else:
+            t_grid = None
         k_grid = linear_grid(kmin, kmax, ksamples)
         ids = distinct_species(th[0].particle)
         if len(ids) > 1:
             Partial(postprocessing.IntermediateScattering, ids, th, k_grid, t_grid,
                     nk=nk, dk=dk).do()
 
-def fskt(input_file, time_target=1e9, tsamples=60, kmin=7.0, kmax=8.0,
-         ksamples=1, dk=0.1, nk=8, func=None, fmt=None,
-         species_layout=None, total=False, *input_files,
-         **global_args):
+def fskt(input_file, time_target=-1.0, time_target_fraction=0.75,
+         tsamples=60, kmin=7.0, kmax=8.0, ksamples=1, dk=0.1, nk=8,
+         func=logx_grid, fmt=None, species_layout=None, total=False,
+         *input_files, **global_args):
     """Self intermediate scattering function"""
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
-        if func is None:
-            func = logx_grid
-            t_grid = [0.0] + func(th.timestep, min(th.times[-1], time_target), tsamples)
+        if time_target > 0:
+            t_grid = [0.0] + func(th.timestep, time_target, tsamples)
+        elif time_target_fraction > 0:
+            t_grid = [0.0] + func(th.timestep, time_target_fraction*th.total_time, tsamples)
         else:
-            t_grid = [th.timestep*i for i in th.steps]
+            t_grid = None
         k_grid = linear_grid(kmin, kmax, ksamples)
         if total:
             postprocessing.SelfIntermediateScattering(th, k_grid, t_grid,
@@ -175,9 +189,11 @@ def chi4qs(input_file, tsamples=60, a=0.3, time_target=-1.0, fmt=None,
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         func = logx_grid
         if time_target > 0:
-            time_target = min(th.total_time, time_target)
+            t_grid = [0.0] + func(th.timestep, min(th.total_time, time_target), tsamples)
+        elif time_target_fraction > 0:
+            t_grid = [0.0] + func(th.timestep, time_target_fraction*th.total_time, tsamples)
         else:
-            time_target = th.total_time * 0.75
+            t_grid = None
         t_grid = [0.0] + func(th.timestep, time_target, tsamples)
         if total:
             backend(th, t_grid, a=a, norigins=global_args['norigins']).do()
@@ -185,12 +201,18 @@ def chi4qs(input_file, tsamples=60, a=0.3, time_target=-1.0, fmt=None,
         if not total and len(ids) > 1:
             Partial(backend, ids, th, t_grid, a=a, norigins=global_args['norigins']).do()
 
-def alpha2(input_file, time_target=1e9, tsamples=60, func=logx_grid, fmt=None,
+def alpha2(input_file, time_target=-1.0, time_target_fraction=0.75,
+           tsamples=60, func=logx_grid, fmt=None,
          species_layout=None, *input_files, **global_args):
     """Non-Gaussian parameter"""
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
-        t_grid = [0.0] + func(th.timestep, time_target, tsamples)
+        if time_target > 0:
+            t_grid = [0.0] + func(th.timestep, time_target, tsamples)
+        elif time_target_fraction > 0:
+            t_grid = [0.0] + func(th.timestep, time_target_fraction*th.total_time, tsamples)
+        else:
+            t_grid = None
         postprocessing.NonGaussianParameter(th, t_grid, norigins=global_args['norigins']).do()
         ids = distinct_species(th[-1].particle)
         if len(ids) > 1:
