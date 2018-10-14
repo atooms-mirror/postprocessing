@@ -37,12 +37,12 @@ def deviation(x, y):
 class Test(unittest.TestCase):
 
     def test_name(self):
-        default = postprocessing.pp_output_path
-        postprocessing.correlation.pp_output_path = '{trajectory.filename}.pp.{short_name}.{tag_description}'
+        default = postprocessing.core.pp_output_path
+        postprocessing.core.pp_output_path = '{trajectory.filename}.pp.{short_name}.{tag_description}'
         corr = postprocessing.SelfIntermediateScattering('data/trajectory.xyz')
         self.assertEqual(corr._output_file, 'data/trajectory.xyz.pp.F_s(k,t).the_whole_system')
         self.assertEqual(corr.grid_name, ['k', 't'])
-        postprocessing.pp_output_path = default
+        postprocessing.core.pp_output_path = default
         
 class TestRealSpace(unittest.TestCase):
 

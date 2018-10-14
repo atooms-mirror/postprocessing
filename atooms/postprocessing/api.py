@@ -43,7 +43,7 @@ def _compat(args, fmt, species_layout=None):
 
 def gr(input_file, dr=0.04, grandcanonical=False, fmt=None, species_layout=None,
        *input_files, **global_args):
-    """Radial distribution function."""
+    """Radial distribution function"""
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         th._grandcanonical = grandcanonical
@@ -54,7 +54,7 @@ def gr(input_file, dr=0.04, grandcanonical=False, fmt=None, species_layout=None,
 
 def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30, species_layout=None,
        fmt=None, trajectory_field=None, field=None, *input_files, **global_args):
-    """Structure factor."""
+    """Structure factor"""
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
     if global_args['fast']:
         backend = postprocessing.StructureFactorOpti
@@ -77,7 +77,7 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30, species_lay
 def ik(input_file, trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0, kmax=15.0,
        ksamples=30, fmt=None, species_layout=None,
        *input_files, **global_args):
-    """Spectral density,"""
+    """Spectral density"""
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         if trajectory_radius is None:
@@ -90,7 +90,7 @@ def ik(input_file, trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0, kmax=15.0,
 def msd(input_file, time_target=-1.0, time_target_fraction=-1.0,
         tsamples=30, sigma=1.0, func=linear_grid, rmsd_target=-1.0,
         fmt=None, species_layout=None, *input_files, **global_args):
-    """Mean square displacement."""
+    """Mean square displacement"""
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         dt = th.timestep
@@ -110,7 +110,7 @@ def msd(input_file, time_target=-1.0, time_target_fraction=-1.0,
 
 def vacf(input_file, time_target=1.0, tsamples=30, func=linear_grid, fmt=None,
          species_layout=None, *input_files, **global_args):
-    """Velocity autocorrelation function."""
+    """Velocity autocorrelation function"""
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         t_grid = [0.0] + func(th.timestep, time_target, tsamples)
@@ -122,7 +122,7 @@ def vacf(input_file, time_target=1.0, tsamples=30, func=linear_grid, fmt=None,
 def fkt(input_file, time_target=1e9, tsamples=60, kmin=7.0, kmax=7.0, ksamples=1,
         dk=0.1, nk=100, tag_by_name=False, func=logx_grid, fmt=None,
         species_layout=None, *input_files, **global_args):
-    """Total intermediate scattering function."""
+    """Total intermediate scattering function"""
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         t_grid = [0.0] + func(th.timestep, time_target, tsamples)
@@ -136,7 +136,7 @@ def fskt(input_file, time_target=1e9, tsamples=60, kmin=7.0, kmax=8.0,
          ksamples=1, dk=0.1, nk=8, func=None, fmt=None,
          species_layout=None, total=False, *input_files,
          **global_args):
-    """Self intermediate scattering function."""
+    """Self intermediate scattering function"""
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         if func is None:
@@ -155,7 +155,7 @@ def fskt(input_file, time_target=1e9, tsamples=60, kmin=7.0, kmax=8.0,
 
 def chi4qs(input_file, tsamples=60, a=0.3, time_target=-1.0, fmt=None,
            species_layout=None, total=False, *input_files, **global_args):
-    """Dynamic susceptibility of self overlap."""
+    """Dynamic susceptibility of self overlap"""
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
 
     if global_args['fast']:

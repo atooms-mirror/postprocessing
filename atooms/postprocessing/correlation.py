@@ -16,16 +16,15 @@ try:
 except ImportError:
     from .helpers import _dump
 
+from . import core
 from .helpers import adjust_skip
-from .core import __version__
 from .progress import progress
 
-__all__ = ['acf', 'gcf', 'gcf_offset', 'Correlation',
-           'pp_output_path', 'pp_trajectory_format']
+__all__ = ['acf', 'gcf', 'gcf_offset', 'Correlation']
 
 _log = logging.getLogger(__name__)
-pp_output_path = '{trajectory.filename}.pp.{symbol}.{tag}'
-pp_trajectory_format = None
+#pp_output_path = '{trajectory.filename}.pp.{symbol}.{tag}'
+#pp_trajectory_format = None
 
 
 def acf(grid, skip, t, x):
@@ -179,7 +178,7 @@ class Correlation(object):
     def __init__(self, trj, grid, output_path=None, norigins=None):
         # Accept a trajectory-like instance or a path to a trajectory
         if isinstance(trj, str):
-            self.trajectory = Trajectory(trj, mode='r', fmt=pp_trajectory_format)
+            self.trajectory = Trajectory(trj, mode='r', fmt=core.pp_trajectory_format)
         else:
             self.trajectory = trj
         self.grid = grid
@@ -188,7 +187,7 @@ class Correlation(object):
         self.comments = None  # can be modified by user at run time
         self.tag = ''
         self.tag_description = 'the whole system'
-        self.output_path = output_path if output_path is not None else pp_output_path
+        self.output_path = output_path if output_path is not None else core.pp_output_path
         self.skip = adjust_skip(self.trajectory, norigins)
 
         # Callbacks
@@ -363,6 +362,18 @@ class Correlation(object):
                 self.grid, self.value = x[0: 2]
                 _log.warn("Ignoring some columns in %s", self._output_file)
 
+    @property
+    def grid_name(self):
+        """
+        Return the name of the grid variables
+
+        Example:
+        -------
+        If `self.name` is `F_s(k,t)`, the function returns `['k', 't']`
+        """
+        variables = self.short_name.split('(')[1][:-1]
+        return variables.split(',')
+
     def write(self):
         """Write the correlation function and the analysis data to file"""
         def is_iterable(maybe_iterable):
@@ -393,7 +404,7 @@ class Correlation(object):
             conj = ''
         comments = _dump(title='%s %s %s %s' % (self.long_name, self.short_name, conj, self.tag_description),
                          columns=columns,
-                         command='atooms-pp', version=__version__,
+                         command='atooms-pp', version=core.__version__,
                          description=None, note=None,
                          parents=self.trajectory.filename,
                          inline=False)

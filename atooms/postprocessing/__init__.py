@@ -21,7 +21,4 @@ from .ik import *
 from .s4kt import *
 from .sk import *
 
-# Global variables
-pp_output_path = '{trajectory.filename}.pp.{symbol}.{tag}'
-pp_trajectory_format = None
 
