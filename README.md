@@ -1,8 +1,9 @@
 Post processing
 ==================
-Python post processing tools to compute static and dynamic correlation functions from particle simulations:
-- Real space: radial distribution function, mean square displacement, time-dependent overlap, ...
-- Fourier space: structure factor, intermediate scattering function, dynamic susceptibility, ...
+Python post processing tools to compute static and dynamic correlation functions from particle simulations
+
+- Real space: radial distribution function, mean square displacement, time-dependent overlap functions, non-Gaussian parameter
+- Fourier space: structure factor, intermediate scattering functions, four-point dynamic susceptibility
 
 This package relies on [atooms](https://gitlab.info-ufr.univ-montp2.fr/atooms/postprocessing.git) to read trajectory files.
 
@@ -21,10 +22,9 @@ should work fine.
 As an example, we compute the structure factor S(k) for the trajectory
 file `trajectory.xyz` contained in the `data/` directory.
 
-![terminal](https://gitlab.info-ufr.univ-montp2.fr/atooms/postprocessing/raw/develop/docs/anim.gif)
+![https://www.coulomb.univ-montp2.fr/perso/daniele.coslovich/anim.gif](https://gitlab.info-ufr.univ-montp2.fr/atooms/postprocessing/raw/develop/docs/anim.gif)
 
-In the example above, we used 20% of the available
-time frames via the flag `--norigins`. Without it, atooms-pp applies an heuristics to determine the number of time frames required to achieve a reasonable data quality.
+In the example above, we used 20% of the available time frames to compute the averages using the `--norigins` flag. Without it, atooms-pp applies an heuristics to determine the number of time frames required to achieve a reasonable data quality.
 
 The results of the calculation are stored in `data/trajectory.xyz.pp.sk`. If
 the system is a mixture of different types of particles, say A and B, the program will create additional files for
