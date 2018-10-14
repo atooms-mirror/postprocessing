@@ -68,13 +68,18 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
         # Throw everything into a big numpy array (nframes, npos, ndim)
         pos = numpy.array(self._pos_unf)
 
-        # To optimize without wasting too much memory (we really have
+        # To optimize without wasting too much memory (we have
         # troubles here) we group particles in blocks and tabulate the
-        # exponentials over time this is more memory consuming but we
-        # can optimize the inner loop.  even better we could change
-        # order in the tabulated expo array to speed things up shape
-        # is (Npart, Ndim)
-        block = min(20, self._pos_unf[0].shape[0])
+        # exponentials over time. This is more memory consuming but we
+        # can optimize the inner loop. Even better, we could change
+        # the order in the tabulated expo array to speed things up
+        # Use 10 blocks, but do not exceed 200 particles
+        number_of_blocks = 10
+        block = int(self._pos_unf[0].shape[0] / float(number_of_blocks))
+        block = max(20, block)
+        block = min(200, block)
+        if len(self.kvector.keys()) == 0:
+            raise ValueError('could not find any wave-vectors, try increasing dk')
         kmax = max(self.kvector.keys()) + self.dk
         acf = [defaultdict(float) for _ in self.kgrid]
         cnt = [defaultdict(float) for _ in self.kgrid]
@@ -143,6 +148,8 @@ class IntermediateScattering(FourierSpaceCorrelation):
         Tabulate densities
         """
         nsteps = len(self._pos_0)
+        if len(self.kvector.keys()) == 0:
+            raise ValueError('could not find any wave-vectors, try increasing dk')
         kmax = max(self.kvector.keys()) + self.dk
         rho_0 = [defaultdict(complex) for it in range(nsteps)]
         rho_1 = [defaultdict(complex) for it in range(nsteps)]

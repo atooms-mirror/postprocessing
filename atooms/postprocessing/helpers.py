@@ -124,26 +124,25 @@ def adjust_skip(trajectory, n_origins=None):
     given number of time origins.
 
     Possible values of n_origins:
-    - None: use euristics to keep the product of steps * particles constant
+    - None: heuristics to keep the product of steps * particles constant
     - int: if -1, all origins are used, otherwise if n_origins >= 1 only n_origins
     - float in the interval (0,1): the fraction of samples to consider as time origins
     """
     if n_origins is not None:
-        n_origins = float(n_origins)
         if trajectory.block_size > 1:
             # There is logaritmic sampling, we go for the block size
             skip = trajectory.block_size
         else:
-            if n_origins < 0:
+            if float(n_origins) < 0 or n_origins == '1.0':
                 skip = 1  # all origins
-            elif n_origins >= 1:
+            elif int(n_origins) >= 1:
                 skip = int(len(trajectory.steps) / float(n_origins))
             else:
                 # A float between 0 and 1
                 skip = int(1 / n_origins)
     else:
-        # Euristics
-        block = 20000
+        # Heuristics (to be improved)
+        block = 40000
         skip = int(len(trajectory.steps) * len(trajectory[0].particle) / block)
 
     # Normalize anyway and make it even
