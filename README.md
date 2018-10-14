@@ -1,33 +1,32 @@
 Post processing
 ==================
-
 Python post processing tools to compute static and dynamic correlation functions from particle simulations. Supported correlation functions:
 - real space: radial distribution function, mean square displacement, time-dependent overlap, ...
 - Fourier space: structure factor, intermediate scattering function, dynamic susceptibility, ...
 
-This package requires [atooms](https://gitlab.info-ufr.univ-montp2.fr/atooms/postprocessing.git) to read trajectory files. It supports tab-completion of command line arguments and progress bar via the optional packages `argcomplete` and `tqdm`.
+This package relies on [atooms](https://gitlab.info-ufr.univ-montp2.fr/atooms/postprocessing.git) to read trajectory files.
 
 Quick start
----------------
-Our goal is to analyze trajectories produced
-by particle simulation codes. Any trajectory file format recognized by
-atooms can be processed, for instance most "xyz" trajectory files
-should work fine. The correlation functions can be computed using
-either the command line script `pp.py` or directly from python.
-
-Here we compute the structure factor S(k) for the trajectory
-file `trajectory.xyz` contained in the `data/` directory.
-
-![terminal](docs/anim.gif)
-
-In the example above, we actually used 20% of the available
-time frames ("time origins"). If this is not specified, atooms-pp applies an heuristics to determine the number of time frames needed to achieve a reasonable data quality.
-
-```bash
-$ pp.py sk data/trajectory.xyz
+------------
+Installation is easy (see below for more details)
+```
+pip install atooms-pp
 ```
 
-The results of the calculations are stored in `data/trajectory.xyz.pp.sk`. If
+We can now compute correlation functions from trajectories produced
+by particle simulation codes. Any trajectory format recognized by
+atooms can be processed, for instance most "xyz" files
+should work fine.
+
+As an example, we compute the structure factor S(k) for the trajectory
+file `trajectory.xyz` contained in the `data/` directory.
+
+![terminal](https://gitlab.info-ufr.univ-montp2.fr/atooms/postprocessing/raw/develop/docs/anim.gif)
+
+In the example above, we used 20% of the available
+time frames via the flag `--norigins`. Without it, atooms-pp applies an heuristics to determine the number of time frames required to achieve a reasonable data quality.
+
+The results of the calculation are stored in `data/trajectory.xyz.pp.sk`. If
 multiple particle species are present, say A and B, the program will create additional files for
 partial correlations, named `trajectory.xyz.pp.sk.A-A`, `trajectory.xyz.pp.sk.B-B` and `trajectory.xyz.pp.sk.A-B`.
 
@@ -49,20 +48,19 @@ Requirements
 - numpy
 - [atooms](https://gitlab.info-ufr.univ-montp2.fr/atooms/postprocessing.git)
 - [optional] argh (only needed when using `pp.py`)
-- [optional] tqdm (only needed to enable progress bars)
-- [optional] argcomplete (only needed to enable tab-completion for `pp.py`)
+- [optional] tqdm (enable progress bars)
+- [optional] argcomplete (enable tab-completion for `pp.py`)
 
 Installation
 ------------
-From the python package index
+If you cannot install the package system-wide, you can still install it in the user space. Either from pypi
 ```
-pip install atooms-pp
+pip install --user atooms-pp
 ```
-
-From the code repository
+or cloning the project repo 
 ```
 git clone https://gitlab.info-ufr.univ-montp2.fr/atooms/postprocessing.git
 cd postprocessing
 make user
 ```
-This will install `pp.py` under `~/.local/bin`. Make sure this folder is in your `$PATH`. Alternatively, install the package system-wide with `sudo make install`.
+The commands above will install `pp.py` under `~/.local/bin`. Make sure this folder is in your `$PATH`.
