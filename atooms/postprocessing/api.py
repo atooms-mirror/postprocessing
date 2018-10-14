@@ -14,6 +14,11 @@ def _get_trajectories(input_files, args):
     from atooms.core.utils import fractional_slice
     for input_file in input_files:
         with Trajectory(input_file, fmt=args['fmt']) as th:
+            # Caching is useful for systems with multiple species but
+            # it will increase the memory footprint. Use --no-cache to
+            # disable it
+            if not args['no_cache']:
+                th.cache = True
             if args['species_layout'] is not None:
                 th.register_callback(change_species, args['species_layout'])
             sl = fractional_slice(args['first'], args['last'], args['skip'], len(th))
@@ -39,6 +44,8 @@ def _compat(args, fmt, species_layout=None):
         args['norigins'] = None
     if 'fast' not in args:
         args['fast'] = False
+    if 'no_cache' not in args:
+        args['no_cache'] = False
     return args
 
 def gr(input_file, dr=0.04, grandcanonical=False, fmt=None, species_layout=None,
