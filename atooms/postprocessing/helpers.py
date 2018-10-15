@@ -135,11 +135,11 @@ def adjust_skip(trajectory, n_origins=None):
         else:
             if float(n_origins) < 0 or n_origins == '1.0':
                 skip = 1  # all origins
-            elif int(n_origins) >= 1:
+            elif float(n_origins) >= 1:
                 skip = int(len(trajectory.steps) / float(n_origins))
             else:
                 # A float between 0 and 1
-                skip = int(1 / n_origins)
+                skip = int(1 / float(n_origins))
     else:
         # Heuristics (to be improved)
         block = 40000
