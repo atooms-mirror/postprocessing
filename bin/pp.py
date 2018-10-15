@@ -25,7 +25,7 @@ parser = add_first_last_skip(parser)
 parser.add_argument('--fmt', dest='fmt', help='fmt')
 parser.add_argument('--output', dest='output', default='{trajectory.filename}.pp.{symbol}.{tag}', help='output path')
 parser.add_argument('--fast', action='store_true', dest='verbose', help='enable optimized backends when possible')
-parser.add_argument('--quiet', action='store_true', dest='verbose', help='quiet output')
+parser.add_argument('--quiet', action='store_true', dest='quiet', help='quiet output')
 parser.add_argument('--verbose', action='store_true', dest='verbose', help='verbose output')
 parser.add_argument('--debug', action='store_true', dest='debug', help='debug output')
 parser.add_argument('--nup', action='store_true', dest='nup', help='answer to NUP query')
@@ -37,16 +37,24 @@ if argcomplete is not None:
     argcomplete.autocomplete(parser)
 args = parser.parse_args()
 
-postprocessing.correlation.pp_output_path = args.output 
+# Modify output path
+postprocessing.correlation.core.pp_output_path = args.output 
+
 if args.verbose:
     setup_logging('atooms', level=40)
     setup_logging('atooms.postprocessing', level=20)
     import atooms.postprocessing.progress
     atooms.postprocessing.progress.active = True
+elif args.quiet:
+    setup_logging('atooms', level=40)
+    setup_logging('atooms.postprocessing', level=40)
+    import atooms.postprocessing.progress
+    atooms.postprocessing.progress.active = False
 elif args.debug:
     setup_logging('atooms', level=40)
     setup_logging('atooms.postprocessing', level=10)
 else:
+    # Default is verbose
     setup_logging('atooms', level=40)
     setup_logging('atooms.postprocessing', level=20)
     import atooms.postprocessing.progress
