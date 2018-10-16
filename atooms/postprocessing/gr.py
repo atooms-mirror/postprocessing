@@ -14,14 +14,15 @@ from .progress import progress
 __all__ = ['RadialDistributionFunction']
 
 
-def gr_kernel(x, y, L):
+def gr_kernel(x, y, L, *args):
+    # Precalculating 1/L does not improve timings
     # r is an array of array distances
     r = x-y
     r = r - numpy.rint(r/L) * L
     return numpy.sqrt(numpy.sum(r**2, axis=1))
 
 
-def gr_kernel_square(x, y, L):
+def gr_kernel_square(x, y, L, *args):
     """Return square distances."""
     # r is an array of array distances
     r = x-y
@@ -36,7 +37,7 @@ def pairs_newton_hist(f, x, y, L, bins):
     """
     hist, bins = numpy.histogram([], bins)
     # Do the calculation in batches to optimize
-    bl = max(1, int(100 * 1000.0 / len(y)))
+    bl = max(1, int(1e5 / len(y)))
     for ib in range(0, len(y)-1, bl):
         fxy = []
         # batch must never exceed len(y)-1
