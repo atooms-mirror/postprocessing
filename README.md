@@ -9,7 +9,7 @@ This package relies on [atooms](https://gitlab.info-ufr.univ-montp2.fr/atooms/po
 
 Quick start
 ------------
-Installation is easy (see [Installation](#Installation) for more details)
+Installation is easy (see [Installation] for more details)
 ```
 pip install atooms-pp
 ```
@@ -22,7 +22,7 @@ should work fine.
 As an example, we compute the structure factor S(k) for the trajectory
 file `trajectory.xyz` contained in the `data/` directory.
 
-![](https://www.coulomb.univ-montp2.fr/perso/daniele.coslovich/anim.gif)
+![https://www.coulomb.univ-montp2.fr/perso/daniele.coslovich/anim.gif](https://gitlab.info-ufr.univ-montp2.fr/atooms/postprocessing/raw/develop/docs/anim.gif)
 
 In the example above, we used 20% of the available time frames to compute the averages using the `--norigins` flag. Without it, atooms-pp applies an heuristics to determine the number of time frames required to achieve a reasonable data quality.
 
@@ -45,11 +45,11 @@ Checkout the [tutorial](https://www.coulomb.univ-montp2.fr/perso/daniele.coslovi
 
 Requirements
 ------------
-- numpy
+- [numpy](https://pypi.org/project/numpy/)
 - [atooms](https://gitlab.info-ufr.univ-montp2.fr/atooms/postprocessing.git)
-- [optional] argh (only needed when using `pp.py`)
-- [optional] tqdm (enable progress bars)
-- [optional] argcomplete (enable tab-completion for `pp.py`)
+- [optional] [argh](https://pypi.org/project/argh/) (only needed when using `pp.py`)
+- [optional] [tqdm](https://pypi.org/project/tqdm/) (enable progress bars)
+- [optional] [argcomplete](https://pypi.org/project/argcomplete/) (enable tab-completion for `pp.py`)
 
 Installation
 ------------
