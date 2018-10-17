@@ -45,11 +45,11 @@ Checkout the [tutorial](https://www.coulomb.univ-montp2.fr/perso/daniele.coslovi
 
 Requirements
 ------------
-- numpy
+- [numpy](https://pypi.org/project/numpy/)
 - [atooms](https://gitlab.info-ufr.univ-montp2.fr/atooms/postprocessing.git)
-- [optional] argh (only needed when using `pp.py`)
-- [optional] tqdm (enable progress bars)
-- [optional] argcomplete (enable tab-completion for `pp.py`)
+- [optional] [argh](https://pypi.org/project/argh/) (only needed when using `pp.py`)
+- [optional] [tqdm](https://pypi.org/project/tqdm/) (enable progress bars)
+- [optional] [argcomplete](https://pypi.org/project/argcomplete/) (enable tab-completion for `pp.py`)
 
 Installation
 ------------
