@@ -43,7 +43,7 @@ class Test(unittest.TestCase):
         self.assertEqual(corr._output_file, 'data/trajectory.xyz.pp.F_s(k,t).the_whole_system')
         self.assertEqual(corr.grid_name, ['k', 't'])
         postprocessing.core.pp_output_path = default
-        
+
 class TestRealSpace(unittest.TestCase):
 
     def setUp(self):
@@ -107,7 +107,7 @@ class TestRealSpace(unittest.TestCase):
         ref[('A', 'A')] = numpy.array([ 0.,          0.00675382,  0.27087136,  1.51486318])
         ref[('B', 'B')] = numpy.array([ 0.31065645,  0.51329066,  0.67485665,  0.78039485])
         ref[('A', 'B')] = numpy.array([ 4.25950671,  3.86572027,  2.70020052,  1.78935426])
-        
+
         gr = Partial(postprocessing.RadialDistributionFunction, ['A', 'B'], ts)
         gr.compute()
         for ab in [('A', 'A'), ('A', 'B'), ('B', 'B')]:
@@ -230,22 +230,33 @@ class TestFourierSpace(unittest.TestCase):
             p.compute()
 
     def test_fkt_partial(self):
-        # TODO: add check
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         t = trajectory.TrajectoryXYZ(f)
         p = postprocessing.IntermediateScattering(t, [4, 7.3, 10], nk=40)
         p.add_filter(filter_species, 'A')
         p.compute()
+        p.analyze()
+        tau = []
+        for key in sorted(p.analysis['relaxation times tau']):
+            tau.append(p.analysis['relaxation times tau'][key])
+        self.assertAlmostEqual(tau[0], 2.2792074711157104)
+        self.assertAlmostEqual(tau[1], 5.8463508731564975)
+        self.assertAlmostEqual(tau[2], 0.85719855804743605,)
 
     def test_fskt_partial(self):
-        # TODO: add check
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         t = trajectory.TrajectoryXYZ(f)
         p = postprocessing.SelfIntermediateScattering(t, [4, 7.3, 10], nk=40, norigins=0.2)
         p.add_filter(filter_species, 'A')
         p.compute()
+        p.analyze()
+        tau = []
+        for key in sorted(p.analysis['relaxation times tau']):
+            tau.append(p.analysis['relaxation times tau'][key])
+
+        self.assertAlmostEqual(tau[0], 14.0664413472)
+        self.assertAlmostEqual(tau[1], 3.04872057144)
+        self.assertAlmostEqual(tau[2], 0.964198444066)
 
 if __name__ == '__main__':
     unittest.main()
-
-
