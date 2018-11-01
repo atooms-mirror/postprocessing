@@ -9,12 +9,6 @@ from atooms import trajectory
 import atooms.postprocessing as postprocessing
 from atooms.postprocessing.helpers import filter_species
 
-# def filter_id(s, id):
-#     # TODO: should we do a copy or modify the system in place? Looks like modify it's ok
-#     nop = [p for p in s.particle if p.species != id]
-#     for n in nop:
-#         s.particle.remove(n)
-#     return s
 
 def filter_random(s, n):
     """Keep only n particles"""
