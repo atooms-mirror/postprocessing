@@ -89,12 +89,11 @@ def gcf_offset(f, grid, skip, t, x, mask=None):
         cnt = defaultdict(int)
         # Standard calculation
         for off, i in progress(grid, total=len(grid)):
-            for i0 in range(off, len(x)-i-skip, skip):
+            for i0 in range(off, len(x)-i, skip):
                 # Get the actual time difference
                 dt = t[i0+i] - t[i0]
                 cf[dt] += f(x[i0+i], x[i0])
                 cnt[dt] += 1
-
         # Return the ACF with the time differences sorted
         dt = sorted(cf.keys())
         return dt, [cf[ti] / cnt[ti] for ti in dt]
