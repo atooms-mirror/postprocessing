@@ -94,6 +94,7 @@ def gcf_offset(f, grid, skip, t, x, mask=None):
                 dt = t[i0+i] - t[i0]
                 cf[dt] += f(x[i0+i], x[i0])
                 cnt[dt] += 1
+
         # Return the ACF with the time differences sorted
         dt = sorted(cf.keys())
         return dt, [cf[ti] / cnt[ti] for ti in dt]

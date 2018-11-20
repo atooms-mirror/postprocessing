@@ -55,7 +55,7 @@ def gr(input_file, dr=0.04, grandcanonical=False, fmt=None, species_layout=None,
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         th._grandcanonical = grandcanonical
         postprocessing.RadialDistributionFunction(th, dr=dr, norigins=global_args['norigins']).do()
-        ids = distinct_species(th[-1].particle)
+        ids = distinct_species(th[0].particle)
         if len(ids) > 1:
             Partial(postprocessing.RadialDistributionFunction, ids, th, dr=dr, norigins=global_args['norigins']).do()
 
@@ -70,7 +70,7 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
         backend = postprocessing.StructureFactor
 
     for th in _get_trajectories([input_file] + list(input_files), global_args):
-        ids = distinct_species(th[-1].particle)
+        ids = distinct_species(th[0].particle)
         backend(th, None, norigins=global_args['norigins'],
                 trajectory_field=trajectory_field,
                 field=field, kmin=kmin,
@@ -108,7 +108,7 @@ def msd(input_file, time_target=-1.0, time_target_fraction=0.75,
             t_grid = [0.0] + func(dt, time_target_fraction*th.total_time, tsamples)
         else:
             t_grid = None
-        ids = distinct_species(th[-1].particle)
+        ids = distinct_species(th[0].particle)
         postprocessing.MeanSquareDisplacement(th, tgrid=t_grid,
                                               norigins=global_args['norigins'],
                                               sigma=sigma, rmax=rmsd_target).do()
@@ -130,7 +130,7 @@ def vacf(input_file, time_target=-1.0, time_target_fraction=0.10,
             t_grid = None
         postprocessing.VelocityAutocorrelation(th, t_grid,
                                                norigins=global_args['norigins']).do()
-        ids = distinct_species(th[-1].particle)
+        ids = distinct_species(th[0].particle)
         if len(ids) > 1:
             Partial(postprocessing.VelocityAutocorrelation, ids, th,
                     t_grid, norigins=global_args['norigins']).do()
@@ -171,7 +171,7 @@ def fskt(input_file, time_target=-1.0, time_target_fraction=0.75,
         if total:
             postprocessing.SelfIntermediateScattering(th, k_grid, t_grid,
                                                       nk, dk=dk, norigins=global_args['norigins']).do()
-        ids = distinct_species(th[-1].particle)
+        ids = distinct_species(th[0].particle)
         if len(ids) > 1:
             Partial(postprocessing.SelfIntermediateScattering, ids,
                     th, k_grid, t_grid, nk, dk=dk, norigins=global_args['norigins']).do()
@@ -214,6 +214,6 @@ def alpha2(input_file, time_target=-1.0, time_target_fraction=0.75,
         else:
             t_grid = None
         postprocessing.NonGaussianParameter(th, t_grid, norigins=global_args['norigins']).do()
-        ids = distinct_species(th[-1].particle)
+        ids = distinct_species(th[0].particle)
         if len(ids) > 1:
             Partial(postprocessing.NonGaussianParameter, ids, th, t_grid, norigins=global_args['norigins']).do()
