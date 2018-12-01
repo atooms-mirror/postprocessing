@@ -29,6 +29,7 @@ parser.add_argument('--quiet', action='store_true', dest='quiet', help='quiet ou
 parser.add_argument('--verbose', action='store_true', dest='verbose', help='verbose output')
 parser.add_argument('--debug', action='store_true', dest='debug', help='debug output')
 parser.add_argument('--nup', action='store_true', dest='nup', help='answer to NUP query')
+parser.add_argument('--update', action='store_true', dest='update', help='compute only if update is needed')
 parser.add_argument('--no-cache', action='store_true', dest='no_cache', help='disable trajectory cache')
 parser.add_argument('--species-layout', dest='species_layout', help='force species layout to F, C or A')
 parser.add_argument('--norigins', dest='norigins', help="time origins for averages")

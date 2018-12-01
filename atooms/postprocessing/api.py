@@ -46,6 +46,8 @@ def _compat(args, fmt, species_layout=None):
         args['fast'] = False
     if 'no_cache' not in args:
         args['no_cache'] = False
+    if 'update' not in args:
+        args['update'] = False
     return args
 
 def gr(input_file, dr=0.04, grandcanonical=False, fmt=None, species_layout=None,
@@ -54,10 +56,10 @@ def gr(input_file, dr=0.04, grandcanonical=False, fmt=None, species_layout=None,
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         th._grandcanonical = grandcanonical
-        postprocessing.RadialDistributionFunction(th, dr=dr, norigins=global_args['norigins']).do()
+        postprocessing.RadialDistributionFunction(th, dr=dr, norigins=global_args['norigins']).do(update=global_args['update'])
         ids = distinct_species(th[0].particle)
         if len(ids) > 1:
-            Partial(postprocessing.RadialDistributionFunction, ids, th, dr=dr, norigins=global_args['norigins']).do()
+            Partial(postprocessing.RadialDistributionFunction, ids, th, dr=dr, norigins=global_args['norigins']).do(update=global_args['update'])
 
 def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
        species_layout=None, fmt=None, trajectory_field=None,
@@ -75,12 +77,12 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
                 trajectory_field=trajectory_field,
                 field=field, kmin=kmin,
                 kmax=kmax, nk=nk, dk=dk,
-                ksamples=ksamples).do()
+                ksamples=ksamples).do(update=global_args['update'])
         if len(ids) > 1 and trajectory_field is None:
             Partial(backend, ids, th, None,
                     norigins=global_args['norigins'], kmin=kmin,
                     kmax=kmax, nk=nk, dk=dk,
-                    ksamples=ksamples).do()
+                    ksamples=ksamples).do(update=global_args['update'])
 
 def ik(input_file, trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0, kmax=15.0,
        ksamples=30, fmt=None, species_layout=None,
@@ -93,7 +95,7 @@ def ik(input_file, trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0, kmax=15.0,
             postprocessing.SpectralDensity(th, trajectory_radius,
                                            kgrid=None, norigins=global_args['norigins'],
                                            kmin=kmin, kmax=kmax, nk=nk, dk=dk,
-                                           ksamples=ksamples).do()
+                                           ksamples=ksamples).do(update=global_args['update'])
 
 def msd(input_file, time_target=-1.0, time_target_fraction=0.75,
         tsamples=30, sigma=1.0, func=linear_grid, rmsd_target=-1.0,
@@ -111,10 +113,10 @@ def msd(input_file, time_target=-1.0, time_target_fraction=0.75,
         ids = distinct_species(th[0].particle)
         postprocessing.MeanSquareDisplacement(th, tgrid=t_grid,
                                               norigins=global_args['norigins'],
-                                              sigma=sigma, rmax=rmsd_target).do()
+                                              sigma=sigma, rmax=rmsd_target).do(update=global_args['update'])
         if len(ids) > 1:
             Partial(postprocessing.MeanSquareDisplacement, ids,
-                    th, tgrid=t_grid, norigins=global_args['norigins'], sigma=sigma, rmax=rmsd_target).do()
+                    th, tgrid=t_grid, norigins=global_args['norigins'], sigma=sigma, rmax=rmsd_target).do(update=global_args['update'])
 
 def vacf(input_file, time_target=-1.0, time_target_fraction=0.10,
          tsamples=30, func=linear_grid, fmt=None, species_layout=None,
@@ -129,11 +131,11 @@ def vacf(input_file, time_target=-1.0, time_target_fraction=0.10,
         else:
             t_grid = None
         postprocessing.VelocityAutocorrelation(th, t_grid,
-                                               norigins=global_args['norigins']).do()
+                                               norigins=global_args['norigins']).do(update=global_args['update'])
         ids = distinct_species(th[0].particle)
         if len(ids) > 1:
             Partial(postprocessing.VelocityAutocorrelation, ids, th,
-                    t_grid, norigins=global_args['norigins']).do()
+                    t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
 
 def fkt(input_file, time_target=-1.0, time_target_fraction=0.75,
         tsamples=60, kmin=7.0, kmax=7.0, ksamples=1, dk=0.1, nk=100,
@@ -152,7 +154,7 @@ def fkt(input_file, time_target=-1.0, time_target_fraction=0.75,
         ids = distinct_species(th[0].particle)
         if len(ids) > 1:
             Partial(postprocessing.IntermediateScattering, ids, th, k_grid, t_grid,
-                    nk=nk, dk=dk).do()
+                    nk=nk, dk=dk).do(update=global_args['update'])
 
 def fskt(input_file, time_target=-1.0, time_target_fraction=0.75,
          tsamples=60, kmin=7.0, kmax=8.0, ksamples=1, dk=0.1, nk=8,
@@ -170,11 +172,11 @@ def fskt(input_file, time_target=-1.0, time_target_fraction=0.75,
         k_grid = linear_grid(kmin, kmax, ksamples)
         if total:
             postprocessing.SelfIntermediateScattering(th, k_grid, t_grid,
-                                                      nk, dk=dk, norigins=global_args['norigins']).do()
+                                                      nk, dk=dk, norigins=global_args['norigins']).do(update=global_args['update'])
         ids = distinct_species(th[0].particle)
         if len(ids) > 1:
             Partial(postprocessing.SelfIntermediateScattering, ids,
-                    th, k_grid, t_grid, nk, dk=dk, norigins=global_args['norigins']).do()
+                    th, k_grid, t_grid, nk, dk=dk, norigins=global_args['norigins']).do(update=global_args['update'])
 
 def chi4qs(input_file, tsamples=60, a=0.3, time_target=-1.0,
            time_target_fraction=0.75, fmt=None, species_layout=None,
@@ -196,10 +198,10 @@ def chi4qs(input_file, tsamples=60, a=0.3, time_target=-1.0,
         else:
             t_grid = None
         if total:
-            backend(th, t_grid, a=a, norigins=global_args['norigins']).do()
+            backend(th, t_grid, a=a, norigins=global_args['norigins']).do(update=global_args['update'])
         ids = distinct_species(th[0].particle)
         if not total and len(ids) > 1:
-            Partial(backend, ids, th, t_grid, a=a, norigins=global_args['norigins']).do()
+            Partial(backend, ids, th, t_grid, a=a, norigins=global_args['norigins']).do(update=global_args['update'])
 
 def alpha2(input_file, time_target=-1.0, time_target_fraction=0.75,
            tsamples=60, func=logx_grid, fmt=None,
@@ -213,7 +215,7 @@ def alpha2(input_file, time_target=-1.0, time_target_fraction=0.75,
             t_grid = [0.0] + func(th.timestep, time_target_fraction*th.total_time, tsamples)
         else:
             t_grid = None
-        postprocessing.NonGaussianParameter(th, t_grid, norigins=global_args['norigins']).do()
+        postprocessing.NonGaussianParameter(th, t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
         ids = distinct_species(th[0].particle)
         if len(ids) > 1:
-            Partial(postprocessing.NonGaussianParameter, ids, th, t_grid, norigins=global_args['norigins']).do()
+            Partial(postprocessing.NonGaussianParameter, ids, th, t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
