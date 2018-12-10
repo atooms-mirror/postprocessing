@@ -15,7 +15,7 @@ from atooms.core.utils import setup_logging
 from atooms.core.utils import add_first_last_skip
 import atooms.postprocessing as postprocessing
 import atooms.postprocessing.core
-from atooms.postprocessing.api import msd, vacf, fkt, fskt, gr, sk, chi4qs, ik, alpha2
+from atooms.postprocessing.api import msd, vacf, fkt, fskt, gr, sk, chi4qs, ik, alpha2, qst, qt
 from atooms.postprocessing.core import CustomHelpFormatter
 
 # We add some global some flags. For backward compatibility, we keep
@@ -33,7 +33,7 @@ parser.add_argument('--update', action='store_true', dest='update', help='comput
 parser.add_argument('--no-cache', action='store_true', dest='no_cache', help='disable trajectory cache')
 parser.add_argument('--species-layout', dest='species_layout', help='force species layout to F, C or A')
 parser.add_argument('--norigins', dest='norigins', help="time origins for averages")
-argh.add_commands(parser, [msd, vacf, fkt, fskt, chi4qs, gr, sk, ik, alpha2], func_kwargs={'formatter_class': CustomHelpFormatter})
+argh.add_commands(parser, [msd, vacf, fkt, fskt, chi4qs, gr, sk, ik, alpha2, qst, qt], func_kwargs={'formatter_class': CustomHelpFormatter})
 if argcomplete is not None:
     argcomplete.autocomplete(parser)
 args = parser.parse_args()

@@ -219,3 +219,37 @@ def alpha2(input_file, time_target=-1.0, time_target_fraction=0.75,
         ids = distinct_species(th[0].particle)
         if len(ids) > 1:
             Partial(postprocessing.NonGaussianParameter, ids, th, t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
+
+def qst(input_file, time_target=-1.0, time_target_fraction=0.75,
+        tsamples=60, func=logx_grid, fmt=None,
+        species_layout=None, *input_files, **global_args):
+    """Self overlap correlation function"""
+    global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
+    for th in _get_trajectories([input_file] + list(input_files), global_args):
+        if time_target > 0:
+            t_grid = [0.0] + func(th.timestep, time_target, tsamples)
+        elif time_target_fraction > 0:
+            t_grid = [0.0] + func(th.timestep, time_target_fraction*th.total_time, tsamples)
+        else:
+            t_grid = None
+        postprocessing.SelfOverlap(th, t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
+        ids = distinct_species(th[0].particle)
+        if len(ids) > 1:
+            Partial(postprocessing.SelfOverlap, ids, th, t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
+
+def qt(input_file, time_target=-1.0, time_target_fraction=0.75,
+        tsamples=60, func=logx_grid, fmt=None,
+        species_layout=None, *input_files, **global_args):
+    """Collective overlap correlation function"""
+    global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
+    for th in _get_trajectories([input_file] + list(input_files), global_args):
+        if time_target > 0:
+            t_grid = [0.0] + func(th.timestep, time_target, tsamples)
+        elif time_target_fraction > 0:
+            t_grid = [0.0] + func(th.timestep, time_target_fraction*th.total_time, tsamples)
+        else:
+            t_grid = None
+        postprocessing.CollectiveOverlap(th, t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
+        ids = distinct_species(th[0].particle)
+        if len(ids) > 1:
+            Partial(postprocessing.CollectiveOverlap, ids, th, t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
