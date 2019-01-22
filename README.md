@@ -9,7 +9,7 @@ This package relies on [atooms](https://gitlab.info-ufr.univ-montp2.fr/atooms/po
 
 Quick start
 ------------
-Installation is easy (see [Installation] for more details)
+Installation is easy (see [Installation](#installation) for more details)
 ```
 pip install atooms-pp
 ```
