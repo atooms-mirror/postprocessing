@@ -355,7 +355,7 @@ class Correlation(object):
         with open(self._output_file, 'r') as inp:
             x = numpy.loadtxt(inp, unpack=True)
             if len(x) == 3:
-                raise ValueError('cannot read 3-columns files yet')
+                _log.warn("cannot read 3-columns files yet in %s", self._output_file)
             elif len(x) == 2:
                 self.grid, self.value = x
             else:
