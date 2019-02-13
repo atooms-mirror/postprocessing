@@ -26,4 +26,4 @@ version:
 	@echo __date__ = \'$(DATE)\' >> ${PROJECT}/_commit.py
 
 clean:
-	rm -f ${PROJECT}/*pyc  ${PROJECT}/*/*pyc tests/*pyc data/*.pp.*
+	rm -f ${PROJECT}/*pyc ${PROJECT}/*/*pyc ${PROJECT}/*/*so tests/*pyc data/*.pp.*
