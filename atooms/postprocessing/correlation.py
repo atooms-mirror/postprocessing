@@ -344,10 +344,12 @@ class Correlation(object):
                                                tag=self.tag,
                                                tag_description=self.tag_description.replace(' ', '_'),
                                                trajectory=self.trajectory)
-            # Strip unpleasant punctuation
+            # Strip unpleasant punctuation from basename path
             for punct in ['.', '_', '-']:
-                filename = filename.replace(punct * 2, punct)
-                filename = filename.strip(punct)
+                subpaths = filename.split('/')
+                subpaths[-1] = subpaths[-1].replace(punct * 2, punct)
+                subpaths[-1] = subpaths[-1].strip(punct)
+                filename = '/'.join(subpaths)
         return filename
 
     def read(self):
@@ -397,7 +399,7 @@ class Correlation(object):
         # Extract variables from parenthesis in symbol
         variables = self.short_name.split('(')[1][:-1]
         variables = variables.split(',')
-        columns = variables + [self.symbol]
+        columns = variables + [self.short_name]  #[self.symbol]
         if len(self.tag_description) > 0:
             conj = 'of'
         else:
