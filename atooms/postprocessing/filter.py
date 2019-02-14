@@ -32,6 +32,7 @@ def Filter(correlation, condition):
     tag = tag.replace('or', '+')
     tag = tag.replace('"', '')
     tag = tag.replace('==', '')
+    tag = tag.replace('!=', '.not')
     tag = tag.replace(',', '-')
     correlation.tag = tag
     correlation.tag_description = condition
