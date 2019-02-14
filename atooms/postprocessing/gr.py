@@ -102,11 +102,12 @@ class RadialDistributionFunction(Correlation):
 
     def _compute(self):
         ncfg = len(self.trajectory)
-        if self.trajectory.grandcanonical:
-            N_0 = numpy.average([len(x) for x in self._pos_0])
-            N_1 = numpy.average([len(x) for x in self._pos_1])
-        else:
-            N_0, N_1 = len(self._pos_0[0]), len(self._pos_1[0])
+        # Assume grandcanonical trajectory for generality.
+        # Note that testing if the trajectory is grandcanonical or
+        # semigrandcanonical is useless when applying filters.  
+        # N_0, N_1 = len(self._pos_0[0]), len(self._pos_1[0])
+        N_0 = numpy.average([len(x) for x in self._pos_0])
+        N_1 = numpy.average([len(x) for x in self._pos_1])
 
         gr_all = []
         _, r = numpy.histogram([], bins=self.grid)

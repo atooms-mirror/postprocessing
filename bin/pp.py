@@ -40,10 +40,6 @@ if argcomplete is not None:
     argcomplete.autocomplete(parser)
 args = parser.parse_args()
 
-# Implict option rules
-if args.filter is not None:
-    args.no_partial = True
-
 # Modify output path
 postprocessing.correlation.core.pp_output_path = args.output 
 

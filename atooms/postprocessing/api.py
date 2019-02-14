@@ -49,9 +49,14 @@ def _compat(args, fmt=None, species_layout=None):
     if 'update' not in args:
         args['update'] = False
     if 'filter' not in args:
-        args['filter'] = None        
+        args['filter'] = None
     if 'no_partial' not in args:
         args['no_partial'] = False
+
+    # Implict option rules
+    if args['filter'] is not None:
+        args['no_partial'] = True
+
     return args
 
 def gr(input_file, dr=0.04, grandcanonical=False, fmt=None,
