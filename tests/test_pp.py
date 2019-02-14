@@ -107,6 +107,27 @@ class TestRealSpace(unittest.TestCase):
         for ab in [('A', 'A'), ('A', 'B'), ('B', 'B')]:
             self.assertLess(deviation(gr.partial[ab].value[21:25], ref[ab]), 4e-2)
 
+    def test_gr_filter(self):
+        from atooms.postprocessing.filter import Filter
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        ts = trajectory.TrajectoryXYZ(f)
+        ref = {}
+        ref[('A', 'A')] = numpy.array([ 0.,          0.00675382,  0.27087136,  1.51486318])
+        ref[('B', 'B')] = numpy.array([ 0.31065645,  0.51329066,  0.67485665,  0.78039485])
+        ref[('A', 'B')] = numpy.array([ 4.25950671,  3.86572027,  2.70020052,  1.78935426])
+
+        gr = Filter(postprocessing.RadialDistributionFunction(ts), 'species == "A", species == "A"')
+        gr.compute()
+        self.assertLess(deviation(gr.value[21:25], ref[('A', 'A')]), 4e-2)
+
+        gr = Filter(postprocessing.RadialDistributionFunction(ts), 'species == "A", species == "B"')
+        gr.compute()
+        self.assertLess(deviation(gr.value[21:25], ref[('A', 'B')]), 4e-2)
+
+        gr = Filter(postprocessing.RadialDistributionFunction(ts), 'species == "B", species == "B"')
+        gr.compute()
+        self.assertLess(deviation(gr.value[21:25], ref[('B', 'B')]), 4e-2)
+
 class TestFourierSpace(unittest.TestCase):
 
     def setUp(self):
