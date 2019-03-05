@@ -81,8 +81,6 @@ class BondAngleDistribution(Correlation):
             for species_pair in rcut:
                 self.rcut[ids.index(species_pair[0]), ids.index(species_pair[1])] = rcut[species_pair]
 
-        print rcut
-        print self.rcut
         self.analysis['cutoff distances'] = rcut
 
         for i in progress(origins):
