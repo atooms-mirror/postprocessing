@@ -22,9 +22,9 @@ def _default_rcut(th):
     Look for the first minimum in the partial g(r)
     """
     from atooms.system.particle import distinct_species
-    from helpers import ifabsmm
     from atooms.postprocessing.partial import Partial
     from atooms.postprocessing import RadialDistributionFunction
+    from .helpers import ifabsmm
 
     ids = distinct_species(th[0].particle)
     gr = Partial(RadialDistributionFunction, ids, th, dr=0.1)
