@@ -81,7 +81,9 @@ class BondAngleDistribution(Correlation):
             for species_pair in rcut:
                 self.rcut[ids.index(species_pair[0]), ids.index(species_pair[1])] = rcut[species_pair]
 
-        self.analysis['cutoff distances'] = rcut
+        for isp in range(len(ids)):
+            for jsp in range(len(ids)):
+                self.analysis['cutoff distance {}-{}'.format(isp, jsp)] = self.rcut[isp, jsp]
 
         for i in progress(origins):
             system = self.trajectory[i]
@@ -90,7 +92,6 @@ class BondAngleDistribution(Correlation):
             ids = numpy.array(system.dump('spe'), dtype=numpy.int32)
             nn = numpy.array(0, dtype=numpy.int32)
             neighbors = numpy.ndarray(50, dtype=numpy.int32)
-            _log.info('cutoff distance:', rcut)
             for idx in range(len(self._pos_0[i])):
                 compute.neighbors('C', side, self._pos_0[i][idx],
                                   self._pos_1[i].transpose(), ids,
