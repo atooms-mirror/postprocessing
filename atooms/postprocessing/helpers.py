@@ -129,26 +129,36 @@ def adjust_skip(trajectory, n_origins=None):
     - float in the interval (0,1): the fraction of samples to consider as time origins
     """
     if n_origins is not None:
-        if trajectory.block_size > 1:
-            # There is logaritmic sampling, we go for the block size
-            skip = trajectory.block_size
+        if float(n_origins) < 0 or n_origins == '1.0':
+            skip = 1 * trajectory.block_size  # all origins
+        elif float(n_origins) >= 1:
+            skip = max(1, int(len(trajectory.steps) // trajectory.block_size / float(n_origins)))
         else:
-            if float(n_origins) < 0 or n_origins == '1.0':
-                skip = 1  # all origins
-            elif float(n_origins) >= 1:
-                skip = int(len(trajectory.steps) / float(n_origins))
-            else:
-                # A float between 0 and 1
-                skip = int(1 / float(n_origins))
+            # A float between 0 and 1
+            skip = int(1 / float(n_origins)) * trajectory.block_size
     else:
         # Heuristics (to be improved)
-        block = 40000
-        skip = int(len(trajectory.steps) * len(trajectory[0].particle) / block)
+        if trajectory.block_size == 1:
+            block = 40000
+            # Ignore cache here
+            # This destroys the connection between decorated unfolded trajectory and folded trajectory
+            #_cache, trajectory.cache = trajectory.cache, False
+            skip = int(len(trajectory.steps) * len(trajectory[0].particle) / block)
+            #trajectory.cache = _cache
+        else:
+            # We stick to the block size
+            skip = trajectory.block_size
+
+    # Make sure the skip is an multiple of block size
+    if skip % trajectory.block_size != 0:
+        print skip, trajectory.block_size
+        skip = (skip // trajectory.block_size) * trajectory.block_size
+        print skip
+        #raise ValueError('wrong skip {} {}'.format(skip, trajectory.block_size))
 
     # Normalize anyway and make it even
     skip = max(1, skip)
     skip = min(len(trajectory.steps), skip)
-
     return skip
 
 
