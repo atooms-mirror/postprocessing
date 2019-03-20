@@ -64,8 +64,8 @@ class MeanSquareDisplacement(Correlation):
             else:
                 self.grid = linear_grid(0.0, t_max, self.tsamples)
 
+        #self.grid = [_*self.trajectory.timestep for _ in self.trajectory.steps[:30]]
         self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid)
-
         # Note that the grid is redefined
         self.grid, self.value = gcf_offset(msd, self._discrete_tgrid, self.skip,
                                            self.trajectory.steps, self._pos_unf)
