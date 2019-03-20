@@ -8,6 +8,7 @@ from atooms.system.particle import distinct_species
 
 from .helpers import linear_grid, logx_grid
 
+_func_db = {'linear_grid': linear_grid, 'logx_grid': logx_grid, 'linear': linear_grid, 'logx': logx_grid}
 
 def _get_trajectories(input_files, args):
     from atooms.trajectory import Sliced
@@ -114,9 +115,11 @@ def ik(input_file, trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0, kmax=15.0,
                                ksamples=ksamples).do(update=global_args['update'])
 
 def msd(input_file, time_target=-1.0, time_target_fraction=0.75,
-        tsamples=30, sigma=1.0, func=linear_grid, rmsd_target=-1.0,
+        tsamples=30, sigma=1.0, func=linear_grid, grid=None, rmsd_target=-1.0,
         fmt=None, species_layout=None, *input_files, **global_args):
     """Mean square displacement"""
+    if grid is not None and grid in _func_db:
+        func = _func_db[grid]
     global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         dt = th.timestep
@@ -126,11 +129,16 @@ def msd(input_file, time_target=-1.0, time_target_fraction=0.75,
             t_grid = [0.0] + func(dt, time_target_fraction*th.total_time, tsamples)
         else:
             t_grid = None
+        #_cache, th.cache = th.cache, False
         ids = distinct_species(th[0].particle)
+        #th.cache = _cache
+        #print th.cache, id(th._cache)
         pp.MeanSquareDisplacement(th, tgrid=t_grid,
                                               norigins=global_args['norigins'],
                                               sigma=sigma, rmax=rmsd_target).do(update=global_args['update'])
+        #print th.cache, th._cache
         if len(ids) > 1:
+            #print th.cache, id(th._cache)
             Partial(pp.MeanSquareDisplacement, ids,
                     th, tgrid=t_grid, norigins=global_args['norigins'], sigma=sigma, rmax=rmsd_target).do(update=global_args['update'])
 
