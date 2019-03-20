@@ -256,11 +256,14 @@ class Correlation(object):
 
         # Dump unfolded positions if requested
         if 'pos-unf' in self.phasespace:
-            for s in progress(Unfolded(self.trajectory, fixed_cm=True)):
+            tunf = Unfolded(self.trajectory, fixed_cm=True)
+            for s in progress(tunf):
+                print 'setup', id(self.trajectory._cache), id(tunf._cache)
                 # Apply filter if there is one
                 if len(self._cbk) > 0:
                     s = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
                 self._pos_unf.append(s.dump('pos'))
+            print 'setup end', id(self.trajectory._cache), self.trajectory
 
     def _setup_arrays_twobody(self):
         """Setup list of numpy arrays for two-body correlations."""
