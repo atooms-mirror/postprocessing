@@ -181,6 +181,7 @@ class Correlation(object):
             self.trajectory = Trajectory(trj, mode='r', fmt=core.pp_trajectory_format)
         else:
             self.trajectory = trj
+        self._unfolded = Unfolded(self.trajectory, fixed_cm=True)
         self.grid = grid
         self.value = []
         self.analysis = {}
@@ -256,14 +257,11 @@ class Correlation(object):
 
         # Dump unfolded positions if requested
         if 'pos-unf' in self.phasespace:
-            tunf = Unfolded(self.trajectory, fixed_cm=True)
-            for s in progress(tunf):
-                print 'setup', id(self.trajectory._cache), id(tunf._cache)
+            for s in progress(self._unfolded):
                 # Apply filter if there is one
                 if len(self._cbk) > 0:
                     s = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
                 self._pos_unf.append(s.dump('pos'))
-            print 'setup end', id(self.trajectory._cache), self.trajectory
 
     def _setup_arrays_twobody(self):
         """Setup list of numpy arrays for two-body correlations."""
