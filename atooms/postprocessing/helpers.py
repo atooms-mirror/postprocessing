@@ -132,7 +132,8 @@ def adjust_skip(trajectory, n_origins=None):
         if float(n_origins) < 0 or n_origins == '1.0':
             skip = 1 * trajectory.block_size  # all origins
         elif float(n_origins) >= 1:
-            skip = max(1, int(len(trajectory.steps) // trajectory.block_size / float(n_origins)))
+            nbl = len(trajectory.steps) // trajectory.block_size
+            skip = int(nbl / float(n_origins)) * trajectory.block_size
         else:
             # A float between 0 and 1
             skip = int(1 / float(n_origins)) * trajectory.block_size
@@ -151,10 +152,7 @@ def adjust_skip(trajectory, n_origins=None):
 
     # Make sure the skip is an multiple of block size
     if skip % trajectory.block_size != 0:
-        print skip, trajectory.block_size
-        skip = (skip // trajectory.block_size) * trajectory.block_size
-        print skip
-        #raise ValueError('wrong skip {} {}'.format(skip, trajectory.block_size))
+        raise ValueError('wrong skip {} {}'.format(skip, trajectory.block_size))
 
     # Normalize anyway and make it even
     skip = max(1, skip)
