@@ -225,15 +225,35 @@ class TestFourierSpace(unittest.TestCase):
         # TODO: this test fails with python 3 because of a weird issue with xyz trajectory in atooms (_fallback)
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         ff = os.path.join(self.reference_path, 'kalj-small-field.xyz')
-        t = trajectory.TrajectoryXYZ(f)
-        p = postprocessing.StructureFactor(t, [4, 7.3, 10], trajectory_field=ff)
+        th = trajectory.TrajectoryXYZ(f)
+        p = postprocessing.StructureFactor(th, [4, 7.3, 10])
+        p.add_weight(trajectory=trajectory.TrajectoryXYZ(ff), field='field_B')
         p.compute()
         # We multiply by x because the S(k) is normalized to 1/N
         from atooms.system.particle import composition
-        x = composition(t[0].particle)['B'] / float(len(t[0].particle))
+        x = composition(th[0].particle)['B'] / float(len(th[0].particle))
         ref_value = x * numpy.array([0.86716496871363735, 0.86986885176760842, 0.98112175463699136])
         self.assertLess(deviation(p.value, ref_value), 1e-2)
 
+    def test_sk_field_partial(self):
+        """
+        Test that weight works with partial correlation
+        """
+        # TODO: this test fails with python 3 because of a weird issue with xyz trajectory in atooms (_fallback)
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        ff = os.path.join(self.reference_path, 'kalj-small-field.xyz')
+        th = trajectory.TrajectoryXYZ(f)
+        p = postprocessing.Partial(postprocessing.StructureFactor, ['A', 'B'], th, [4, 7.3, 10])
+        from atooms.postprocessing.helpers import copy_field
+        from atooms.trajectory import TrajectoryXYZ
+        p.add_weight(trajectory=trajectory.TrajectoryXYZ(ff), field='field_B')
+        p.compute()
+        from atooms.system.particle import composition
+        ref_value = numpy.array([0.86716496871363735, 0.86986885176760842, 0.98112175463699136])
+        zeros = numpy.zeros(3)
+        self.assertLess(deviation(p.partial[('B', 'B')].value, ref_value), 1e-2)
+        self.assertLess(deviation(p.partial[('A', 'A')].value, zeros), 1e-2)
+        
     @unittest.skip('Broken test')
     def test_fkt_random(self):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')

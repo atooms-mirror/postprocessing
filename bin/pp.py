@@ -34,7 +34,10 @@ parser.add_argument('--no-cache', action='store_true', dest='no_cache', help='di
 parser.add_argument('--species-layout', dest='species_layout', help='force species layout to F, C or A')
 parser.add_argument('--norigins', dest='norigins', help="time origins for averages")
 parser.add_argument('--no-partial', action='store_true', dest='no_partial', help='disable partial correlations')
-parser.add_argument('--filter', dest='filter', help='filter corrlation function via arbitrary condition on particle properties')
+parser.add_argument('--filter', dest='filter', help='filter correlation function via arbitrary condition on particle properties')
+parser.add_argument('--weight', dest='weight_field', help='particle property to use as weight for correlation function')
+parser.add_argument('--weight-trajectory', dest='weight_trajectory', help='trajectory from which weight is read')
+parser.add_argument('--weight-subtract-mean', dest='weight_subtract_mean', help='set the mean (ensemble-average) of the weight to zero')
 argh.add_commands(parser, [msd, vacf, fkt, fskt, chi4qs, gr, sk, ik, alpha2, qst, qt, ba], func_kwargs={'formatter_class': CustomHelpFormatter})
 if argcomplete is not None:
     argcomplete.autocomplete(parser)

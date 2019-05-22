@@ -206,8 +206,61 @@ class Correlation(object):
         self._vel_0, self._vel_1 = [], []
         self._pos_unf_0, self._pos_unf_1 = [], []
 
+        # Weights
+        self._weight = None
+        self._weight_0, self._weight_1 = None, None
+        self._weight_field = None
+        self._weight_subtract_mean = False
+        
     def __str__(self):
         return '{} at <{}>'.format(self.long_name, id(self))
+
+    def add_weight(self, trajectory=None, field=None, subtract_mean=False):
+        """
+        Add weight from the given `field` in `trajectory`
+
+        If `trajectory` is `None`, `self.trajectory` will be used and
+        `field` must be a particle property.
+        
+        If `field` is `None`, `trajectory` is assumed to be a path an
+        xyz trajectory and we use the data in last column as a weight.
+
+        If both `field` and `trajectory` are `None` the function
+        returns immediately and the weight is not set.
+
+        The optional `subtract_mean` option subtracts the mean,
+        calculated from the ensemble average, from the weight.
+        """
+        if trajectory is None and field is None:
+            return
+
+        self._weight = []
+        self._weight_subtract_mean = subtract_mean
+
+        # Guessing the field from the last column of an xyz file is
+        # not supported anymore
+        if field is None:
+            raise ValueError('provide field to use as weight')
+        else:
+            self._weight_field = field
+
+        # By default we use the same trajectory as for the phasespace
+        if trajectory is None:
+            self._weight_trajectory = self.trajectory
+        else:
+            self._weight_trajectory = trajectory           
+            # Copy over the field
+            from .helpers import copy_field
+            self.trajectory.add_callback(copy_field, self._weight_field, self._weight_trajectory)
+
+        # Make sure the steps are consistent
+        if self._weight_trajectory.steps != self.trajectory.steps:
+            raise ValueError('inconsistency between weight trajectory and trajectory')
+        
+        # Modify tag
+        if self._weight_field is not None:
+            self.tag = self._weight_field
+            self.tag_description += ' with %s field' % self._weight_field.replace('_', ' ')
 
     def add_filter(self, cbk, *args, **kwargs):
         """Add filter callback `cbk` along with positional and keyword arguments"""
@@ -231,20 +284,28 @@ class Correlation(object):
         Dump positions and/or velocities at different time frames as a
         list of numpy array.
         """
+        # TODO: what happens if we call compute twice?? Shouldnt we reset the arrays?
         # Ensure phasespace is a list.
         # It may not be a class variable anymore after this
         if not isinstance(self.phasespace, list) and \
            not isinstance(self.phasespace, tuple):
             self.phasespace = [self.phasespace]
 
-        # Setup arrays
+        # Setup arrays        
         if self.nbodies == 1:
             self._setup_arrays_onebody()
+            self._setup_weight_onebody()
         elif self.nbodies == 2:
             self._setup_arrays_twobody()
+            self._setup_weight_twobody()
 
     def _setup_arrays_onebody(self):
-        """Setup list of numpy arrays for one-body correlations."""
+        """
+        Setup list of numpy arrays for one-body correlations.
+        
+        We also take care of dumping the weight if needed, see
+        `add_weight()`.
+        """
         if 'pos' in self.phasespace or 'vel' in self.phasespace:
             for s in progress(self.trajectory):
                 # Apply filter if there is one
@@ -262,7 +323,73 @@ class Correlation(object):
                 if len(self._cbk) > 0:
                     s = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
                 self._pos_unf.append(s.dump('pos'))
+                
+    def _setup_weight_onebody(self):
+        """
+        Setup list of numpy arrays for the weight, see `add_weight()`
+        """
+        if self._weight is None:
+            return
 
+        # Dump arrays of weights
+        for s in progress(self.trajectory):
+            # Apply filter if there is one
+            # TODO: fix when weight trajectory does not contain actual particle info
+            # It should be possible to link the weight trajectory to the trajectory
+            # and return the trajectory particles with the weight
+            if len(self._cbk) > 0:
+                s = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])                
+            current_weight = s.dump('particle.%s' % self._weight_field)
+            self._weight.append(current_weight)
+
+        # Subtract global mean
+        if self._weight_subtract_mean:
+            mean = 0
+            for current_field in self._weight:
+                mean += current_field.mean()
+            mean /= len(fields)
+
+            for current_field in self._weight:
+                current_field -= mean
+
+    def _setup_weight_twobody(self):
+        """
+        Setup list of numpy arrays for the weight, see `add_weight()`
+        """
+        if self._weight is None:
+            return
+
+        self._weight = []
+        self._weight_0 = []
+        self._weight_1 = []
+
+        # TODO: add checks on number of filters
+        if len(self._cbk) <= 1:
+            self._setup_weight_onebody()
+            self._weight_0 = self._weight
+            self._weight_1 = self._weight
+            return
+
+        # Dump arrays of weights
+        for s in progress(self.trajectory):
+            # Apply filters
+            if len(self._cbk) == 2:
+                s0 = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
+                s1 = self._cbk[1](s, *self._cbk_args[1], **self._cbk_kwargs[1])
+            self._weight_0.append(s0.dump('particle.%s' % self._weight_field))
+            self._weight_1.append(s1.dump('particle.%s' % self._weight_field))
+
+        # Subtract global mean
+        if self._weight_subtract_mean:
+            for current_weight in [self._weight_0, self._weight_1]:
+                mean = 0
+                for current_field in current_weight:
+                    mean += current_field.mean()
+                mean /= len(fields)
+
+                for current_field in current_weight:
+                    current_field -= mean
+        
     def _setup_arrays_twobody(self):
         """Setup list of numpy arrays for two-body correlations."""
         if len(self._cbk) <= 1:

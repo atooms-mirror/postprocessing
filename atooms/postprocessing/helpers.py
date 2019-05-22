@@ -112,6 +112,21 @@ def filter_species(system, species):
     return s
 
 
+def copy_field(system, field, trajectory):
+    """
+    Copy particle property `field` from `trajectory` at the current
+    frame in system.
+
+    It requires atooms >= 1.10.0
+    """
+    # Only available in atooms > 1.10.0
+    so = trajectory[system.frame]
+    for p, po in zip(system.particle, so.particle):
+        x = getattr(po, field)
+        setattr(p, field, x)
+    return system
+
+
 def filter_all(system):
     s = copy.copy(system)
     s.particle = [p for p in system.particle]

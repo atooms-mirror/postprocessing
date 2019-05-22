@@ -31,30 +31,29 @@ def _get_trajectories(input_files, args):
             yield ts
 
 def _compat(args):
-    if 'first' not in args:
-        args['first'] = None
-    if 'last' not in args:
-        args['last'] = None
-    if 'skip' not in args:
-        args['skip'] = None
-    if 'fmt' not in args:
-        args['fmt'] = None
-    if 'species_layout' not in args:
-        args['species_layout'] = None
-    if 'norigins' not in args:
-        args['norigins'] = None
-    if 'fast' not in args:
-        args['fast'] = False
-    if 'no_cache' not in args:
-        args['no_cache'] = False
-    if 'update' not in args:
-        args['update'] = False
-    if 'filter' not in args:
-        args['filter'] = None
-    if 'no_partial' not in args:
-        args['no_partial'] = False
+    """Set default values of global arguments in `args` dictionary"""
 
-    # Implict option rules
+    defaults = {
+        'first': None,
+        'last': None,
+        'skip': None,
+        'fmt': None,
+        'species_layout': None,
+        'norigins': None,
+        'fast': False,
+        'no_cache': False,
+        'update': False,
+        'filter': None,
+        'no_partial': False,
+        'weight': None,
+        'weight_trajectory': None,
+        'weight_subtract_mean': False,
+    }
+    for key in defaults:
+        if key not in args:
+            args[key] = defaults[key]
+
+    # Implicit option rules
     if args['filter'] is not None:
         args['no_partial'] = True
 
@@ -72,12 +71,12 @@ def gr(input_file, dr=0.04, grandcanonical=False, *input_files, **global_args):
 
         ids = distinct_species(th[0].particle)
         if len(ids) > 1 and not global_args['no_partial']:
-            cf = Partial(pp.RadialDistributionFunction, ids, th, dr=dr, norigins=global_args['norigins'])
+            cf = Partial(pp.RadialDistributionFunction, ids, th,
+                         dr=dr, norigins=global_args['norigins'])
             cf.do(update=global_args['update'])
 
 def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
-       trajectory_field=None,
-       field=None, *input_files, **global_args):
+       *input_files, **global_args):
     """Structure factor"""
     global_args = _compat(global_args)
     if global_args['fast']:
@@ -86,19 +85,26 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
         backend = pp.StructureFactor
 
     for th in _get_trajectories([input_file] + list(input_files), global_args):
-        backend(th, None, norigins=global_args['norigins'],
-                trajectory_field=trajectory_field,
-                field=field, kmin=kmin,
-                kmax=kmax, nk=nk, dk=dk,
-                ksamples=ksamples).do(update=global_args['update'])
+        cf = backend(th, None, norigins=global_args['norigins'], kmin=kmin,
+                     kmax=kmax, nk=nk, dk=dk, ksamples=ksamples)
+        if global_args['weight_trajectory'] is not None:
+            global_args['weight_trajectory'] = TrajectoryXYZ(global_args['weight_trajectory'])
+        cf.add_weight(trajectory=global_args['weight_trajectory'],
+                      field=global_args['weight'],
+                      subtract_mean=global_args['weight_subtract_mean'])
+        cf.do(update=global_args['update'])
 
         ids = distinct_species(th[0].particle)
-        if len(ids) > 1 and trajectory_field is None and field is None:
-            Partial(backend, ids, th, None,
+        if len(ids) > 1:
+            cf = Partial(backend, ids, th, None,
                     norigins=global_args['norigins'],
                     kmin=kmin, kmax=kmax, nk=nk, dk=dk,
-                    ksamples=ksamples).do(update=global_args['update'])
-
+                    ksamples=ksamples)
+            cf.add_weight(trajectory=global_args['weight_trajectory'],
+                          field=global_args['weight'],
+                          subtract_mean=global_args['weight_subtract_mean'])
+            cf.do(update=global_args['update'])
+            
 def ik(input_file, trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0, kmax=15.0,
        ksamples=30, *input_files, **global_args):
     """Spectral density"""
