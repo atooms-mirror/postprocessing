@@ -30,7 +30,7 @@ def _get_trajectories(input_files, args):
             ts = Sliced(th, sl)
             yield ts
 
-def _compat(args, fmt=None, species_layout=None):
+def _compat(args):
     if 'first' not in args:
         args['first'] = None
     if 'last' not in args:
@@ -38,9 +38,9 @@ def _compat(args, fmt=None, species_layout=None):
     if 'skip' not in args:
         args['skip'] = None
     if 'fmt' not in args:
-        args['fmt'] = fmt
+        args['fmt'] = None
     if 'species_layout' not in args:
-        args['species_layout'] = species_layout
+        args['species_layout'] = None
     if 'norigins' not in args:
         args['norigins'] = None
     if 'fast' not in args:
@@ -60,13 +60,11 @@ def _compat(args, fmt=None, species_layout=None):
 
     return args
 
-def gr(input_file, dr=0.04, grandcanonical=False, fmt=None,
-       species_layout=None, *input_files, **global_args):
+def gr(input_file, dr=0.04, grandcanonical=False, *input_files, **global_args):
     """Radial distribution function"""
-    global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
+    global_args = _compat(global_args)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         th._grandcanonical = grandcanonical
-
         cf = pp.RadialDistributionFunction(th, dr=dr, norigins=global_args['norigins'])
         if global_args['filter'] is not None:
             cf = pp.Filter(cf, global_args['filter'])
@@ -78,10 +76,10 @@ def gr(input_file, dr=0.04, grandcanonical=False, fmt=None,
             cf.do(update=global_args['update'])
 
 def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
-       species_layout=None, trajectory_field=None,
+       trajectory_field=None,
        field=None, *input_files, **global_args):
     """Structure factor"""
-    global_args = _compat(global_args, species_layout=species_layout)
+    global_args = _compat(global_args)
     if global_args['fast']:
         backend = pp.StructureFactorOpti
     else:
@@ -102,10 +100,9 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
                     ksamples=ksamples).do(update=global_args['update'])
 
 def ik(input_file, trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0, kmax=15.0,
-       ksamples=30, fmt=None, species_layout=None,
-       *input_files, **global_args):
+       ksamples=30, *input_files, **global_args):
     """Spectral density"""
-    global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
+    global_args = _compat(global_args)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         if trajectory_radius is None:
             trajectory_radius = input_file
@@ -116,11 +113,11 @@ def ik(input_file, trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0, kmax=15.0,
 
 def msd(input_file, time_target=-1.0, time_target_fraction=0.75,
         tsamples=30, sigma=1.0, func=linear_grid, grid=None, rmsd_target=-1.0,
-        fmt=None, species_layout=None, *input_files, **global_args):
+        *input_files, **global_args):
     """Mean square displacement"""
     if grid is not None and grid in _func_db:
         func = _func_db[grid]
-    global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
+    global_args = _compat(global_args)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         dt = th.timestep
         if time_target > 0:
@@ -129,24 +126,18 @@ def msd(input_file, time_target=-1.0, time_target_fraction=0.75,
             t_grid = [0.0] + func(dt, time_target_fraction*th.total_time, tsamples)
         else:
             t_grid = None
-        #_cache, th.cache = th.cache, False
         ids = distinct_species(th[0].particle)
-        #th.cache = _cache
-        #print th.cache, id(th._cache)
         pp.MeanSquareDisplacement(th, tgrid=t_grid,
                                               norigins=global_args['norigins'],
                                               sigma=sigma, rmax=rmsd_target).do(update=global_args['update'])
-        #print th.cache, th._cache
         if len(ids) > 1:
-            #print th.cache, id(th._cache)
             Partial(pp.MeanSquareDisplacement, ids,
                     th, tgrid=t_grid, norigins=global_args['norigins'], sigma=sigma, rmax=rmsd_target).do(update=global_args['update'])
 
 def vacf(input_file, time_target=-1.0, time_target_fraction=0.10,
-         tsamples=30, func=linear_grid, fmt=None, species_layout=None,
-         *input_files, **global_args):
+         tsamples=30, func=linear_grid, *input_files, **global_args):
     """Velocity autocorrelation function"""
-    global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
+    global_args = _compat(global_args)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         if time_target > 0:
             t_grid = [0.0] + func(th.timestep, min(th.total_time, time_target), tsamples)
@@ -162,10 +153,9 @@ def vacf(input_file, time_target=-1.0, time_target_fraction=0.10,
 
 def fkt(input_file, time_target=-1.0, time_target_fraction=0.75,
         tsamples=60, kmin=7.0, kmax=7.0, ksamples=1, dk=0.1, nk=100,
-        tag_by_name=False, func=logx_grid, fmt=None,
-        species_layout=None, *input_files, **global_args):
+        tag_by_name=False, func=logx_grid, *input_files, **global_args):
     """Total intermediate scattering function"""
-    global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
+    global_args = _compat(global_args)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         if time_target > 0:
             t_grid = [0.0] + func(th.timestep, time_target, tsamples)
@@ -181,10 +171,9 @@ def fkt(input_file, time_target=-1.0, time_target_fraction=0.75,
 
 def fskt(input_file, time_target=-1.0, time_target_fraction=0.75,
          tsamples=60, kmin=7.0, kmax=8.0, ksamples=1, dk=0.1, nk=8,
-         func=logx_grid, fmt=None, species_layout=None, total=False,
-         *input_files, **global_args):
+         func=logx_grid, total=False, *input_files, **global_args):
     """Self intermediate scattering function"""
-    global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
+    global_args = _compat(global_args)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         if time_target > 0:
             t_grid = [0.0] + func(th.timestep, time_target, tsamples)
@@ -202,10 +191,10 @@ def fskt(input_file, time_target=-1.0, time_target_fraction=0.75,
                     th, k_grid, t_grid, nk, dk=dk, norigins=global_args['norigins']).do(update=global_args['update'])
 
 def chi4qs(input_file, tsamples=60, a=0.3, time_target=-1.0,
-           time_target_fraction=0.75, fmt=None, species_layout=None,
-           total=False, *input_files, **global_args):
+           time_target_fraction=0.75, total=False, *input_files,
+           **global_args):
     """Dynamic susceptibility of self overlap"""
-    global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
+    global_args = _compat(global_args)
 
     if global_args['fast']:
         backend = pp.Chi4SelfOverlapOpti
@@ -227,10 +216,9 @@ def chi4qs(input_file, tsamples=60, a=0.3, time_target=-1.0,
             Partial(backend, ids, th, t_grid, a=a, norigins=global_args['norigins']).do(update=global_args['update'])
 
 def alpha2(input_file, time_target=-1.0, time_target_fraction=0.75,
-           tsamples=60, func=logx_grid, fmt=None,
-         species_layout=None, *input_files, **global_args):
+           tsamples=60, func=logx_grid, *input_files, **global_args):
     """Non-Gaussian parameter"""
-    global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
+    global_args = _compat(global_args)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         if time_target > 0:
             t_grid = [0.0] + func(th.timestep, time_target, tsamples)
@@ -244,10 +232,9 @@ def alpha2(input_file, time_target=-1.0, time_target_fraction=0.75,
             Partial(pp.NonGaussianParameter, ids, th, t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
 
 def qst(input_file, time_target=-1.0, time_target_fraction=0.75,
-        tsamples=60, func=logx_grid, fmt=None,
-        species_layout=None, *input_files, **global_args):
+        tsamples=60, func=logx_grid, *input_files, **global_args):
     """Self overlap correlation function"""
-    global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
+    global_args = _compat(global_args)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         if time_target > 0:
             t_grid = [0.0] + func(th.timestep, time_target, tsamples)
@@ -261,10 +248,9 @@ def qst(input_file, time_target=-1.0, time_target_fraction=0.75,
             Partial(pp.SelfOverlap, ids, th, t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
 
 def qt(input_file, time_target=-1.0, time_target_fraction=0.75,
-        tsamples=60, func=logx_grid, fmt=None,
-        species_layout=None, *input_files, **global_args):
+        tsamples=60, func=logx_grid, *input_files, **global_args):
     """Collective overlap correlation function"""
-    global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
+    global_args = _compat(global_args)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         if time_target > 0:
             t_grid = [0.0] + func(th.timestep, time_target, tsamples)
@@ -277,10 +263,9 @@ def qt(input_file, time_target=-1.0, time_target_fraction=0.75,
         if len(ids) > 1:
             Partial(pp.CollectiveOverlap, ids, th, t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
 
-def ba(input_file, dtheta=4.0, grandcanonical=False, fmt=None,
-       species_layout=None, *input_files, **global_args):
+def ba(input_file, dtheta=4.0, grandcanonical=False, *input_files, **global_args):
     """Bond-angle distribution"""
-    global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
+    global_args = _compat(global_args)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         th._grandcanonical = grandcanonical
 

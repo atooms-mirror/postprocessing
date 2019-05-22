@@ -22,7 +22,7 @@ from atooms.postprocessing.core import CustomHelpFormatter
 # them in the function signature as well.
 parser = argparse.ArgumentParser(formatter_class=CustomHelpFormatter, description=__doc__)
 parser = add_first_last_skip(parser)
-parser.add_argument('--fmt', dest='fmt', help='trajectory fmt')
+parser.add_argument('--fmt', dest='fmt', help='trajectory format')
 parser.add_argument('--output', dest='output', default='{trajectory.filename}.pp.{symbol}.{tag}', help='output path')
 parser.add_argument('--fast', action='store_true', dest='verbose', help='enable optimized backends when possible')
 parser.add_argument('--quiet', action='store_true', dest='quiet', help='quiet output')
