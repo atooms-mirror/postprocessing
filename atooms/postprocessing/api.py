@@ -78,10 +78,10 @@ def gr(input_file, dr=0.04, grandcanonical=False, fmt=None,
             cf.do(update=global_args['update'])
 
 def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
-       species_layout=None, fmt=None, trajectory_field=None,
+       species_layout=None, trajectory_field=None,
        field=None, *input_files, **global_args):
     """Structure factor"""
-    global_args = _compat(global_args, fmt=fmt, species_layout=species_layout)
+    global_args = _compat(global_args, species_layout=species_layout)
     if global_args['fast']:
         backend = pp.StructureFactorOpti
     else:
@@ -95,10 +95,10 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
                 ksamples=ksamples).do(update=global_args['update'])
 
         ids = distinct_species(th[0].particle)
-        if len(ids) > 1 and trajectory_field is None:
+        if len(ids) > 1 and trajectory_field is None and field is None:
             Partial(backend, ids, th, None,
-                    norigins=global_args['norigins'], kmin=kmin,
-                    kmax=kmax, nk=nk, dk=dk,
+                    norigins=global_args['norigins'],
+                    kmin=kmin, kmax=kmax, nk=nk, dk=dk,
                     ksamples=ksamples).do(update=global_args['update'])
 
 def ik(input_file, trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0, kmax=15.0,
