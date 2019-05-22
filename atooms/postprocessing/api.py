@@ -154,8 +154,7 @@ def vacf(input_file, time_target=-1.0, time_target_fraction=0.10,
             t_grid = [0.0] + func(th.timestep, time_target_fraction*th.total_time, tsamples)
         else:
             t_grid = None
-        pp.VelocityAutocorrelation(th, t_grid,
-                                               norigins=global_args['norigins']).do(update=global_args['update'])
+        pp.VelocityAutocorrelation(th, t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
         ids = distinct_species(th[0].particle)
         if len(ids) > 1:
             Partial(pp.VelocityAutocorrelation, ids, th,

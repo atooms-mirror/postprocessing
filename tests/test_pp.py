@@ -47,8 +47,8 @@ class TestRealSpace(unittest.TestCase):
 
     def test_msd_partial(self):
         ref_grid = numpy.array([0, 3.0, 45.0, 90.0])
-        ref_value = {'A': numpy.array([0.0, 0.126669, 1.21207, 2.16563]),
-                     'B': numpy.array([0.0, 0.220299, 2.31111, 4.37561])}
+        ref_value = {'A': numpy.array([0.0, 0.12678160738346345, 1.2085486450303853, 2.1661186644014219]),
+                     'B': numpy.array([0.0, 0.21626803585653143, 2.2289735958089922, 4.2971113171074578])}
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         for i in ['A', 'B']:
             with trajectory.Sliced(trajectory.TrajectoryXYZ(f), slice(0, 1000, 1)) as t:
@@ -268,10 +268,9 @@ class TestFourierSpace(unittest.TestCase):
         tau = []
         for key in sorted(p.analysis['relaxation times tau']):
             tau.append(p.analysis['relaxation times tau'][key])
-
-        self.assertAlmostEqual(tau[0], 14.0664413472)
-        self.assertAlmostEqual(tau[1], 3.04872057144)
-        self.assertAlmostEqual(tau[2], 0.964198444066)
+        self.assertAlmostEqual(tau[0], 14.081572329287619)
+        self.assertAlmostEqual(tau[1], 3.1034088042905967)
+        self.assertAlmostEqual(tau[2], 0.97005294966138289)
 
 if __name__ == '__main__':
     unittest.main()
