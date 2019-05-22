@@ -41,29 +41,47 @@ class StructureFactor(FourierSpaceCorrelation):
         self._field, tag = self._add_field(trajectory_field, field)
         if tag is not None:
             self.tag = tag
-            self.tag_description += '%s field' % tag.replace('_', ' ')
+            self.tag_description += ' with %s field' % tag.replace('_', ' ')
 
     def _add_field(self, trajectory_field, field):
         if trajectory_field is None:
-            return None, None
+            if field is None:
+                return None, None
+            else:
+                th = self.trajectory
         else:
-            # TODO: check step consistency 06.09.2017
             from atooms.trajectory import TrajectoryXYZ
-            with TrajectoryXYZ(trajectory_field) as th:
-                if th.steps != self.trajectory.steps:
-                    raise ValueError('field and traectory are not synced (%s, %s)' % (len(th), len(self.trajectory)))
-                fields = []
-                # This must be a string, not a list
-                unique_field = th._read_metadata(0)['columns']
-                if isinstance(unique_field, list):
-                    # If field is not given, get the last column
-                    if field is None:
-                        unique_field = unique_field[-1]
-                    else:
-                        unique_field = field
-                for s in th:
-                    fields.append(s.dump('particle.%s' % unique_field))
-            return fields, unique_field
+            th = TrajectoryXYZ(trajectory_field)
+            # TODO: check step consistency 06.09.2017
+
+        if th.steps != self.trajectory.steps:
+            raise ValueError('field and traectory are not synced (%s, %s)' % (len(th), len(self.trajectory)))
+        fields = []
+        # This must be a string, not a list
+        unique_field = th._read_metadata(0)['columns']
+        if isinstance(unique_field, list):
+            # If field is not given, get the last column
+            if field is None:
+                unique_field = unique_field[-1]
+            else:
+                unique_field = field
+        for s in th:
+            current_field = s.dump('particle.%s' % unique_field)
+            fields.append(current_field)
+
+        # Subtract global mean
+        mean = 0
+        for current_field in fields:
+            mean += current_field.mean()
+        mean /= len(fields)
+        
+        for current_field in fields:
+            current_field -= mean
+            
+        if trajectory_field is not None:
+            th.close()
+            
+        return fields, unique_field
 
     def _compute(self):
         from atooms.trajectory.utils import is_cell_variable
