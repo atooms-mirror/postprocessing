@@ -258,10 +258,12 @@ class Correlation(object):
             raise ValueError('inconsistency between weight trajectory and trajectory')
         
         # Modify tag
-        if self._weight_field is not None:
-            self.tag = self._weight_field
-            self.tag_description += ' with %s field' % self._weight_field.replace('_', ' ')
-
+        self.tag_description += ' with {} field'.format(self._weight_field.replace('_', ' '))
+        if self.tag:
+            self.tag += '-{}'.format(self._weight_field)
+        else:
+            self.tag = '{}'.format(self._weight_field)
+        
     def add_filter(self, cbk, *args, **kwargs):
         """Add filter callback `cbk` along with positional and keyword arguments"""
         if len(self._cbk) > self.nbodies:

@@ -83,7 +83,6 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
         backend = pp.StructureFactorOpti
     else:
         backend = pp.StructureFactor
-
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         cf = backend(th, None, norigins=global_args['norigins'], kmin=kmin,
                      kmax=kmax, nk=nk, dk=dk, ksamples=ksamples)

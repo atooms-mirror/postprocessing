@@ -58,7 +58,7 @@ class Partial(object):
     def add_weight(self, trajectory=None, field=None, subtract_mean=False):
         for key in self.partial:
             self.partial[key].add_weight(trajectory, field, subtract_mean)
-
+            
     def need_update(self):
         need = False
         for partial in self.partial.values():
