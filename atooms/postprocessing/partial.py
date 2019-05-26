@@ -55,9 +55,9 @@ class Partial(object):
                         jsp = self.species[j]
                         self.partial[(isp, jsp)] = self.partial[(jsp, isp)]
 
-    def add_weight(self, trajectory=None, field=None, subtract_mean=False):
+    def add_weight(self, trajectory=None, field=None, fluctuations=False):
         for key in self.partial:
-            self.partial[key].add_weight(trajectory, field, subtract_mean)
+            self.partial[key].add_weight(trajectory, field, fluctuations)
             
     def need_update(self):
         need = False

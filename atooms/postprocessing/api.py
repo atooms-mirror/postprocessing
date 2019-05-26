@@ -76,17 +76,20 @@ def gr(input_file, dr=0.04, grandcanonical=False, *input_files, **global_args):
             cf.do(update=global_args['update'])
 
 def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
-       *input_files, **global_args):
-    """Structure factor"""
+       kgrid=None, *input_files, **global_args):
+    """
+    Structure factor
+    """
     from atooms.trajectory import TrajectoryXYZ
     global_args = _compat(global_args)
     if global_args['fast']:
         backend = pp.StructureFactorOpti
     else:
         backend = pp.StructureFactor
+    if kgrid is not None:
+        kgrid = [float(_) for _ in kgrid.split(',')]
     for th in _get_trajectories([input_file] + list(input_files), global_args):
-        cf = backend(th, None, norigins=global_args['norigins'], kmin=kmin,
-                     kmax=kmax, nk=nk, dk=dk, ksamples=ksamples)
+        cf = backend(th, kgrid=kgrid, norigins=global_args['norigins'], kmin=kmin, kmax=kmax, nk=nk, dk=dk, ksamples=ksamples)
         if global_args['weight_trajectory'] is not None:
             global_args['weight_trajectory'] = TrajectoryXYZ(global_args['weight_trajectory'])
         cf.add_weight(trajectory=global_args['weight_trajectory'],
@@ -96,29 +99,32 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
 
         ids = distinct_species(th[0].particle)
         if len(ids) > 1:
-            cf = Partial(backend, ids, th, None,
-                    norigins=global_args['norigins'],
-                    kmin=kmin, kmax=kmax, nk=nk, dk=dk,
-                    ksamples=ksamples)
+            cf = Partial(backend, ids, th, kgrid=kgrid,
+                         norigins=global_args['norigins'],
+                         kmin=kmin, kmax=kmax, nk=nk, dk=dk,
+                         ksamples=ksamples)
             cf.add_weight(trajectory=global_args['weight_trajectory'],
                           field=global_args['weight'],
                           fluctuations=global_args['weight_fluctuations'])
             cf.do(update=global_args['update'])
             
-def ik(input_file, trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0, kmax=15.0,
-       ksamples=30, *input_files, **global_args):
+def ik(input_file, trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0,
+       kmax=15.0, kgrid=None, ksamples=30, *input_files,
+       **global_args):
     """Spectral density"""
     global_args = _compat(global_args)
+    if kgrid is not None:
+        kgrid = [float(_) for _ in kgrid.split(',')]
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         if trajectory_radius is None:
             trajectory_radius = input_file
             pp.SpectralDensity(th, trajectory_radius,
-                               kgrid=None, norigins=global_args['norigins'],
+                               kgrid=kgrid, norigins=global_args['norigins'],
                                kmin=kmin, kmax=kmax, nk=nk, dk=dk,
                                ksamples=ksamples).do(update=global_args['update'])
 
-def msd(input_file, time_target=-1.0, time_target_fraction=0.75,
-        tsamples=30, sigma=1.0, func=linear_grid, grid=None, rmsd_target=-1.0,
+def msd(input_file, tmax=-1.0, tmax_fraction=0.75,
+        tsamples=30, sigma=1.0, func=linear_grid, grid=None, rmsd_max=-1.0,
         *input_files, **global_args):
     """Mean square displacement"""
     if grid is not None and grid in _func_db:
@@ -126,29 +132,30 @@ def msd(input_file, time_target=-1.0, time_target_fraction=0.75,
     global_args = _compat(global_args)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         dt = th.timestep
-        if time_target > 0:
-            t_grid = [0.0] + func(dt, min(th.total_time, time_target), tsamples)
-        elif time_target_fraction > 0:
-            t_grid = [0.0] + func(dt, time_target_fraction*th.total_time, tsamples)
+        if tmax > 0:
+            t_grid = [0.0] + func(dt, min(th.total_time, tmax), tsamples)
+        elif tmax_fraction > 0:
+            t_grid = [0.0] + func(dt, tmax_fraction*th.total_time, tsamples)
         else:
             t_grid = None
         ids = distinct_species(th[0].particle)
         pp.MeanSquareDisplacement(th, tgrid=t_grid,
-                                              norigins=global_args['norigins'],
-                                              sigma=sigma, rmax=rmsd_target).do(update=global_args['update'])
+                                  norigins=global_args['norigins'],
+                                  sigma=sigma, rmax=rmsd_max).do(update=global_args['update'])
         if len(ids) > 1:
-            Partial(pp.MeanSquareDisplacement, ids,
-                    th, tgrid=t_grid, norigins=global_args['norigins'], sigma=sigma, rmax=rmsd_target).do(update=global_args['update'])
+            Partial(pp.MeanSquareDisplacement, ids, th, tgrid=t_grid,
+                    norigins=global_args['norigins'], sigma=sigma,
+                    rmax=rmsd_max).do(update=global_args['update'])
 
-def vacf(input_file, time_target=-1.0, time_target_fraction=0.10,
+def vacf(input_file, tmax=-1.0, tmax_fraction=0.10,
          tsamples=30, func=linear_grid, *input_files, **global_args):
     """Velocity autocorrelation function"""
     global_args = _compat(global_args)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
-        if time_target > 0:
-            t_grid = [0.0] + func(th.timestep, min(th.total_time, time_target), tsamples)
-        elif time_target_fraction > 0:
-            t_grid = [0.0] + func(th.timestep, time_target_fraction*th.total_time, tsamples)
+        if tmax > 0:
+            t_grid = [0.0] + func(th.timestep, min(th.total_time, tmax), tsamples)
+        elif tmax_fraction > 0:
+            t_grid = [0.0] + func(th.timestep, tmax_fraction*th.total_time, tsamples)
         else:
             t_grid = None
         pp.VelocityAutocorrelation(th, t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
@@ -157,47 +164,55 @@ def vacf(input_file, time_target=-1.0, time_target_fraction=0.10,
             Partial(pp.VelocityAutocorrelation, ids, th,
                     t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
 
-def fkt(input_file, time_target=-1.0, time_target_fraction=0.75,
+def fkt(input_file, tmax=-1.0, tmax_fraction=0.75,
         tsamples=60, kmin=7.0, kmax=7.0, ksamples=1, dk=0.1, nk=100,
-        tag_by_name=False, func=logx_grid, *input_files, **global_args):
+        kgrid=None, tag_by_name=False, func=logx_grid, *input_files,
+        **global_args):
     """Total intermediate scattering function"""
     global_args = _compat(global_args)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
-        if time_target > 0:
-            t_grid = [0.0] + func(th.timestep, time_target, tsamples)
-        elif time_target_fraction > 0:
-            t_grid = [0.0] + func(th.timestep, time_target_fraction*th.total_time, tsamples)
+        if tmax > 0:
+            t_grid = [0.0] + func(th.timestep, tmax, tsamples)
+        elif tmax_fraction > 0:
+            t_grid = [0.0] + func(th.timestep, tmax_fraction*th.total_time, tsamples)
         else:
             t_grid = None
-        k_grid = linear_grid(kmin, kmax, ksamples)
+        if kgrid is not None:
+            k_grid = [float(_) for _ in kgrid.split(',')]
+        else:
+            k_grid = linear_grid(kmin, kmax, ksamples)
         ids = distinct_species(th[0].particle)
         if len(ids) > 1:
             Partial(pp.IntermediateScattering, ids, th, k_grid, t_grid,
                     nk=nk, dk=dk).do(update=global_args['update'])
 
-def fskt(input_file, time_target=-1.0, time_target_fraction=0.75,
+def fskt(input_file, tmax=-1.0, tmax_fraction=0.75,
          tsamples=60, kmin=7.0, kmax=8.0, ksamples=1, dk=0.1, nk=8,
-         func=logx_grid, total=False, *input_files, **global_args):
+         kgrid=None, func=logx_grid, total=False, *input_files,
+         **global_args):
     """Self intermediate scattering function"""
     global_args = _compat(global_args)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
-        if time_target > 0:
-            t_grid = [0.0] + func(th.timestep, time_target, tsamples)
-        elif time_target_fraction > 0:
-            t_grid = [0.0] + func(th.timestep, time_target_fraction*th.total_time, tsamples)
+        if tmax > 0:
+            t_grid = [0.0] + func(th.timestep, tmax, tsamples)
+        elif tmax_fraction > 0:
+            t_grid = [0.0] + func(th.timestep, tmax_fraction*th.total_time, tsamples)
         else:
             t_grid = None
-        k_grid = linear_grid(kmin, kmax, ksamples)
+        if kgrid is not None:
+            k_grid = [float(_) for _ in kgrid.split(',')]
+        else:
+            k_grid = linear_grid(kmin, kmax, ksamples)
         if total:
-            pp.SelfIntermediateScattering(th, k_grid, t_grid,
-                                                      nk, dk=dk, norigins=global_args['norigins']).do(update=global_args['update'])
+            pp.SelfIntermediateScattering(th, k_grid, t_grid, nk, dk=dk,
+                                          norigins=global_args['norigins']).do(update=global_args['update'])
         ids = distinct_species(th[0].particle)
         if len(ids) > 1:
-            Partial(pp.SelfIntermediateScattering, ids,
-                    th, k_grid, t_grid, nk, dk=dk, norigins=global_args['norigins']).do(update=global_args['update'])
+            Partial(pp.SelfIntermediateScattering, ids, th, k_grid, t_grid, nk, dk=dk,
+                    norigins=global_args['norigins']).do(update=global_args['update'])
 
-def chi4qs(input_file, tsamples=60, a=0.3, time_target=-1.0,
-           time_target_fraction=0.75, total=False, *input_files,
+def chi4qs(input_file, tsamples=60, a=0.3, tmax=-1.0,
+           tmax_fraction=0.75, total=False, *input_files,
            **global_args):
     """Dynamic susceptibility of self overlap"""
     global_args = _compat(global_args)
@@ -209,10 +224,10 @@ def chi4qs(input_file, tsamples=60, a=0.3, time_target=-1.0,
 
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         func = logx_grid
-        if time_target > 0:
-            t_grid = [0.0] + func(th.timestep, min(th.total_time, time_target), tsamples)
-        elif time_target_fraction > 0:
-            t_grid = [0.0] + func(th.timestep, time_target_fraction*th.total_time, tsamples)
+        if tmax > 0:
+            t_grid = [0.0] + func(th.timestep, min(th.total_time, tmax), tsamples)
+        elif tmax_fraction > 0:
+            t_grid = [0.0] + func(th.timestep, tmax_fraction*th.total_time, tsamples)
         else:
             t_grid = None
         if total:
@@ -221,15 +236,15 @@ def chi4qs(input_file, tsamples=60, a=0.3, time_target=-1.0,
         if not total and len(ids) > 1:
             Partial(backend, ids, th, t_grid, a=a, norigins=global_args['norigins']).do(update=global_args['update'])
 
-def alpha2(input_file, time_target=-1.0, time_target_fraction=0.75,
+def alpha2(input_file, tmax=-1.0, tmax_fraction=0.75,
            tsamples=60, func=logx_grid, *input_files, **global_args):
     """Non-Gaussian parameter"""
     global_args = _compat(global_args)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
-        if time_target > 0:
-            t_grid = [0.0] + func(th.timestep, time_target, tsamples)
-        elif time_target_fraction > 0:
-            t_grid = [0.0] + func(th.timestep, time_target_fraction*th.total_time, tsamples)
+        if tmax > 0:
+            t_grid = [0.0] + func(th.timestep, tmax, tsamples)
+        elif tmax_fraction > 0:
+            t_grid = [0.0] + func(th.timestep, tmax_fraction*th.total_time, tsamples)
         else:
             t_grid = None
         pp.NonGaussianParameter(th, t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
@@ -237,15 +252,15 @@ def alpha2(input_file, time_target=-1.0, time_target_fraction=0.75,
         if len(ids) > 1:
             Partial(pp.NonGaussianParameter, ids, th, t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
 
-def qst(input_file, time_target=-1.0, time_target_fraction=0.75,
+def qst(input_file, tmax=-1.0, tmax_fraction=0.75,
         tsamples=60, func=logx_grid, *input_files, **global_args):
     """Self overlap correlation function"""
     global_args = _compat(global_args)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
-        if time_target > 0:
-            t_grid = [0.0] + func(th.timestep, time_target, tsamples)
-        elif time_target_fraction > 0:
-            t_grid = [0.0] + func(th.timestep, time_target_fraction*th.total_time, tsamples)
+        if tmax > 0:
+            t_grid = [0.0] + func(th.timestep, tmax, tsamples)
+        elif tmax_fraction > 0:
+            t_grid = [0.0] + func(th.timestep, tmax_fraction*th.total_time, tsamples)
         else:
             t_grid = None
         pp.SelfOverlap(th, t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
@@ -253,15 +268,15 @@ def qst(input_file, time_target=-1.0, time_target_fraction=0.75,
         if len(ids) > 1:
             Partial(pp.SelfOverlap, ids, th, t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
 
-def qt(input_file, time_target=-1.0, time_target_fraction=0.75,
+def qt(input_file, tmax=-1.0, tmax_fraction=0.75,
         tsamples=60, func=logx_grid, *input_files, **global_args):
     """Collective overlap correlation function"""
     global_args = _compat(global_args)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
-        if time_target > 0:
-            t_grid = [0.0] + func(th.timestep, time_target, tsamples)
-        elif time_target_fraction > 0:
-            t_grid = [0.0] + func(th.timestep, time_target_fraction*th.total_time, tsamples)
+        if tmax > 0:
+            t_grid = [0.0] + func(th.timestep, tmax, tsamples)
+        elif tmax_fraction > 0:
+            t_grid = [0.0] + func(th.timestep, tmax_fraction*th.total_time, tsamples)
         else:
             t_grid = None
         pp.CollectiveOverlap(th, t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
