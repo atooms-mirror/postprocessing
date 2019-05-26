@@ -47,7 +47,7 @@ def _compat(args):
         'no_partial': False,
         'weight': None,
         'weight_trajectory': None,
-        'weight_subtract_mean': False,
+        'weight_fluctuations': False,
     }
     for key in defaults:
         if key not in args:
@@ -78,6 +78,7 @@ def gr(input_file, dr=0.04, grandcanonical=False, *input_files, **global_args):
 def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
        *input_files, **global_args):
     """Structure factor"""
+    from atooms.trajectory import TrajectoryXYZ
     global_args = _compat(global_args)
     if global_args['fast']:
         backend = pp.StructureFactorOpti
@@ -90,7 +91,7 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
             global_args['weight_trajectory'] = TrajectoryXYZ(global_args['weight_trajectory'])
         cf.add_weight(trajectory=global_args['weight_trajectory'],
                       field=global_args['weight'],
-                      subtract_mean=global_args['weight_subtract_mean'])
+                      fluctuations=global_args['weight_fluctuations'])
         cf.do(update=global_args['update'])
 
         ids = distinct_species(th[0].particle)
@@ -101,7 +102,7 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
                     ksamples=ksamples)
             cf.add_weight(trajectory=global_args['weight_trajectory'],
                           field=global_args['weight'],
-                          subtract_mean=global_args['weight_subtract_mean'])
+                          fluctuations=global_args['weight_fluctuations'])
             cf.do(update=global_args['update'])
             
 def ik(input_file, trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0, kmax=15.0,

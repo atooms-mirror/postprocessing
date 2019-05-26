@@ -115,6 +115,16 @@ def gcf_offset(f, grid, skip, t, x, mask=None):
         return dt, [cf[ti] / sum([cnt[ti] for ti in dt])]
 
 
+def _subtract_mean(weight):
+    mean = 0
+    for current_field in weight:
+        mean += current_field.mean()
+    mean /= len(weight)
+    for current_field in weight:
+        current_field -= mean
+    return weight
+
+
 class Correlation(object):
     """
     Base class for correlation functions.
@@ -210,12 +220,12 @@ class Correlation(object):
         self._weight = None
         self._weight_0, self._weight_1 = None, None
         self._weight_field = None
-        self._weight_subtract_mean = False
+        self._weight_fluctuations = False
         
     def __str__(self):
         return '{} at <{}>'.format(self.long_name, id(self))
 
-    def add_weight(self, trajectory=None, field=None, subtract_mean=False):
+    def add_weight(self, trajectory=None, field=None, fluctuations=False):
         """
         Add weight from the given `field` in `trajectory`
 
@@ -228,14 +238,14 @@ class Correlation(object):
         If both `field` and `trajectory` are `None` the function
         returns immediately and the weight is not set.
 
-        The optional `subtract_mean` option subtracts the mean,
+        The optional `fluctuations` option subtracts the mean,
         calculated from the ensemble average, from the weight.
         """
         if trajectory is None and field is None:
             return
 
         self._weight = []
-        self._weight_subtract_mean = subtract_mean
+        self._weight_fluctuations = fluctuations
 
         # Guessing the field from the last column of an xyz file is
         # not supported anymore
@@ -258,11 +268,11 @@ class Correlation(object):
             raise ValueError('inconsistency between weight trajectory and trajectory')
         
         # Modify tag
-        self.tag_description += ' with {} field'.format(self._weight_field.replace('_', ' '))
-        if self.tag:
-            self.tag += '-{}'.format(self._weight_field)
-        else:
-            self.tag = '{}'.format(self._weight_field)
+        fluct = 'fluctuations' if self._weight_fluctuations else ''
+        self.tag_description += ' with {} {} field'.format(self._weight_field.replace('_', ' '), fluct)
+        self.tag_description = self.tag_description.replace('  ', ' ')
+        self.tag += '.{}_{}'.format(self._weight_field, fluct)
+        self.tag.strip('_.')
         
     def add_filter(self, cbk, *args, **kwargs):
         """Add filter callback `cbk` along with positional and keyword arguments"""
@@ -345,15 +355,9 @@ class Correlation(object):
             self._weight.append(current_weight)
 
         # Subtract global mean
-        if self._weight_subtract_mean:
-            mean = 0
-            for current_field in self._weight:
-                mean += current_field.mean()
-            mean /= len(fields)
-
-            for current_field in self._weight:
-                current_field -= mean
-
+        if self._weight_fluctuations:
+            _subtract_mean(self._weight)
+            
     def _setup_weight_twobody(self):
         """
         Setup list of numpy arrays for the weight, see `add_weight()`
@@ -382,15 +386,9 @@ class Correlation(object):
             self._weight_1.append(s1.dump('particle.%s' % self._weight_field))
 
         # Subtract global mean
-        if self._weight_subtract_mean:
-            for current_weight in [self._weight_0, self._weight_1]:
-                mean = 0
-                for current_field in current_weight:
-                    mean += current_field.mean()
-                mean /= len(fields)
-
-                for current_field in current_weight:
-                    current_field -= mean
+        if self._weight_fluctuations:
+            _subtract_mean(self._weight_0)
+            _subtract_mean(self._weight_1)
         
     def _setup_arrays_twobody(self):
         """Setup list of numpy arrays for two-body correlations."""

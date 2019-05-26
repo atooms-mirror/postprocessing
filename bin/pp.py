@@ -37,7 +37,7 @@ parser.add_argument('--no-partial', action='store_true', dest='no_partial', help
 parser.add_argument('--filter', dest='filter', help='filter correlation function via arbitrary condition on particle properties')
 parser.add_argument('--weight', dest='weight', help='particle property to use as weight for correlation function')
 parser.add_argument('--weight-trajectory', dest='weight_trajectory', help='trajectory from which weight is read')
-parser.add_argument('--weight-subtract-mean', dest='weight_subtract_mean', help='set the mean (ensemble-average) of the weight to zero')
+parser.add_argument('--weight-fluctuations', dest='weight_fluctuations', action='store_true', help='set the mean (ensemble-average) of the weight to zero')
 argh.add_commands(parser, [msd, vacf, fkt, fskt, chi4qs, gr, sk, ik, alpha2, qst, qt, ba], func_kwargs={'formatter_class': CustomHelpFormatter})
 if argcomplete is not None:
     argcomplete.autocomplete(parser)
