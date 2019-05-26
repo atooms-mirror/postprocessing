@@ -8,7 +8,10 @@ from atooms.system.particle import distinct_species
 
 from .helpers import linear_grid, logx_grid
 
-_func_db = {'linear_grid': linear_grid, 'logx_grid': logx_grid, 'linear': linear_grid, 'logx': logx_grid}
+_func_db = {'linear_grid': linear_grid,
+            'linear': linear_grid,
+            'logx_grid': logx_grid,
+            'logx': logx_grid}
 
 def _get_trajectories(input_files, args):
     from atooms.trajectory import Sliced
@@ -123,12 +126,11 @@ def ik(input_file, trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0,
                                kmin=kmin, kmax=kmax, nk=nk, dk=dk,
                                ksamples=ksamples).do(update=global_args['update'])
 
-def msd(input_file, tmax=-1.0, tmax_fraction=0.75,
-        tsamples=30, sigma=1.0, func=linear_grid, grid=None, rmsd_max=-1.0,
-        *input_files, **global_args):
+def msd(input_file, tmax=-1.0, tmax_fraction=0.75, tsamples=30,
+        sigma=1.0, func='linear', rmsd_max=-1.0, *input_files,
+        **global_args):
     """Mean square displacement"""
-    if grid is not None and grid in _func_db:
-        func = _func_db[grid]
+    func = _func_db[func]
     global_args = _compat(global_args)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         dt = th.timestep
@@ -148,9 +150,10 @@ def msd(input_file, tmax=-1.0, tmax_fraction=0.75,
                     rmax=rmsd_max).do(update=global_args['update'])
 
 def vacf(input_file, tmax=-1.0, tmax_fraction=0.10,
-         tsamples=30, func=linear_grid, *input_files, **global_args):
+         tsamples=30, func='linear', *input_files, **global_args):
     """Velocity autocorrelation function"""
     global_args = _compat(global_args)
+    func = _func_db[func]
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         if tmax > 0:
             t_grid = [0.0] + func(th.timestep, min(th.total_time, tmax), tsamples)
@@ -166,10 +169,11 @@ def vacf(input_file, tmax=-1.0, tmax_fraction=0.10,
 
 def fkt(input_file, tmax=-1.0, tmax_fraction=0.75,
         tsamples=60, kmin=7.0, kmax=7.0, ksamples=1, dk=0.1, nk=100,
-        kgrid=None, tag_by_name=False, func=logx_grid, *input_files,
+        kgrid=None, tag_by_name=False, func='logx', *input_files,
         **global_args):
     """Total intermediate scattering function"""
     global_args = _compat(global_args)
+    func = _func_db[func]
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         if tmax > 0:
             t_grid = [0.0] + func(th.timestep, tmax, tsamples)
@@ -188,10 +192,11 @@ def fkt(input_file, tmax=-1.0, tmax_fraction=0.75,
 
 def fskt(input_file, tmax=-1.0, tmax_fraction=0.75,
          tsamples=60, kmin=7.0, kmax=8.0, ksamples=1, dk=0.1, nk=8,
-         kgrid=None, func=logx_grid, total=False, *input_files,
+         kgrid=None, func='logx', total=False, *input_files,
          **global_args):
     """Self intermediate scattering function"""
     global_args = _compat(global_args)
+    func = _func_db[func]
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         if tmax > 0:
             t_grid = [0.0] + func(th.timestep, tmax, tsamples)
@@ -211,19 +216,18 @@ def fskt(input_file, tmax=-1.0, tmax_fraction=0.75,
             Partial(pp.SelfIntermediateScattering, ids, th, k_grid, t_grid, nk, dk=dk,
                     norigins=global_args['norigins']).do(update=global_args['update'])
 
-def chi4qs(input_file, tsamples=60, a=0.3, tmax=-1.0,
+def chi4qs(input_file, tsamples=60, a=0.3, tmax=-1.0, func='logx',
            tmax_fraction=0.75, total=False, *input_files,
            **global_args):
     """Dynamic susceptibility of self overlap"""
     global_args = _compat(global_args)
-
+    func = _func_db[func]
     if global_args['fast']:
         backend = pp.Chi4SelfOverlapOpti
     else:
         backend = pp.Chi4SelfOverlap
 
     for th in _get_trajectories([input_file] + list(input_files), global_args):
-        func = logx_grid
         if tmax > 0:
             t_grid = [0.0] + func(th.timestep, min(th.total_time, tmax), tsamples)
         elif tmax_fraction > 0:
@@ -237,9 +241,10 @@ def chi4qs(input_file, tsamples=60, a=0.3, tmax=-1.0,
             Partial(backend, ids, th, t_grid, a=a, norigins=global_args['norigins']).do(update=global_args['update'])
 
 def alpha2(input_file, tmax=-1.0, tmax_fraction=0.75,
-           tsamples=60, func=logx_grid, *input_files, **global_args):
+           tsamples=60, func='logx', *input_files, **global_args):
     """Non-Gaussian parameter"""
     global_args = _compat(global_args)
+    func = _func_db[func]
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         if tmax > 0:
             t_grid = [0.0] + func(th.timestep, tmax, tsamples)
@@ -253,9 +258,10 @@ def alpha2(input_file, tmax=-1.0, tmax_fraction=0.75,
             Partial(pp.NonGaussianParameter, ids, th, t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
 
 def qst(input_file, tmax=-1.0, tmax_fraction=0.75,
-        tsamples=60, func=logx_grid, *input_files, **global_args):
+        tsamples=60, func='logx', *input_files, **global_args):
     """Self overlap correlation function"""
     global_args = _compat(global_args)
+    func = _func_db[func]
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         if tmax > 0:
             t_grid = [0.0] + func(th.timestep, tmax, tsamples)
@@ -269,9 +275,10 @@ def qst(input_file, tmax=-1.0, tmax_fraction=0.75,
             Partial(pp.SelfOverlap, ids, th, t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
 
 def qt(input_file, tmax=-1.0, tmax_fraction=0.75,
-        tsamples=60, func=logx_grid, *input_files, **global_args):
+        tsamples=60, func='logx', *input_files, **global_args):
     """Collective overlap correlation function"""
     global_args = _compat(global_args)
+    func = _func_db[func]
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         if tmax > 0:
             t_grid = [0.0] + func(th.timestep, tmax, tsamples)
