@@ -47,14 +47,6 @@ class Partial(object):
                     self.partial[(isp, jsp)].tag = '%s-%s' % (isp, jsp)
                     self.partial[(isp, jsp)].tag_description = 'species pair %s-%s' % (isp, jsp)
 
-            # Enforce symmetry
-            for i in range(len(self.species)):
-                for j in range(len(self.species)):
-                    if j < i:
-                        isp = self.species[i]
-                        jsp = self.species[j]
-                        self.partial[(isp, jsp)] = self.partial[(jsp, isp)]
-
     def add_weight(self, trajectory=None, field=None, fluctuations=False):
         for key in self.partial:
             self.partial[key].add_weight(trajectory, field, fluctuations)
