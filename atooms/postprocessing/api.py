@@ -48,9 +48,6 @@ def _compat(args):
         'update': False,
         'filter': None,
         'no_partial': False,
-        'weight': None,
-        'weight_trajectory': None,
-        'weight_fluctuations': False,
     }
     for key in defaults:
         if key not in args:
@@ -62,12 +59,12 @@ def _compat(args):
 
     return args
 
-def gr(input_file, dr=0.04, grandcanonical=False, *input_files, **global_args):
+def gr(input_file, dr=0.04, grandcanonical=False, ndim=-1, *input_files, **global_args):
     """Radial distribution function"""
     global_args = _compat(global_args)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         th._grandcanonical = grandcanonical
-        cf = pp.RadialDistributionFunction(th, dr=dr, norigins=global_args['norigins'])
+        cf = pp.RadialDistributionFunction(th, dr=dr, norigins=global_args['norigins'], ndim=ndim)
         if global_args['filter'] is not None:
             cf = pp.Filter(cf, global_args['filter'])
         cf.do(update=global_args['update'])
@@ -75,11 +72,12 @@ def gr(input_file, dr=0.04, grandcanonical=False, *input_files, **global_args):
         ids = distinct_species(th[0].particle)
         if len(ids) > 1 and not global_args['no_partial']:
             cf = Partial(pp.RadialDistributionFunction, ids, th,
-                         dr=dr, norigins=global_args['norigins'])
+                         dr=dr, norigins=global_args['norigins'], ndim=ndim)
             cf.do(update=global_args['update'])
 
 def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
-       kgrid=None, *input_files, **global_args):
+       kgrid=None, weight=None, weight_trajectory=None,
+       weight_fluctuations=False, *input_files, **global_args):
     """
     Structure factor
     """
@@ -93,11 +91,11 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
         kgrid = [float(_) for _ in kgrid.split(',')]
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         cf = backend(th, kgrid=kgrid, norigins=global_args['norigins'], kmin=kmin, kmax=kmax, nk=nk, dk=dk, ksamples=ksamples)
-        if global_args['weight_trajectory'] is not None:
-            global_args['weight_trajectory'] = TrajectoryXYZ(global_args['weight_trajectory'])
-        cf.add_weight(trajectory=global_args['weight_trajectory'],
-                      field=global_args['weight'],
-                      fluctuations=global_args['weight_fluctuations'])
+        if weight_trajectory is not None:
+            weight_trajectory = TrajectoryXYZ(weight_trajectory)
+        cf.add_weight(trajectory=weight_trajectory,
+                      field=weight,
+                      fluctuations=weight_fluctuations)
         cf.do(update=global_args['update'])
 
         ids = distinct_species(th[0].particle)
@@ -106,9 +104,9 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
                          norigins=global_args['norigins'],
                          kmin=kmin, kmax=kmax, nk=nk, dk=dk,
                          ksamples=ksamples)
-            cf.add_weight(trajectory=global_args['weight_trajectory'],
-                          field=global_args['weight'],
-                          fluctuations=global_args['weight_fluctuations'])
+            cf.add_weight(trajectory=weight_trajectory,
+                          field=weight,
+                          fluctuations=weight_fluctuations)
             cf.do(update=global_args['update'])
             
 def ik(input_file, trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0,
