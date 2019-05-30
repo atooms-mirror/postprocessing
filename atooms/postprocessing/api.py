@@ -64,7 +64,9 @@ def gr(input_file, dr=0.04, grandcanonical=False, ndim=-1, *input_files, **globa
     global_args = _compat(global_args)
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         th._grandcanonical = grandcanonical
-        cf = pp.RadialDistributionFunction(th, dr=dr, norigins=global_args['norigins'], ndim=ndim)
+        cf = pp.RadialDistributionFunction(th, dr=dr,
+                                           norigins=global_args['norigins'],
+                                           ndim=ndim)
         if global_args['filter'] is not None:
             cf = pp.Filter(cf, global_args['filter'])
         cf.do(update=global_args['update'])
@@ -90,7 +92,9 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
     if kgrid is not None:
         kgrid = [float(_) for _ in kgrid.split(',')]
     for th in _get_trajectories([input_file] + list(input_files), global_args):
-        cf = backend(th, kgrid=kgrid, norigins=global_args['norigins'], kmin=kmin, kmax=kmax, nk=nk, dk=dk, ksamples=ksamples)
+        cf = backend(th, kgrid=kgrid,
+                     norigins=global_args['norigins'], kmin=kmin,
+                     kmax=kmax, nk=nk, dk=dk, ksamples=ksamples)
         if weight_trajectory is not None:
             weight_trajectory = TrajectoryXYZ(weight_trajectory)
         cf.add_weight(trajectory=weight_trajectory,
@@ -167,7 +171,7 @@ def vacf(input_file, tmax=-1.0, tmax_fraction=0.10,
 
 def fkt(input_file, tmax=-1.0, tmax_fraction=0.75,
         tsamples=60, kmin=7.0, kmax=7.0, ksamples=1, dk=0.1, nk=100,
-        kgrid=None, tag_by_name=False, func='logx', *input_files,
+        kgrid=None, func='logx', *input_files,
         **global_args):
     """Total intermediate scattering function"""
     global_args = _compat(global_args)
@@ -236,7 +240,8 @@ def chi4qs(input_file, tsamples=60, a=0.3, tmax=-1.0, func='logx',
             backend(th, t_grid, a=a, norigins=global_args['norigins']).do(update=global_args['update'])
         ids = distinct_species(th[0].particle)
         if not total and len(ids) > 1:
-            Partial(backend, ids, th, t_grid, a=a, norigins=global_args['norigins']).do(update=global_args['update'])
+            Partial(backend, ids, th, t_grid, a=a,
+                    norigins=global_args['norigins']).do(update=global_args['update'])
 
 def alpha2(input_file, tmax=-1.0, tmax_fraction=0.75,
            tsamples=60, func='logx', *input_files, **global_args):
@@ -253,7 +258,8 @@ def alpha2(input_file, tmax=-1.0, tmax_fraction=0.75,
         pp.NonGaussianParameter(th, t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
         ids = distinct_species(th[0].particle)
         if len(ids) > 1:
-            Partial(pp.NonGaussianParameter, ids, th, t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
+            Partial(pp.NonGaussianParameter, ids, th, t_grid,
+                    norigins=global_args['norigins']).do(update=global_args['update'])
 
 def qst(input_file, tmax=-1.0, tmax_fraction=0.75,
         tsamples=60, func='logx', *input_files, **global_args):
@@ -270,7 +276,8 @@ def qst(input_file, tmax=-1.0, tmax_fraction=0.75,
         pp.SelfOverlap(th, t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
         ids = distinct_species(th[0].particle)
         if len(ids) > 1:
-            Partial(pp.SelfOverlap, ids, th, t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
+            Partial(pp.SelfOverlap, ids, th, t_grid,
+                    norigins=global_args['norigins']).do(update=global_args['update'])
 
 def qt(input_file, tmax=-1.0, tmax_fraction=0.75,
         tsamples=60, func='logx', *input_files, **global_args):
@@ -287,7 +294,8 @@ def qt(input_file, tmax=-1.0, tmax_fraction=0.75,
         pp.CollectiveOverlap(th, t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
         ids = distinct_species(th[0].particle)
         if len(ids) > 1:
-            Partial(pp.CollectiveOverlap, ids, th, t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
+            Partial(pp.CollectiveOverlap, ids, th, t_grid,
+                    norigins=global_args['norigins']).do(update=global_args['update'])
 
 def ba(input_file, dtheta=4.0, grandcanonical=False, *input_files, **global_args):
     """Bond-angle distribution"""
