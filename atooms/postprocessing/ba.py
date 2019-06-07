@@ -33,6 +33,8 @@ def _default_rcut(th):
     for isp in ids:
         for jsp in ids:
             # First find absolute maximum
+            if (isp, jsp) not in gr.partial:
+                continue
             _, m = ifabsmm(list(gr.partial[(isp, jsp)].grid),
                            list(gr.partial[(isp, jsp)].value))
             # Then look for first minimum after the maximum
@@ -42,6 +44,13 @@ def _default_rcut(th):
                     if delta >= 0:
                         rcut[(isp, jsp)] = gr.partial[(isp, jsp)].grid[i]
                         break
+
+    # Fill missing entries
+    for isp in ids:
+        for jsp in ids:
+            if (isp, jsp) not in gr.partial and (isp, jsp) in rcut:
+                rcut[(isp, jsp)] = rcut[(jsp, isp)]
+    
     return rcut
 
 class BondAngleDistribution(Correlation):
