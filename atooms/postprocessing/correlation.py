@@ -185,13 +185,13 @@ class Correlation(object):
     They will be available as self._pos, self._pos_unf, self._vel.
     """
 
-    def __init__(self, trj, grid, output_path=None, norigins=None):
+    def __init__(self, trj, grid, output_path=None, norigins=None, fix_cm=False):
         # Accept a trajectory-like instance or a path to a trajectory
         if isinstance(trj, str):
             self.trajectory = Trajectory(trj, mode='r', fmt=core.pp_trajectory_format)
         else:
             self.trajectory = trj
-        self._unfolded = Unfolded(self.trajectory, fixed_cm=True)
+        self._unfolded = Unfolded(self.trajectory, fixed_cm=fix_cm)
         self.grid = grid
         self.value = []
         self.analysis = {}
