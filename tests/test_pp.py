@@ -53,7 +53,7 @@ class TestRealSpace(unittest.TestCase):
         for i in ['A', 'B']:
             with trajectory.Sliced(trajectory.TrajectoryXYZ(f), slice(0, 1000, 1)) as t:
                 t.add_callback(filter_species, i)
-                p = postprocessing.MeanSquareDisplacement(t, [0.0, 3.0, 45.0, 90])
+                p = postprocessing.MeanSquareDisplacement(t, [0.0, 3.0, 45.0, 90], fix_cm=True)
                 import warnings
                 warnings.simplefilter('ignore', RuntimeWarning)
                 p.compute()
@@ -67,7 +67,7 @@ class TestRealSpace(unittest.TestCase):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         ts = trajectory.Sliced(trajectory.TrajectoryXYZ(f), slice(0, 1000, 1))
         for i in ['A', 'B']:
-            p = postprocessing.MeanSquareDisplacement(ts, [0.0, 3.0, 45.0, 90])
+            p = postprocessing.MeanSquareDisplacement(ts, [0.0, 3.0, 45.0, 90], fix_cm=True)
             p.add_filter(filter_species, i)
             p.compute()
             self.assertLess(deviation(p.grid, ref_grid), 4e-2)
