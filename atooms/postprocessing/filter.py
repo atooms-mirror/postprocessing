@@ -31,6 +31,7 @@ def Filter(correlation, condition):
     tag = tag.replace('and', '_')
     tag = tag.replace('or', '+')
     tag = tag.replace('"', '')
+    tag = tag.replace("'", '')
     tag = tag.replace('==', '')
     tag = tag.replace('!=', '.not')
     tag = tag.replace(',', '-')
