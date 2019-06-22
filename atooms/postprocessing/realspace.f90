@@ -142,7 +142,7 @@ contains
     hbox = box / 2
     rcutsq = rcut**2
     do j = 1,size(pos,2)
-       jsp = ids(j)
+       jsp = ids(j) - delta
        rij = center(:) - pos(:,j)
        where (abs(rij) > hbox)
           rij = rij - sign(box,rij)

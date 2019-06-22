@@ -54,7 +54,7 @@ class BondAngleDistribution(Correlation):
     symbol = 'ba'
     short_name = 'D(theta)'
     long_name = 'bond angle distribution'
-    phasespace = 'pos'
+    phasespace = ['pos', 'ids']
 
     def __init__(self, trajectory, norigins=None, dtheta=4.0, rcut=None):
         Correlation.__init__(self, trajectory, None, norigins=norigins)
@@ -88,18 +88,23 @@ class BondAngleDistribution(Correlation):
 
         for i in progress(origins):
             system = self.trajectory[i]
-            system = change_species(system, 'F')  # species are in fortran style
-            side = system.cell.side
-            ids = numpy.array(system.dump('spe'), dtype=numpy.int32)
+            side = system.cell.side  # this should not be affected by filters
+            #system = change_species(system, 'F')  # species are in fortran style
+            #ids = numpy.array(system.dump('spe'), dtype=numpy.int32)
             nn = numpy.array(0, dtype=numpy.int32)
             neighbors = numpy.ndarray(50, dtype=numpy.int32)
             for idx in range(len(self._pos_0[i])):
+                isp = self._ids_0[i][idx]
                 compute.neighbors('C', side, self._pos_0[i][idx],
-                                  self._pos_1[i].transpose(), ids,
-                                  self.rcut[ids[idx]-1, :], nn, neighbors)  # species in Fortran style
-                compute.bond_angle(self._pos_0[i][idx, :], self._pos_1[i].transpose(),
-                                   neighbors[0: nn], side,
-                                   dtheta, hist_one)
+                                  self._pos_1[i].transpose(),
+                                  self._ids_1[i],
+                                  self.rcut[isp, :],
+                                  nn, neighbors)
+                #print idx, self._pos_1[i].shape, neighbors[0: nn], set(self._ids_1[i])
+                compute.bond_angle(self._pos_0[i][idx, :],
+                                   self._pos_1[i].transpose(),
+                                   neighbors[0: nn], side, dtheta,
+                                   hist_one)
                 hist_all.append(hist_one.copy())
 
         # Normalization

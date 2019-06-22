@@ -10,6 +10,8 @@ from collections import defaultdict
 import numpy
 from atooms.trajectory import Trajectory
 from atooms.trajectory.decorators import Unfolded
+from atooms.trajectory.decorators import change_species
+from atooms.system.particle import distinct_species
 from atooms.core.utils import Timer
 try:
     from medepy.metadata import dump as _dump
@@ -209,11 +211,13 @@ class Correlation(object):
         # Lists for one body correlations
         self._pos = []
         self._vel = []
+        self._ids = []
         self._pos_unf = []
 
         # Lists for two-body correlations
         self._pos_0, self._pos_1 = [], []
         self._vel_0, self._vel_1 = [], []
+        self._ids_0, self._ids_1 = [], []
         self._pos_unf_0, self._pos_unf_1 = [], []
 
         # Weights
@@ -318,7 +322,8 @@ class Correlation(object):
         We also take care of dumping the weight if needed, see
         `add_weight()`.
         """
-        if 'pos' in self.phasespace or 'vel' in self.phasespace:
+        if 'pos' in self.phasespace or 'vel' in self.phasespace or 'ids' in self.phasespace:
+            ids = distinct_species(self.trajectory[0].particle)
             for s in progress(self.trajectory):
                 # Apply filter if there is one
                 if len(self._cbk) > 0:
@@ -327,7 +332,12 @@ class Correlation(object):
                     self._pos.append(s.dump('pos'))
                 if 'vel' in self.phasespace:
                     self._vel.append(s.dump('vel'))
-
+                if 'ids' in self.phasespace:
+                    _ids = s.dump('species', dtype=numpy.int32)
+                    for i in range(len(self._ids)):
+                        _ids[i] = ids.index(_ids[i])
+                    self._ids.append(_ids)
+                    
         # Dump unfolded positions if requested
         if 'pos-unf' in self.phasespace:
             for s in progress(self._unfolded):
@@ -396,9 +406,14 @@ class Correlation(object):
             self._setup_arrays_onebody()
             self._pos_0 = self._pos
             self._pos_1 = self._pos
+            self._vel_0 = self._vel
+            self._vel_1 = self._vel
+            self._ids_0 = self._ids
+            self._ids_1 = self._ids
             return
 
-        if 'pos' in self.phasespace or 'vel' in self.phasespace:
+        if 'pos' in self.phasespace or 'vel' in self.phasespace or 'ids' in self.phasespace:
+            ids = distinct_species(self.trajectory[0].particle)
             for s in progress(self.trajectory):
                 s0 = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
                 s1 = self._cbk[1](s, *self._cbk_args[1], **self._cbk_kwargs[1])
@@ -408,7 +423,14 @@ class Correlation(object):
                 if 'vel' in self.phasespace:
                     self._vel_0.append(s0.dump('vel'))
                     self._vel_1.append(s1.dump('vel'))
-
+                if 'ids' in self.phasespace:
+                    _ids_0 = s0.dump('species')
+                    _ids_1 = s1.dump('species')
+                    _ids_0 = numpy.array([ids.index(_) for _ in _ids_0], dtype=numpy.int32)
+                    _ids_1 = numpy.array([ids.index(_) for _ in _ids_1], dtype=numpy.int32)
+                    self._ids_0.append(_ids_0)
+                    self._ids_1.append(_ids_1)
+                    
         # Dump unfolded positions if requested
         if 'pos-unf' in self.phasespace:
             for s in progress(Unfolded(self.trajectory)):
