@@ -333,9 +333,8 @@ class Correlation(object):
                 if 'vel' in self.phasespace:
                     self._vel.append(s.dump('vel'))
                 if 'ids' in self.phasespace:
-                    _ids = s.dump('species', dtype=numpy.int32)
-                    for i in range(len(self._ids)):
-                        _ids[i] = ids.index(_ids[i])
+                    _ids = s.dump('species')
+                    _ids = numpy.array([ids.index(_) for _ in _ids], dtype=numpy.int32)
                     self._ids.append(_ids)
                     
         # Dump unfolded positions if requested
