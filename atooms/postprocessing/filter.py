@@ -6,6 +6,11 @@ Decorator to filter correlation functions by arbitrary condition
 on particle properties.
 
 It uses filters internally.
+
+For 2-body correlations we expect up to two logical conditions. If
+there is only one, we filter only the first group of particle, the
+second one includes all the particles of the system. Otherwise we
+filter two subsets of particles accordingly.
 """
 
 import logging
