@@ -14,14 +14,15 @@ from .progress import progress
 __all__ = ['RadialDistributionFunction']
 
 
-def gr_kernel(x, y, L):
+def gr_kernel(x, y, L, *args):
+    # Precalculating 1/L does not improve timings
     # r is an array of array distances
     r = x-y
     r = r - numpy.rint(r/L) * L
     return numpy.sqrt(numpy.sum(r**2, axis=1))
 
 
-def gr_kernel_square(x, y, L):
+def gr_kernel_square(x, y, L, *args):
     """Return square distances."""
     # r is an array of array distances
     r = x-y
@@ -36,7 +37,7 @@ def pairs_newton_hist(f, x, y, L, bins):
     """
     hist, bins = numpy.histogram([], bins)
     # Do the calculation in batches to optimize
-    bl = max(1, int(100 * 1000.0 / len(y)))
+    bl = max(1, int(1e5 / len(y)))
     for ib in range(0, len(y)-1, bl):
         fxy = []
         # batch must never exceed len(y)-1
@@ -83,9 +84,16 @@ class RadialDistributionFunction(Correlation):
     long_name = 'radial distribution function'
     phasespace = 'pos'
 
-    def __init__(self, trajectory, rgrid=None, norigins=None, dr=0.04):
+    def __init__(self, trajectory, rgrid=None, norigins=None, dr=0.04, ndim=-1):
         Correlation.__init__(self, trajectory, rgrid, norigins=norigins)
-        self.side = self.trajectory.read(0).cell.side
+        self._side = self.trajectory.read(0).cell.side
+        if ndim > 0:
+            # Only the first ndim coordinates are retained
+            self._ndim = ndim
+            self._volume = self._side[:ndim].prod()
+        else:
+            self._ndim = len(self._side)
+            self._volume = self._side.prod()
         if rgrid is not None:
             # Reconstruct bounds of grid for numpy histogram
             self.grid = []
@@ -93,38 +101,43 @@ class RadialDistributionFunction(Correlation):
                 self.grid.append(rgrid[i] - (rgrid[1] - rgrid[0]) / 2)
             self.grid.append(rgrid[-1] + (rgrid[1] - rgrid[0]) / 2)
         else:
-            if len(self.side.shape) > 0:
-                L = self.side[0]
-            else:
-                L = self.side
+            L = min(self._side)
             self.grid = linear_grid(0.0, L / 2.0, dr)
 
     def _compute(self):
         ncfg = len(self.trajectory)
-        if self.trajectory.grandcanonical:
-            N_0 = numpy.average([len(x) for x in self._pos_0])
-            N_1 = numpy.average([len(x) for x in self._pos_1])
-        else:
-            N_0, N_1 = len(self._pos_0[0]), len(self._pos_1[0])
+        # Assume grandcanonical trajectory for generality.
+        # Note that testing if the trajectory is grandcanonical or
+        # semigrandcanonical is useless when applying filters.  
+        # N_0, N_1 = len(self._pos_0[0]), len(self._pos_1[0])
+        N_0 = numpy.average([len(x) for x in self._pos_0])
+        N_1 = numpy.average([len(x) for x in self._pos_1])
 
         gr_all = []
         _, r = numpy.histogram([], bins=self.grid)
         origins = range(0, ncfg, self.skip)
         for i in progress(origins):
-            self.side = self.trajectory.read(i).cell.side
+            self._side = self.trajectory.read(i).cell.side
             if len(self._pos_0[i]) == 0 or len(self._pos_1[i]) == 0:
                 continue
             if self._pos_0 is self._pos_1:
                 gr = pairs_newton_hist(gr_kernel, self._pos_0[i], self._pos_1[i],
-                                       self.side, r)
+                                       self._side, r)
             else:
                 gr = pairs_hist(gr_kernel, self._pos_0[i], self._pos_1[i],
-                                self.side, r)
+                                self._side, r)
             gr_all.append(gr)
 
         # Normalization
-        vol = 4 * math.pi / 3.0 * (r[1:]**3-r[:-1]**3)
-        rho = N_1 / self.side.prod()
+        if self._ndim == 2:
+            vol = math.pi * (r[1:]**2 - r[:-1]**2)
+        elif self._ndim == 3:
+            vol = 4 * math.pi / 3.0 * (r[1:]**3 - r[:-1]**3)
+        else:
+            from math import gamma
+            n2 = int(float(self._ndim) / 2)
+            vol = math.pi**n2 * (r[1:]**self._ndim-r[:-1]**self._ndim) / gamma(n2+1)
+        rho = N_1 / self._volume
         if self._pos_0 is self._pos_1:
             norm = rho * vol * N_0 * 0.5  # use Newton III
         else:

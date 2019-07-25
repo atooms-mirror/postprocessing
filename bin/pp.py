@@ -15,24 +15,27 @@ from atooms.core.utils import setup_logging
 from atooms.core.utils import add_first_last_skip
 import atooms.postprocessing as postprocessing
 import atooms.postprocessing.core
-from atooms.postprocessing.api import msd, vacf, fkt, fskt, gr, sk, chi4qs, ik, alpha2
+from atooms.postprocessing.api import msd, vacf, fkt, fskt, gr, sk, chi4qs, ik, alpha2, qst, qt, ba
 from atooms.postprocessing.core import CustomHelpFormatter
 
 # We add some global some flags. For backward compatibility, we keep
 # them in the function signature as well.
 parser = argparse.ArgumentParser(formatter_class=CustomHelpFormatter, description=__doc__)
 parser = add_first_last_skip(parser)
-parser.add_argument('--fmt', dest='fmt', help='fmt')
+parser.add_argument('--fmt', dest='fmt', help='trajectory format')
 parser.add_argument('--output', dest='output', default='{trajectory.filename}.pp.{symbol}.{tag}', help='output path')
 parser.add_argument('--fast', action='store_true', dest='verbose', help='enable optimized backends when possible')
 parser.add_argument('--quiet', action='store_true', dest='quiet', help='quiet output')
 parser.add_argument('--verbose', action='store_true', dest='verbose', help='verbose output')
 parser.add_argument('--debug', action='store_true', dest='debug', help='debug output')
 parser.add_argument('--nup', action='store_true', dest='nup', help='answer to NUP query')
+parser.add_argument('--update', action='store_true', dest='update', help='compute only if update is needed')
 parser.add_argument('--no-cache', action='store_true', dest='no_cache', help='disable trajectory cache')
 parser.add_argument('--species-layout', dest='species_layout', help='force species layout to F, C or A')
 parser.add_argument('--norigins', dest='norigins', help="time origins for averages")
-argh.add_commands(parser, [msd, vacf, fkt, fskt, chi4qs, gr, sk, ik, alpha2], func_kwargs={'formatter_class': CustomHelpFormatter})
+parser.add_argument('--no-partial', action='store_true', dest='no_partial', help='disable partial correlations')
+parser.add_argument('--filter', dest='filter', help='filter correlation function via arbitrary condition on particle properties')
+argh.add_commands(parser, [msd, vacf, fkt, fskt, chi4qs, gr, sk, ik, alpha2, qst, qt, ba], func_kwargs={'formatter_class': CustomHelpFormatter})
 if argcomplete is not None:
     argcomplete.autocomplete(parser)
 args = parser.parse_args()

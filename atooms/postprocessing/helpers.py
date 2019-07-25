@@ -112,6 +112,21 @@ def filter_species(system, species):
     return s
 
 
+def copy_field(system, field, trajectory):
+    """
+    Copy particle property `field` from `trajectory` at the current
+    frame in system.
+
+    It requires atooms >= 1.10.0
+    """
+    # Only available in atooms > 1.10.0
+    so = trajectory[system.frame]
+    for p, po in zip(system.particle, so.particle):
+        x = getattr(po, field)
+        setattr(p, field, x)
+    return system
+
+
 def filter_all(system):
     s = copy.copy(system)
     s.particle = [p for p in system.particle]
@@ -129,26 +144,36 @@ def adjust_skip(trajectory, n_origins=None):
     - float in the interval (0,1): the fraction of samples to consider as time origins
     """
     if n_origins is not None:
-        if trajectory.block_size > 1:
-            # There is logaritmic sampling, we go for the block size
-            skip = trajectory.block_size
+        if float(n_origins) < 0 or n_origins == '1.0':
+            skip = 1 * trajectory.block_size  # all origins
+        elif float(n_origins) > 1:
+            nbl = len(trajectory.steps) // trajectory.block_size
+            skip = int(nbl / float(n_origins)) * trajectory.block_size
+        elif int(n_origins) == 1:
+            skip = len(trajectory.steps)
         else:
-            if float(n_origins) < 0 or n_origins == '1.0':
-                skip = 1  # all origins
-            elif float(n_origins) >= 1:
-                skip = int(len(trajectory.steps) / float(n_origins))
-            else:
-                # A float between 0 and 1
-                skip = int(1 / float(n_origins))
+            # A float between 0 and 1
+            skip = int(1 / float(n_origins)) * trajectory.block_size
     else:
         # Heuristics (to be improved)
-        block = 40000
-        skip = int(len(trajectory.steps) * len(trajectory[0].particle) / block)
+        if trajectory.block_size == 1:
+            block = 40000
+            # Ignore cache here
+            # This destroys the connection between decorated unfolded trajectory and folded trajectory
+            #_cache, trajectory.cache = trajectory.cache, False
+            skip = int(len(trajectory.steps) * len(trajectory[0].particle) / block)
+            #trajectory.cache = _cache
+        else:
+            # We stick to the block size
+            skip = trajectory.block_size
+
+    # Make sure the skip is an multiple of block size
+    if skip % trajectory.block_size != 0 and int(n_origins) != 1:
+        raise ValueError('wrong skip {} {}'.format(skip, trajectory.block_size))
 
     # Normalize anyway and make it even
     skip = max(1, skip)
     skip = min(len(trajectory.steps), skip)
-
     return skip
 
 

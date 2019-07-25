@@ -41,12 +41,12 @@ class MeanSquareDisplacement(Correlation):
     phasespace = 'pos-unf'
 
     def __init__(self, trajectory, tgrid=None, rmax=-1.0, norigins=None,
-                 tsamples=30, sigma=1.0):
+                 tsamples=30, sigma=1.0, fix_cm=False):
         self.rmax = rmax
         self.sigma = sigma
         self.tsamples = tsamples
-        Correlation.__init__(self, trajectory, tgrid, norigins=norigins)
-
+        Correlation.__init__(self, trajectory, tgrid, norigins=norigins, fix_cm=fix_cm)        
+        
     def _compute(self):
         # We postpone time grid definition to compute to avoid
         # unfolding the trajectory twice when targeting the rmsd
@@ -63,9 +63,9 @@ class MeanSquareDisplacement(Correlation):
                 self.grid = linear_grid(0.0, min(t_max, t_target), self.tsamples)
             else:
                 self.grid = linear_grid(0.0, t_max, self.tsamples)
+
+        #self.grid = [_*self.trajectory.timestep for _ in self.trajectory.steps[:30]]
         self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid)
-
-
         # Note that the grid is redefined
         self.grid, self.value = gcf_offset(msd, self._discrete_tgrid, self.skip,
                                            self.trajectory.steps, self._pos_unf)
