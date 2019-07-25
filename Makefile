@@ -5,6 +5,8 @@ DATE=$$(git show -s --format=%ci $(COMMIT) | cut -d ' ' -f 1)
 
 .PHONY: all dist test install version clean
 
+all: user
+
 dist: version
 	python setup.py sdist
 
