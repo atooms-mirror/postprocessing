@@ -191,6 +191,7 @@ def fkt(input_file, tmax=-1.0, tmax_fraction=0.75,
         ids = distinct_species(th[0].particle)
         if len(ids) > 1:
             Partial(pp.IntermediateScattering, ids, th, k_grid, t_grid,
+                    norigins=global_args['norigins'],
                     nk=nk, dk=dk).do(update=global_args['update'])
 
 def fskt(input_file, tmax=-1.0, tmax_fraction=0.75,
