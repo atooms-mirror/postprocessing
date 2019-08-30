@@ -39,7 +39,7 @@ class Chi4SelfOverlap(Correlation):
         Correlation.__init__(self, trajectory, tgrid, norigins=norigins)
         if tgrid is None:
             self.grid = logx_grid(0.0, self.trajectory.total_time * 0.75, tsamples)
-        self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid)
+        self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid, offset=norigins != '1')
         self.a_square = a**2
         self.average = Correlation(self.trajectory, self.grid)
         self.average.short_name = 'Q^u(t)'

@@ -198,11 +198,15 @@ def _templated(entry, template, keep_multiple=False):
     return sorted(match)
 
 
-def setup_t_grid(trajectory, t_grid):
+def setup_t_grid(trajectory, t_grid, offset=True):
     # First get all possible time differences
     steps = trajectory.steps
     off_samp = {}
-    for off in range(trajectory.block_size):
+    if offset:
+        offset_range = range(trajectory.block_size)
+    else:
+        offset_range = [0]
+    for off in offset_range:
         for i in range(off, len(steps)-off):
             if steps[i] - steps[off] not in off_samp:
                 off_samp[steps[i] - steps[off]] = (off, i-off)
