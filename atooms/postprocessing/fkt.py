@@ -83,11 +83,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
         kmax = max(self.kvector.keys()) + self.dk
         acf = [defaultdict(float) for _ in self.kgrid]
         cnt = [defaultdict(float) for _ in self.kgrid]
-        if self.trajectory.block_size > 1:
-            skip = self.trajectory.block_size
-        else:
-            skip = self.skip
-
+        skip = self.skip
         origins = range(0, pos.shape[1], block)
         for j in progress(origins):
             x = expo_sphere(self.k0, kmax, pos[:, j:j + block, :])
@@ -184,7 +180,7 @@ class IntermediateScattering(FourierSpaceCorrelation):
         # Compute correlation function
         acf = [defaultdict(float) for _ in kgrid]
         cnt = [defaultdict(float) for _ in kgrid]
-        skip = self.trajectory.block_size
+        skip = self.skip
         for kk, knorm in enumerate(progress(kgrid)):
             for j in selection[kk]:
                 ik = self.kvector[knorm][j]
