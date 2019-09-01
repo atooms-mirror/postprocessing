@@ -53,9 +53,9 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
 
     #TODO: xyz files are 2 slower than hdf5 here
     def __init__(self, trajectory, kgrid=None, tgrid=None, nk=8, tsamples=60,
-                 dk=0.1, kmin=1.0, kmax=10.0, ksamples=10, norigins=-1):
+                 dk=0.1, kmin=1.0, kmax=10.0, ksamples=10, norigins=-1, fix_cm=False):
         FourierSpaceCorrelation.__init__(self, trajectory, [kgrid, tgrid], norigins,
-                                         nk, dk, kmin, kmax, ksamples)
+                                         nk, dk, kmin, kmax, ksamples, fix_cm)
         # Setup time grid
         # Before setting up the time grid, we need to check periodicity over blocks
         check_block_size(self.trajectory.steps, self.trajectory.block_size)
@@ -130,9 +130,9 @@ class IntermediateScattering(FourierSpaceCorrelation):
     phasespace = 'pos'
 
     def __init__(self, trajectory, kgrid=None, tgrid=None, nk=100, dk=0.1, tsamples=60,
-                 kmin=1.0, kmax=10.0, ksamples=10, norigins=-1):
+                 kmin=1.0, kmax=10.0, ksamples=10, norigins=-1, fix_cm=False):
         FourierSpaceCorrelation.__init__(self, trajectory, [kgrid, tgrid], norigins,
-                                         nk, dk, kmin, kmax, ksamples)
+                                         nk, dk, kmin, kmax, ksamples, fix_cm)
         # Setup time grid
         check_block_size(self.trajectory.steps, self.trajectory.block_size)
         if tgrid is None:
