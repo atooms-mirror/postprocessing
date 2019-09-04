@@ -175,6 +175,7 @@ class FourierSpaceCorrelation(Correlation):
         the values specified in the input list kgrid.
         Returns a dictonary of lists of wavevectors, one entry for each element in the grid.
         """
+        _log.info('setting up the wave-vector grid')
         kvec = defaultdict(list)
         # With elongated box, we choose the smallest k0 component to
         # setup the integer grid. This must be consistent with
