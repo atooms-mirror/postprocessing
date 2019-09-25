@@ -572,6 +572,10 @@ class Correlation(object):
                 analysis += '# %s: %s\n' % (x, f)
 
         # Put it all together
+        # and make sure the path to the output file exists
+        import os
+        from atooms.core.utils import mkdir
+        mkdir(os.path.dirname(self._output_file))
         with open(self._output_file, 'w') as fh:
             fh.write(comments)
             if len(analysis) > 0:
