@@ -95,6 +95,8 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
         cf = backend(th, kgrid=kgrid,
                      norigins=global_args['norigins'], kmin=kmin,
                      kmax=kmax, nk=nk, dk=dk, ksamples=ksamples)
+        if global_args['filter'] is not None:
+            cf = pp.Filter(cf, global_args['filter'])
         if weight_trajectory is not None:
             weight_trajectory = TrajectoryXYZ(weight_trajectory)
         cf.add_weight(trajectory=weight_trajectory,
@@ -103,7 +105,7 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
         cf.do(update=global_args['update'])
 
         ids = distinct_species(th[0].particle)
-        if len(ids) > 1:
+        if len(ids) > 1 and not global_args['no_partial']:
             cf = Partial(backend, ids, th, kgrid=kgrid,
                          norigins=global_args['norigins'],
                          kmin=kmin, kmax=kmax, nk=nk, dk=dk,
