@@ -3,7 +3,7 @@
 import atooms.postprocessing as pp
 from atooms.postprocessing.partial import Partial
 from atooms.trajectory import Trajectory
-from atooms.trajectory.decorators import change_species
+from atooms.trajectory.decorators import change_species, center
 from atooms.system.particle import distinct_species
 
 from .helpers import linear_grid, logx_grid
@@ -18,6 +18,8 @@ def _get_trajectories(input_files, args):
     from atooms.core.utils import fractional_slice
     for input_file in input_files:
         with Trajectory(input_file, fmt=args['fmt']) as th:
+            if args['center']:
+                th.add_callback(center)
             # Caching is useful for systems with multiple species but
             # it will increase the memory footprint. Use --no-cache to
             # disable it
@@ -41,6 +43,7 @@ def _compat(args):
         'last': None,
         'skip': None,
         'fmt': None,
+        'center': False,
         'species_layout': None,
         'norigins': None,
         'fast': False,
