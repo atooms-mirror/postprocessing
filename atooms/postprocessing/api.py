@@ -30,7 +30,10 @@ def _get_trajectories(input_files, args):
                 sl_start = (sl.start // th.block_size) * th.block_size if sl.start is not None else sl.start
                 sl_stop = (sl.stop // th.block_size) * th.block_size if sl.stop is not None else sl.stop
                 sl = slice(sl_start, sl_stop, sl.step)
-            ts = Sliced(th, sl)
+            if sl != slice(None, None, 1):
+                ts = Sliced(th, sl)
+            else:
+                ts = th
             yield ts
 
 def _compat(args):
