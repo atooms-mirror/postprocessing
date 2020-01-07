@@ -23,7 +23,7 @@ class StressAutocorrelation(Correlation):
 
     def __init__(self, trajectory, tgrid, norigins=None):
         Correlation.__init__(self, trajectory, tgrid, norigins=norigins)
-        self._discrete_tgrid = setup_t_grid(self.trajectory, tgrid)
+        self._discrete_tgrid = setup_t_grid(self.trajectory, tgrid, offset=norigins != '1')
 
     def _get_stress(self):
         ndims = 3

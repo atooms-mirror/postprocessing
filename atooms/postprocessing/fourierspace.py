@@ -103,9 +103,9 @@ class FourierSpaceCorrelation(Correlation):
     """
 
     def __init__(self, trajectory, grid, norigins=None, nk=8, dk=0.1,
-                 kmin=-1, kmax=10, ksamples=20):
+                 kmin=-1, kmax=10, ksamples=20, fix_cm=False):
         super(FourierSpaceCorrelation, self).__init__(trajectory,
-                                                      grid, norigins=norigins)
+                                                      grid, norigins=norigins, fix_cm=fix_cm)
         # Some additional variables. k0 = smallest wave vectors
         # compatible with the boundary conditions
         # TODO: document the additional data structures used to store k vectors
@@ -175,6 +175,7 @@ class FourierSpaceCorrelation(Correlation):
         the values specified in the input list kgrid.
         Returns a dictonary of lists of wavevectors, one entry for each element in the grid.
         """
+        _log.info('setting up the wave-vector grid')
         kvec = defaultdict(list)
         # With elongated box, we choose the smallest k0 component to
         # setup the integer grid. This must be consistent with

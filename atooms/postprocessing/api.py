@@ -98,6 +98,8 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
         cf = backend(th, kgrid=kgrid,
                      norigins=global_args['norigins'], kmin=kmin,
                      kmax=kmax, nk=nk, dk=dk, ksamples=ksamples)
+        if global_args['filter'] is not None:
+            cf = pp.Filter(cf, global_args['filter'])
         if weight_trajectory is not None:
             weight_trajectory = TrajectoryXYZ(weight_trajectory)
         cf.add_weight(trajectory=weight_trajectory,
@@ -106,7 +108,7 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
         cf.do(update=global_args['update'])
 
         ids = distinct_species(th[0].particle)
-        if len(ids) > 1:
+        if len(ids) > 1 and not global_args['no_partial']:
             cf = Partial(backend, ids, th, kgrid=kgrid,
                          norigins=global_args['norigins'],
                          kmin=kmin, kmax=kmax, nk=nk, dk=dk,
@@ -175,7 +177,7 @@ def vacf(input_file, tmax=-1.0, tmax_fraction=0.10,
 
 def fkt(input_file, tmax=-1.0, tmax_fraction=0.75,
         tsamples=60, kmin=7.0, kmax=7.0, ksamples=1, dk=0.1, nk=100,
-        kgrid=None, func='logx', *input_files,
+        kgrid=None, func='logx', fix_cm=False, *input_files,
         **global_args):
     """Total intermediate scattering function"""
     global_args = _compat(global_args)
@@ -194,11 +196,12 @@ def fkt(input_file, tmax=-1.0, tmax_fraction=0.75,
         ids = distinct_species(th[0].particle)
         if len(ids) > 1:
             Partial(pp.IntermediateScattering, ids, th, k_grid, t_grid,
-                    nk=nk, dk=dk).do(update=global_args['update'])
+                    norigins=global_args['norigins'],
+                    nk=nk, dk=dk, fix_cm=fix_cm).do(update=global_args['update'])
 
 def fskt(input_file, tmax=-1.0, tmax_fraction=0.75,
          tsamples=60, kmin=7.0, kmax=8.0, ksamples=1, dk=0.1, nk=8,
-         kgrid=None, func='logx', total=False, *input_files,
+         kgrid=None, func='logx', total=False, fix_cm=False, *input_files,
          **global_args):
     """Self intermediate scattering function"""
     global_args = _compat(global_args)
@@ -216,11 +219,12 @@ def fskt(input_file, tmax=-1.0, tmax_fraction=0.75,
             k_grid = linear_grid(kmin, kmax, ksamples)
         if total:
             pp.SelfIntermediateScattering(th, k_grid, t_grid, nk, dk=dk,
-                                          norigins=global_args['norigins']).do(update=global_args['update'])
+                                          norigins=global_args['norigins'],
+                                          fix_cm=fix_cm).do(update=global_args['update'])
         ids = distinct_species(th[0].particle)
         if len(ids) > 1:
             Partial(pp.SelfIntermediateScattering, ids, th, k_grid, t_grid, nk, dk=dk,
-                    norigins=global_args['norigins']).do(update=global_args['update'])
+                    norigins=global_args['norigins'], fix_cm=fix_cm).do(update=global_args['update'])
 
 def chi4qs(input_file, tsamples=60, a=0.3, tmax=-1.0, func='logx',
            tmax_fraction=0.75, total=False, *input_files,

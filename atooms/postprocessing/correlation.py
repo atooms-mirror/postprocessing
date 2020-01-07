@@ -193,7 +193,8 @@ class Correlation(object):
             self.trajectory = Trajectory(trj, mode='r', fmt=core.pp_trajectory_format)
         else:
             self.trajectory = trj
-        self._unfolded = Unfolded(self.trajectory, fixed_cm=fix_cm)
+        self._fix_cm = fix_cm
+        self._unfolded = None
         self.grid = grid
         self.value = []
         self.analysis = {}
@@ -339,6 +340,8 @@ class Correlation(object):
                     
         # Dump unfolded positions if requested
         if 'pos-unf' in self.phasespace:
+            if self._unfolded is None:
+                self._unfolded = Unfolded(self.trajectory, fixed_cm=self._fix_cm)
             for s in progress(self._unfolded):
                 # Apply filter if there is one
                 if len(self._cbk) > 0:
@@ -569,6 +572,10 @@ class Correlation(object):
                 analysis += '# %s: %s\n' % (x, f)
 
         # Put it all together
+        # and make sure the path to the output file exists
+        import os
+        from atooms.core.utils import mkdir
+        mkdir(os.path.dirname(self._output_file))
         with open(self._output_file, 'w') as fh:
             fh.write(comments)
             if len(analysis) > 0:

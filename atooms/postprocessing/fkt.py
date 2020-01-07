@@ -3,6 +3,7 @@
 
 """Intermediate scattering function."""
 
+import logging
 from collections import defaultdict
 
 import numpy
@@ -14,6 +15,8 @@ from .fourierspace import FourierSpaceCorrelation, expo_sphere
 from .progress import progress
 
 __all__ = ['SelfIntermediateScattering', 'IntermediateScattering']
+
+_log = logging.getLogger(__name__)
 
 
 def _write_tau(out, db):
@@ -53,17 +56,24 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
 
     #TODO: xyz files are 2 slower than hdf5 here
     def __init__(self, trajectory, kgrid=None, tgrid=None, nk=8, tsamples=60,
-                 dk=0.1, kmin=1.0, kmax=10.0, ksamples=10, norigins=-1):
+                 dk=0.1, kmin=1.0, kmax=10.0, ksamples=10, norigins=-1, fix_cm=False):
+        if norigins == '1':
+            no_offset = True
+        else:
+            no_offset = False
         FourierSpaceCorrelation.__init__(self, trajectory, [kgrid, tgrid], norigins,
-                                         nk, dk, kmin, kmax, ksamples)
-        # Setup time grid
+                                         nk, dk, kmin, kmax, ksamples, fix_cm)
         # Before setting up the time grid, we need to check periodicity over blocks
-        check_block_size(self.trajectory.steps, self.trajectory.block_size)
+        try:
+            check_block_size(self.trajectory.steps, self.trajectory.block_size)
+        except IndexError as e:
+            _log.warn('issue with trajectory blocks, the time grid may not correspond to the requested one (%s)', e.message)
+        # Setup time grid
         if tgrid is None:
             self.grid[1] = [0.0] + logx_grid(self.trajectory.timestep,
                                              self.trajectory.total_time * 0.75, tsamples)
-        self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid[1])
-
+        self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid[1], offset=not no_offset)
+        
     def _compute(self):
         # Throw everything into a big numpy array (nframes, npos, ndim)
         pos = numpy.array(self._pos_unf)
@@ -83,11 +93,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
         kmax = max(self.kvector.keys()) + self.dk
         acf = [defaultdict(float) for _ in self.kgrid]
         cnt = [defaultdict(float) for _ in self.kgrid]
-        if self.trajectory.block_size > 1:
-            skip = self.trajectory.block_size
-        else:
-            skip = self.skip
-
+        skip = self.skip
         origins = range(0, pos.shape[1], block)
         for j in progress(origins):
             x = expo_sphere(self.k0, kmax, pos[:, j:j + block, :])
@@ -134,14 +140,17 @@ class IntermediateScattering(FourierSpaceCorrelation):
     phasespace = 'pos'
 
     def __init__(self, trajectory, kgrid=None, tgrid=None, nk=100, dk=0.1, tsamples=60,
-                 kmin=1.0, kmax=10.0, ksamples=10, norigins=-1):
+                 kmin=1.0, kmax=10.0, ksamples=10, norigins=-1, fix_cm=False):
         FourierSpaceCorrelation.__init__(self, trajectory, [kgrid, tgrid], norigins,
-                                         nk, dk, kmin, kmax, ksamples)
+                                         nk, dk, kmin, kmax, ksamples, fix_cm)
         # Setup time grid
-        check_block_size(self.trajectory.steps, self.trajectory.block_size)
+        try:
+            check_block_size(self.trajectory.steps, self.trajectory.block_size)
+        except IndexError as e:
+            _log.warn('issue with trajectory blocks, the time grid may not correspond to the requested one (%s)', e.message)
         if tgrid is None:
             self.grid[1] = logx_grid(0.0, self.trajectory.total_time * 0.75, tsamples)
-        self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid[1])
+        self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid[1], offset=norigins != '1')
 
     def _tabulate_rho(self, kgrid, selection):
         """
@@ -184,7 +193,7 @@ class IntermediateScattering(FourierSpaceCorrelation):
         # Compute correlation function
         acf = [defaultdict(float) for _ in kgrid]
         cnt = [defaultdict(float) for _ in kgrid]
-        skip = self.trajectory.block_size
+        skip = self.skip
         for kk, knorm in enumerate(progress(kgrid)):
             for j in selection[kk]:
                 ik = self.kvector[knorm][j]

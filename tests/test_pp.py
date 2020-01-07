@@ -253,7 +253,7 @@ class TestFourierSpace(unittest.TestCase):
         zeros = numpy.zeros(3)
         self.assertLess(deviation(p.partial[('B', 'B')].value, ref_value), 1e-2)
         self.assertLess(deviation(p.partial[('A', 'A')].value, zeros), 1e-2)
-        
+
     @unittest.skip('Broken test')
     def test_fkt_random(self):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
@@ -291,6 +291,16 @@ class TestFourierSpace(unittest.TestCase):
         self.assertAlmostEqual(tau[0], 14.081572329287619)
         self.assertAlmostEqual(tau[1], 3.1034088042905967)
         self.assertAlmostEqual(tau[2], 0.97005294966138289)
+        
+    def test_chi4_overlap(self):
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        with trajectory.TrajectoryXYZ(f) as th:
+            tgrid = postprocessing.helpers.logx_grid(0.0, th.total_time * 0.5, 10)
+            fct = postprocessing.Susceptibility(postprocessing.SelfOverlap, th, tgrid=tgrid)
+            fct.compute()
+            ref = postprocessing.Chi4SelfOverlap(th, tgrid=tgrid)
+            ref.compute()
+            self.assertLess(deviation(numpy.array(ref.value), numpy.array(fct.value)), 0.1)
 
 if __name__ == '__main__':
     unittest.main()

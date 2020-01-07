@@ -34,7 +34,7 @@ class S4ktOverlap(FourierSpaceCorrelation):
         FourierSpaceCorrelation.__init__(self, trajectory, [tgrid, kgrid], norigins,
                                          nk, dk, kmin, kmax, ksamples)
         # Setup time grid
-        self._discrete_tgrid = setup_t_grid(self.trajectory, tgrid)
+        self._discrete_tgrid = setup_t_grid(self.trajectory, tgrid, offset=norigins != '1')
         self.a_square = a**2
 
     def _tabulate_W(self, kgrid, selection, t_off, t, skip):
