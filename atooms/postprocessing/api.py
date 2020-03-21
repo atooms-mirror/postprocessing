@@ -231,7 +231,8 @@ def fskt(input_file, tmax=-1.0, tmax_fraction=0.75, tsamples=60,
         ids = distinct_species(th[0].particle)
         if len(ids) > 1:
             Partial(backend, ids, th, k_grid, t_grid, nk, dk=dk,
-                    norigins=global_args['norigins'], fix_cm=fix_cm).do(update=global_args['update'])
+                    norigins=global_args['norigins'], fix_cm=fix_cm,
+                    lookup_mb=lookup_mb).do(update=global_args['update'])
 
 def chi4qs(input_file, tsamples=60, a=0.3, tmax=-1.0, func='logx',
            tmax_fraction=0.75, total=False, *input_files,
