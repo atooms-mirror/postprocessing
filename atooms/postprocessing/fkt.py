@@ -125,6 +125,81 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
                 _write_tau(out, self.analysis)
 
 
+class SelfIntermediateScatteringFast(SelfIntermediateScattering):
+    """
+    Self part of the intermediate scattering function (fast version)
+    
+    See the documentation of the `FourierSpaceCorrelation` base class
+    for information on the instance variables.
+    """        
+    def _compute(self):
+        try:
+            from atooms.postprocessing.fourierspace_wrap import fourierspace_module
+        except ImportError:
+            _log.error('f90 wrapper missing or not functioning')
+            raise
+
+        # Throw everything into a big numpy array (nframes, npos, ndim)
+        pos = numpy.array(self._pos_unf)
+
+        # To optimize without wasting too much memory (we have
+        # troubles here) we group particles in blocks and tabulate the
+        # exponentials over time. This is more memory consuming but we
+        # can optimize the inner loop. Even better, we could change
+        # the order in the tabulated expo array to speed things up
+        # Use 10 blocks, but do not exceed 200 particles
+        number_of_blocks = 10
+        block = int(self._pos_unf[0].shape[0] / float(number_of_blocks))
+        block = max(20, block)
+        block = min(200, block)
+        if len(self.kvector.keys()) == 0:
+            raise ValueError('could not find any wave-vectors, try increasing dk')
+        kmax = max(self.kvector.keys()) + self.dk
+        acf = [defaultdict(float) for _ in self.kgrid]
+        cnt = [defaultdict(float) for _ in self.kgrid]
+        skip = self.skip
+        origins = range(0, pos.shape[1], block)
+        for j in progress(origins):
+            x = expo_sphere(self.k0, kmax, pos[:, j:j + block, :])
+            xf = numpy.asfortranarray(x)
+            for kk, knorm in enumerate(self.kgrid):
+                for kkk in self.selection[kk]:
+                    ik = self.kvector[knorm][kkk]
+                    for off, i in self._discrete_tgrid:
+                        for i0 in range(off, x.shape[0]-i, skip):
+                            # Get the actual time difference. steps must be accessed efficiently (cached!)
+                            dt = self.trajectory.steps[i0+i] - self.trajectory.steps[i0]
+                            # Call f90 kernel
+                            # ikvec -> dtype=numpy.int32
+                            # rho = numpy.zeros(ikvec.shape[1], dtype=numpy.complex128)
+                            res = fourierspace_module.fskt_kernel(xf, i0 + 1, i, numpy.array(ik, dtype=numpy.int32) + 1)
+                            # print res
+                            #res = numpy.sum(x[i0+i, :, 0, ik[0]]*x[i0, :, 0, ik[0]].conjugate() *
+                            #               x[i0+i, :, 1, ik[1]]*x[i0, :, 1, ik[1]].conjugate() *
+                            #               x[i0+i, :, 2, ik[2]]*x[i0, :, 2, ik[2]].conjugate())
+                            # print i0, i, x.shape
+                            # print res
+                            # print
+
+                            acf[kk][dt] += res.real
+                            cnt[kk][dt] += x.shape[1]
+                            
+        tgrid = sorted(acf[0].keys())
+        self.grid[0] = self.kgrid
+        self.grid[1] = [ti*self.trajectory.timestep for ti in tgrid]
+        self.value = [[acf[kk][ti] / cnt[kk][ti] for ti in tgrid] for kk in range(len(self.grid[0]))]
+        self.value = [[self.value[kk][i] / self.value[kk][0] for i in range(len(self.value[kk]))] for kk in range(len(self.grid[0]))]
+
+    def analyze(self):
+        self.analysis['relaxation times tau'] = _extract_tau(self.grid[0], self.grid[1], self.value)
+
+    def write(self):
+        Correlation.write(self)
+        if self._output_file != '/dev/stdout':
+            with open(self._output_file + '.tau', 'w') as out:
+                _write_tau(out, self.analysis)
+                
+
 class IntermediateScattering(FourierSpaceCorrelation):
     """
     Coherent intermediate scattering function.

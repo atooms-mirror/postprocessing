@@ -109,7 +109,22 @@ contains
     end do
   end subroutine sk_bare
 
-
+  ! This is the original python code
+  !   acf[kk][dt] += numpy.sum(x[i0+i, :, 0, ik[0]]*x[i0, :, 0, ik[0]].conjugate() *
+  !                            x[i0+i, :, 1, ik[1]]*x[i0, :, 1, ik[1]].conjugate() *
+  !                            x[i0+i, :, 2, ik[2]]*x[i0, :, 2, ik[2]].conjugate()).real
+  ! So we pass expo (x) and ik and do the sum
+  ! We also pass i0 and i do avoid slicing in numpy
+  function fskt_kernel(expo,origin,delta,ik) result (output)
+    complex(8),intent(in)       :: expo(:,:,:,:)  ! (nsteps, npart, ndim, kvec)
+    integer, intent(in)         :: origin,delta,ik(:)  ! (ndim)
+    complex(8)                  :: output
+    !print*, origin, origin+delta, size(expo,1), size(expo,2), size(expo,3), size(expo,4)
+    output = SUM(expo(origin+delta,:,1,ik(1)) * CONJG(expo(origin,:,1,ik(1))) * &
+                 expo(origin+delta,:,2,ik(2)) * CONJG(expo(origin,:,2,ik(2))) * &
+                 expo(origin+delta,:,3,ik(3)) * CONJG(expo(origin,:,3,ik(3))))    
+  end function fskt_kernel
+  
   ! subroutine fskt(position,k0,kmax,ikvec,ikbin,fkt)
   !   real(8),intent(in)        :: position(:,:,:)  ! (ndim, npart, nsteps)
   !   real(8),intent(in)        :: k0
