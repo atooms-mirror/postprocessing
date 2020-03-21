@@ -35,6 +35,7 @@ def expo_sphere(k0, kmax, pos):
     # This leaves many unused vectors in the other directions, which
     # could be dropped using different nkmax for x, y, z
     nk_max = 1 + int(kmax / min(k0))
+    # The shape of expo is nframes, N, ndim, 2*nk+1
     expo = numpy.ndarray((len(pos), ) + pos[0].shape + (2*nk_max+1, ), numpy.complex)
     expo[..., nk_max] = numpy.complex(1.0, 0.0)
     # First fill positive k
