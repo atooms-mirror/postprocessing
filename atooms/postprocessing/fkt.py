@@ -14,7 +14,7 @@ from .correlation import Correlation
 from .fourierspace import FourierSpaceCorrelation, expo_sphere
 from .progress import progress
 
-__all__ = ['SelfIntermediateScattering', 'IntermediateScattering']
+__all__ = ['SelfIntermediateScattering', 'SelfIntermediateScatteringFast', 'IntermediateScattering']
 
 _log = logging.getLogger(__name__)
 
