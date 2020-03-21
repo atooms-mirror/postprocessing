@@ -55,12 +55,16 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
     phasespace = 'pos-unf'
 
     #TODO: xyz files are 2 slower than hdf5 here
-    def __init__(self, trajectory, kgrid=None, tgrid=None, nk=8, tsamples=60,
-                 dk=0.1, kmin=1.0, kmax=10.0, ksamples=10, norigins=-1, fix_cm=False):
+    def __init__(self, trajectory, kgrid=None, tgrid=None, nk=8,
+                 tsamples=60, dk=0.1, kmin=1.0, kmax=10.0,
+                 ksamples=10, norigins=-1, fix_cm=False,
+                 lookup_mb=64.0):
         if norigins == '1':
             no_offset = True
         else:
             no_offset = False
+        self.lookup_mb = lookup_mb
+        """Memory in Mb allocated for exponentials tabulation"""
         FourierSpaceCorrelation.__init__(self, trajectory, [kgrid, tgrid], norigins,
                                          nk, dk, kmin, kmax, ksamples, fix_cm)
         # Before setting up the time grid, we need to check periodicity over blocks
@@ -145,22 +149,27 @@ class SelfIntermediateScatteringFast(SelfIntermediateScattering):
         # To optimize without wasting too much memory (we have
         # troubles here) we group particles in blocks and tabulate the
         # exponentials over time. This is more memory consuming but we
-        # can optimize the inner loop. Even better, we could change
-        # the order in the tabulated expo array to speed things up
-        # Use 10 blocks, but do not exceed 200 particles
-        number_of_blocks = 10
+        # can optimize the inner loop. The esitmated amuount of
+        # allocated memory in Mb for the expo array is
+        # self.lookup_mb. Note that the actual memory need scales
+        # with number of k vectors, system size and number of frames.
+        kmax = max(self.kvector.keys()) + self.dk
+        kvec_size = 2*(1 + int(kmax / min(self.k0))) + 1
+        pos_size = numpy.product(pos.shape)
+        target_size = self.lookup_mb * 1e6 / 16.  # 16 bytes for a (double) complex        
+        number_of_blocks = int(pos_size * kvec_size / target_size)
+        number_of_blocks = max(1, number_of_blocks)
         block = int(self._pos_unf[0].shape[0] / float(number_of_blocks))
-        block = max(20, block)
-        block = min(200, block)
+        block = max(1, block)
+        block = min(pos.shape[1], block)
         if len(self.kvector.keys()) == 0:
             raise ValueError('could not find any wave-vectors, try increasing dk')
-        kmax = max(self.kvector.keys()) + self.dk
         acf = [defaultdict(float) for _ in self.kgrid]
         cnt = [defaultdict(float) for _ in self.kgrid]
         skip = self.skip
         origins = range(0, pos.shape[1], block)
         for j in progress(origins):
-            x = expo_sphere(self.k0, kmax, pos[:, j:j + block, :])
+            x = expo_sphere(self.k0, kmax, pos[:, j:j + block, :])            
             xf = numpy.asfortranarray(x)
             for kk, knorm in enumerate(self.kgrid):
                 for kkk in self.selection[kk]:
@@ -170,17 +179,7 @@ class SelfIntermediateScatteringFast(SelfIntermediateScattering):
                             # Get the actual time difference. steps must be accessed efficiently (cached!)
                             dt = self.trajectory.steps[i0+i] - self.trajectory.steps[i0]
                             # Call f90 kernel
-                            # ikvec -> dtype=numpy.int32
-                            # rho = numpy.zeros(ikvec.shape[1], dtype=numpy.complex128)
-                            res = fourierspace_module.fskt_kernel(xf, i0 + 1, i, numpy.array(ik, dtype=numpy.int32) + 1)
-                            # print res
-                            #res = numpy.sum(x[i0+i, :, 0, ik[0]]*x[i0, :, 0, ik[0]].conjugate() *
-                            #               x[i0+i, :, 1, ik[1]]*x[i0, :, 1, ik[1]].conjugate() *
-                            #               x[i0+i, :, 2, ik[2]]*x[i0, :, 2, ik[2]].conjugate())
-                            # print i0, i, x.shape
-                            # print res
-                            # print
-
+                            res = fourierspace_module.fskt_kernel(xf, i0+1, i0+1+i, numpy.array(ik, dtype=numpy.int32)+1)
                             acf[kk][dt] += res.real
                             cnt[kk][dt] += x.shape[1]
                             

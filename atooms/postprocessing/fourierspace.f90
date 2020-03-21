@@ -115,14 +115,18 @@ contains
   !                            x[i0+i, :, 2, ik[2]]*x[i0, :, 2, ik[2]].conjugate()).real
   ! So we pass expo (x) and ik and do the sum
   ! We also pass i0 and i do avoid slicing in numpy
-  function fskt_kernel(expo,origin,delta,ik) result (output)
+  ! This kernel vectorizes, while this is not the case for the implicit loop
+  function fskt_kernel(expo,t1,t2,ik) result (output)
     complex(8),intent(in)       :: expo(:,:,:,:)  ! (nsteps, npart, ndim, kvec)
-    integer, intent(in)         :: origin,delta,ik(:)  ! (ndim)
-    complex(8)                  :: output
-    !print*, origin, origin+delta, size(expo,1), size(expo,2), size(expo,3), size(expo,4)
-    output = SUM(expo(origin+delta,:,1,ik(1)) * CONJG(expo(origin,:,1,ik(1))) * &
-                 expo(origin+delta,:,2,ik(2)) * CONJG(expo(origin,:,2,ik(2))) * &
-                 expo(origin+delta,:,3,ik(3)) * CONJG(expo(origin,:,3,ik(3))))    
+    integer, intent(in)         :: t1,t2,ik(:)  ! (ndim)
+    complex(8)                  :: output, tmp(size(expo,2))
+    integer :: i
+    do i = 1,size(expo,2)
+       tmp(i) = expo(t1,i,1,ik(1)) * CONJG(expo(t2,i,1,ik(1))) * &
+                expo(t1,i,2,ik(2)) * CONJG(expo(t2,i,2,ik(2))) * &
+                expo(t1,i,3,ik(3)) * CONJG(expo(t2,i,3,ik(3)))
+    end do
+    output = SUM(tmp)
   end function fskt_kernel
   
   ! subroutine fskt(position,k0,kmax,ikvec,ikbin,fkt)

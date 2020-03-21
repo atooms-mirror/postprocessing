@@ -202,10 +202,10 @@ def fkt(input_file, tmax=-1.0, tmax_fraction=0.75,
                     norigins=global_args['norigins'],
                     nk=nk, dk=dk, fix_cm=fix_cm).do(update=global_args['update'])
 
-def fskt(input_file, tmax=-1.0, tmax_fraction=0.75,
-         tsamples=60, kmin=7.0, kmax=8.0, ksamples=1, dk=0.1, nk=8,
-         kgrid=None, func='logx', total=False, fix_cm=False, *input_files,
-         **global_args):
+def fskt(input_file, tmax=-1.0, tmax_fraction=0.75, tsamples=60,
+         kmin=7.0, kmax=8.0, ksamples=1, dk=0.1, nk=8, kgrid=None,
+         func='logx', total=False, fix_cm=False, lookup_mb=64.0,
+         *input_files, **global_args):
     """Self intermediate scattering function"""
     global_args = _compat(global_args)
     func = _func_db[func]
@@ -226,8 +226,8 @@ def fskt(input_file, tmax=-1.0, tmax_fraction=0.75,
             k_grid = linear_grid(kmin, kmax, ksamples)
         if total:
             backend(th, k_grid, t_grid, nk, dk=dk,
-                    norigins=global_args['norigins'],
-                    fix_cm=fix_cm).do(update=global_args['update'])
+                    norigins=global_args['norigins'], fix_cm=fix_cm,
+                    lookup_mb=lookup_mb).do(update=global_args['update'])
         ids = distinct_species(th[0].particle)
         if len(ids) > 1:
             Partial(backend, ids, th, k_grid, t_grid, nk, dk=dk,
