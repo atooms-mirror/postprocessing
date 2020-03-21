@@ -230,7 +230,7 @@ def fskt(input_file, tmax=-1.0, tmax_fraction=0.75,
                     fix_cm=fix_cm).do(update=global_args['update'])
         ids = distinct_species(th[0].particle)
         if len(ids) > 1:
-            Partial(pp.SelfIntermediateScattering, ids, th, k_grid, t_grid, nk, dk=dk,
+            Partial(backend, ids, th, k_grid, t_grid, nk, dk=dk,
                     norigins=global_args['norigins'], fix_cm=fix_cm).do(update=global_args['update'])
 
 def chi4qs(input_file, tsamples=60, a=0.3, tmax=-1.0, func='logx',
