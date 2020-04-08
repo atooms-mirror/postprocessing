@@ -178,7 +178,16 @@ contains
        do j=i+1,size(positions,2)
           k = k+1
           dist(:) = positions(:,j) - pos(:)
-          call pbch(dist,box,hbox)
+          !dist(1) = positions(1,j) - pos(1)
+          !dist(2) = positions(2,j) - pos(2)
+          !dist(3) = positions(3,j) - pos(3)
+          !if (abs(dist(1)) > hbox(1)) dist(1) = dist(1) - sign(box(1), dist(1))
+          !if (abs(dist(2)) > hbox(2)) dist(2) = dist(2) - sign(box(2), dist(2))
+          !if (abs(dist(3)) > hbox(3)) dist(3) = dist(3) - sign(box(3), dist(3))
+          where (abs(dist) > hbox)
+             dist = dist - sign(box,dist)
+          end where
+          !distances(k) = sqrt(dist(1)**2 + dist(2)**2 + dist(3)**2)
           distances(k) = sqrt(sum(dist**2))
        end do
     end do
@@ -198,8 +207,17 @@ contains
        pos = positions1(:,i)
        do j=1,size(positions2,2)
           k = k+1
+          !dist(1) = positions1(1,j) - pos(1)
+          !dist(2) = positions1(2,j) - pos(2)
+          !dist(3) = positions1(3,j) - pos(3)
           dist(:) = positions2(:,j) - pos(:)
-          call pbch(dist,box,hbox)
+          !if (abs(dist(1)) > hbox(1)) dist(1) = dist(1) - sign(box(1), dist(1))
+          !if (abs(dist(2)) > hbox(2)) dist(2) = dist(2) - sign(box(2), dist(2))
+          !if (abs(dist(3)) > hbox(3)) dist(3) = dist(3) - sign(box(3), dist(3))
+          where (abs(dist) > hbox)
+             dist = dist - sign(box,dist)
+          end where
+          !distances(k) = sqrt(dist(1)**2 + dist(2)**2 + dist(3)**2)
           distances(k) = sqrt(sum(dist**2))
        end do
     end do
