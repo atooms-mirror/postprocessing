@@ -11,7 +11,7 @@ from .helpers import linear_grid
 from .correlation import Correlation
 from .progress import progress
 
-__all__ = ['RadialDistributionFunction']
+__all__ = ['RadialDistributionFunction', 'RadialDistributionFunctionFast']
 
 
 def gr_kernel(x, y, L, *args):
@@ -29,6 +29,41 @@ def gr_kernel_square(x, y, L, *args):
     r = r - numpy.rint(r/L) * L
     return numpy.sum(r**2, axis=1)
 
+
+def gr_kernel_f90_self(x, L, hL, bins):
+    """
+    """
+    from atooms.postprocessing.realspace_wrap import compute
+    x = x.transpose()
+    hist, bins = numpy.histogram([], bins)
+    idx = numpy.array(range(1, x.shape[1]+1))
+    distances = numpy.ndarray(len(idx)*(x.shape[1]-1)//2)
+    compute.gr_self(idx, x, L, hL, distances)
+    hist, bins = numpy.histogram(distances, bins)
+    # # Do the calculation in batches to optimize
+    # bl = max(1, int(1e5 / len(y)))
+    # for ib in range(0, len(y)-1, bl):
+    #     fxy = []
+    #     # batch must never exceed len(y)-1
+    #     for i in range(ib, min(ib+bl, len(y)-1)):
+    #         for value in f(x[i+1:], y[i], L):
+    #             fxy.append(value)
+    #    hist_tmp, bins = numpy.histogram(fxy, bins)
+    #    hist += hist_tmp
+    return hist
+
+def gr_kernel_f90_cross(x, y, L, hL, bins):
+    """
+    """
+    from atooms.postprocessing.realspace_wrap import compute
+    x = x.transpose()
+    y = y.transpose()
+    hist, bins = numpy.histogram([], bins)
+    idx = numpy.array(range(1, x.shape[1]+1))
+    distances = numpy.ndarray(len(idx)*x.shape[1])
+    compute.gr_self(idx, x, L, hL, distances)
+    hist, bins = numpy.histogram(distances, bins)
+    return hist
 
 def pairs_newton_hist(f, x, y, L, bins):
     """
@@ -145,3 +180,82 @@ class RadialDistributionFunction(Correlation):
         gr = numpy.average(gr_all, axis=0)
         self.grid = (r[:-1] + r[1:]) / 2.0
         self.value = gr / norm
+
+
+class RadialDistributionFunctionFast(RadialDistributionFunction):
+    """
+    Radial distribution function using f90 kernel.
+
+    The correlation function g(r) is computed over a grid of distances
+    `rgrid`. If the latter is `None`, the grid is linear from 0 to L/2
+    with a spacing of `dr`. Here, L is the side of the simulation cell
+    along the x axis at the first step.
+
+    Additional parameters:
+    ----------------------
+
+    - norigins: controls the number of trajectory frames to compute
+      the time average
+    """
+
+    def _compute(self):
+        from atooms.postprocessing.realspace_wrap import compute
+
+        ncfg = len(self.trajectory)
+        # Assume grandcanonical trajectory for generality.
+        # Note that testing if the trajectory is grandcanonical or
+        # semigrandcanonical is useless when applying filters.  
+        # N_0, N_1 = len(self._pos_0[0]), len(self._pos_1[0])
+        # N_0 = numpy.average([len(x) for x in self._pos_0])
+        # N_1 = numpy.average([len(x) for x in self._pos_1])
+
+        N_0, N_1 = [], []
+        gr_all = []
+        _, bins = numpy.histogram([], bins=self.grid)
+        origins = range(0, ncfg, self.skip)
+        for i in progress(origins):
+            self._side = self.trajectory.read(i).cell.side
+            if len(self._pos_0[i]) == 0 or len(self._pos_1[i]) == 0:
+                continue
+            hist, bins = numpy.histogram([], bins)
+            if self._pos_0 is self._pos_1:
+                x = self._pos_0[i].transpose()
+                idx = numpy.array(range(1, x.shape[1]+1))
+                N_0.append(len(idx))
+                N_1.append(x.shape[1])
+                distances = numpy.ndarray(len(idx)*x.shape[1])
+                k = compute.gr_self(idx, x, self._side, self._side/2, distances)
+                gr, bins = numpy.histogram(distances[:k], bins)                
+            else:
+                x = self._pos_0[i].transpose()
+                y = self._pos_1[i].transpose()
+                idx = numpy.array(range(1, x.shape[1]+1))
+                N_0.append(len(idx))
+                N_1.append(y.shape[1])
+                distances = numpy.ndarray(len(idx)*y.shape[1])
+                k = compute.gr_distinct(idx, x, y, self._side, self._side/2, distances)
+                gr, bins = numpy.histogram(distances[:k], bins)
+
+            gr_all.append(gr)
+
+        # Normalization
+        r = bins
+        N_0 = numpy.average(N_0)
+        N_1 = numpy.average(N_1)
+        if self._ndim == 2:
+            vol = math.pi * (r[1:]**2 - r[:-1]**2)
+        elif self._ndim == 3:
+            vol = 4 * math.pi / 3.0 * (r[1:]**3 - r[:-1]**3)
+        else:
+            from math import gamma
+            n2 = int(float(self._ndim) / 2)
+            vol = math.pi**n2 * (r[1:]**self._ndim-r[:-1]**self._ndim) / gamma(n2+1)
+        rho = N_1 / self._volume
+        if self._pos_0 is self._pos_1:
+            norm = rho * vol * N_0 * 0.5  # use Newton III
+        else:
+            norm = rho * vol * N_0
+        gr = numpy.average(gr_all, axis=0)
+        self.grid = (r[:-1] + r[1:]) / 2.0
+        self.value = gr / norm
+        

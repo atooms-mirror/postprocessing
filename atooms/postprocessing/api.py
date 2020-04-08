@@ -68,18 +68,23 @@ def _compat(args):
 def gr(input_file, dr=0.04, grandcanonical=False, ndim=-1, *input_files, **global_args):
     """Radial distribution function"""
     global_args = _compat(global_args)
+    if global_args['fast']:
+        backend = pp.RadialDistributionFunctionFast
+    else:
+        backend = pp.RadialDistributionFunction
+        
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         th._grandcanonical = grandcanonical
-        cf = pp.RadialDistributionFunction(th, dr=dr,
-                                           norigins=global_args['norigins'],
-                                           ndim=ndim)
+        cf = backend(th, dr=dr,
+                     norigins=global_args['norigins'],
+                     ndim=ndim)
         if global_args['filter'] is not None:
             cf = pp.Filter(cf, global_args['filter'])
         cf.do(update=global_args['update'])
 
         ids = distinct_species(th[0].particle)
         if len(ids) > 1 and not global_args['no_partial']:
-            cf = Partial(pp.RadialDistributionFunction, ids, th,
+            cf = Partial(backend, ids, th,
                          dr=dr, norigins=global_args['norigins'], ndim=ndim)
             cf.do(update=global_args['update'])
 

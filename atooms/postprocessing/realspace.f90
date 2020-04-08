@@ -25,6 +25,14 @@ contains
       end where
   end subroutine pbc
 
+  subroutine pbch(dist,boxDim,hbox)
+    real(8), intent(inout)  :: dist(:)
+    real(8), intent(in)     :: boxDim(:), hbox(:)
+    where (abs(dist) > hbox)
+       dist = dist - sign(boxDim,dist)
+    end where
+  end subroutine pbch
+
   subroutine bond_angle(center,positions,neighbors,box,dtheta,hist)
     ! Parameters
     real(8), intent(in)       :: center(:)
@@ -155,5 +163,46 @@ contains
     end do
   end subroutine neighbors
 
+  subroutine gr_self(pidx, positions, box, hbox, distances, k)
+    integer(8), intent(in)    :: pidx(:)
+    integer(8), intent(out) :: k
+    real(8), intent(inout)    :: distances(:)
+    real(8), intent(in)       :: positions(:,:)
+    real(8), intent(in)       :: box(:), hbox(size(box))
+    real(8)    :: dist(size(box)), dist_sq, pos(size(box))
+    integer(8) :: i, j, ii
+    k = 0
+    do ii=1,size(pidx)
+       i = pidx(ii)
+       pos = positions(:,i)
+       do j=i+1,size(positions,2)
+          k = k+1
+          dist(:) = positions(:,j) - pos(:)
+          call pbch(dist,box,hbox)
+          distances(k) = sqrt(sum(dist**2))
+       end do
+    end do
+  end subroutine gr_self
 
+  subroutine gr_distinct(pidx, positions1, positions2, box, hbox, distances, k)
+    integer(8), intent(in)    :: pidx(:)
+    integer(8), intent(out) :: k
+    real(8), intent(inout)    :: distances(:)
+    real(8), intent(in)       :: positions1(:,:), positions2(:,:)
+    real(8), intent(in)       :: box(:), hbox(size(box))
+    real(8)    :: dist(size(box)), dist_sq, pos(size(box))
+    integer(8) :: i, j, ii
+    k = 0
+    do ii=1,size(pidx)
+       i = pidx(ii)
+       pos = positions1(:,i)
+       do j=1,size(positions2,2)
+          k = k+1
+          dist(:) = positions2(:,j) - pos(:)
+          call pbch(dist,box,hbox)
+          distances(k) = sqrt(sum(dist**2))
+       end do
+    end do
+  end subroutine gr_distinct
+  
 end module compute
