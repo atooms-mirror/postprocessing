@@ -7,17 +7,8 @@ import glob
 import setuptools
 from numpy.distutils.core import setup, Extension
 
-
-# Get the long description from README.md and try to convert it to
-# reST. Adapted from https://bons.ai/blog/markdown-for-pypi
-try:
-    from pypandoc import convert
-    readme = convert('README.md', 'rst')
-except (ImportError, OSError):
-    try:
-        readme = open('README.md', 'r').read()
-    except:
-        readme = ''
+with open('README.md', 'r') as fh:
+    readme = fh.read()
 
 with open('atooms/postprocessing/_version.py') as f:
     exec(f.read())
