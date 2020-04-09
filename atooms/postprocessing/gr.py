@@ -11,7 +11,9 @@ from .helpers import linear_grid
 from .correlation import Correlation
 from .progress import progress
 
-__all__ = ['RadialDistributionFunction', 'RadialDistributionFunctionFast']
+__all__ = ['RadialDistributionFunction',
+           'RadialDistributionFunctionLegacy',
+           'RadialDistributionFunctionFast']
 
 
 def gr_kernel(x, y, L, *args):
@@ -28,42 +30,6 @@ def gr_kernel_square(x, y, L, *args):
     r = x-y
     r = r - numpy.rint(r/L) * L
     return numpy.sum(r**2, axis=1)
-
-
-def gr_kernel_f90_self(x, L, hL, bins):
-    """
-    """
-    from atooms.postprocessing.realspace_wrap import compute
-    x = x.transpose()
-    hist, bins = numpy.histogram([], bins)
-    idx = numpy.array(range(1, x.shape[1]+1))
-    distances = numpy.ndarray(len(idx)*(x.shape[1]-1)//2)
-    compute.gr_self(idx, x, L, hL, distances)
-    hist, bins = numpy.histogram(distances, bins)
-    # # Do the calculation in batches to optimize
-    # bl = max(1, int(1e5 / len(y)))
-    # for ib in range(0, len(y)-1, bl):
-    #     fxy = []
-    #     # batch must never exceed len(y)-1
-    #     for i in range(ib, min(ib+bl, len(y)-1)):
-    #         for value in f(x[i+1:], y[i], L):
-    #             fxy.append(value)
-    #    hist_tmp, bins = numpy.histogram(fxy, bins)
-    #    hist += hist_tmp
-    return hist
-
-def gr_kernel_f90_cross(x, y, L, hL, bins):
-    """
-    """
-    from atooms.postprocessing.realspace_wrap import compute
-    x = x.transpose()
-    y = y.transpose()
-    hist, bins = numpy.histogram([], bins)
-    idx = numpy.array(range(1, x.shape[1]+1))
-    distances = numpy.ndarray(len(idx)*x.shape[1])
-    compute.gr_self(idx, x, L, hL, distances)
-    hist, bins = numpy.histogram(distances, bins)
-    return hist
 
 def pairs_newton_hist(f, x, y, L, bins):
     """
@@ -97,7 +63,7 @@ def pairs_hist(f, x, y, L, bins):
     return hist
 
 
-class RadialDistributionFunction(Correlation):
+class RadialDistributionFunctionLegacy(Correlation):
     """
     Radial distribution function.
 
@@ -182,7 +148,7 @@ class RadialDistributionFunction(Correlation):
         self.value = gr / norm
 
 
-class RadialDistributionFunctionFast(RadialDistributionFunction):
+class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
     """
     Radial distribution function using f90 kernel.
 
@@ -205,10 +171,6 @@ class RadialDistributionFunctionFast(RadialDistributionFunction):
         # Assume grandcanonical trajectory for generality.
         # Note that testing if the trajectory is grandcanonical or
         # semigrandcanonical is useless when applying filters.  
-        # N_0, N_1 = len(self._pos_0[0]), len(self._pos_1[0])
-        # N_0 = numpy.average([len(x) for x in self._pos_0])
-        # N_1 = numpy.average([len(x) for x in self._pos_1])
-
         N_0, N_1 = [], []
         gr_all = []
         _, bins = numpy.histogram([], bins=self.grid)
@@ -258,4 +220,6 @@ class RadialDistributionFunctionFast(RadialDistributionFunction):
         gr = numpy.average(gr_all, axis=0)
         self.grid = (r[:-1] + r[1:]) / 2.0
         self.value = gr / norm
-        
+
+# Defaults to fast 
+RadialDistributionFunction = RadialDistributionFunctionFast

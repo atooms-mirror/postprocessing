@@ -50,6 +50,7 @@ def _compat(args):
         'species_layout': None,
         'norigins': None,
         'fast': False,
+        'legacy': False,
         'no_cache': False,
         'update': False,
         'filter': None,
@@ -68,8 +69,8 @@ def _compat(args):
 def gr(input_file, dr=0.04, grandcanonical=False, ndim=-1, *input_files, **global_args):
     """Radial distribution function"""
     global_args = _compat(global_args)
-    if global_args['fast']:
-        backend = pp.RadialDistributionFunctionFast
+    if global_args['legacy']:
+        backend = pp.RadialDistributionFunctionLegacy
     else:
         backend = pp.RadialDistributionFunction
         
@@ -97,9 +98,9 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
     from atooms.trajectory import TrajectoryXYZ
     global_args = _compat(global_args)
     if global_args['fast']:
-        backend = pp.StructureFactorOpti
+        backend = pp.StructureFactorFast
     else:
-        backend = pp.StructureFactor
+        backend = pp.StructureFactorLegacy
     if kgrid is not None:
         kgrid = [float(_) for _ in kgrid.split(',')]
     for th in _get_trajectories([input_file] + list(input_files), global_args):
@@ -214,8 +215,8 @@ def fskt(input_file, tmax=-1.0, tmax_fraction=0.75, tsamples=60,
     """Self intermediate scattering function"""
     global_args = _compat(global_args)
     func = _func_db[func]
-    if global_args['fast']:
-        backend = pp.SelfIntermediateScatteringFast
+    if global_args['legacy']:
+        backend = pp.SelfIntermediateScatteringLegacy
     else:
         backend = pp.SelfIntermediateScattering
     for th in _get_trajectories([input_file] + list(input_files), global_args):

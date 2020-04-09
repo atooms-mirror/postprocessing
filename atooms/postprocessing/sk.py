@@ -9,12 +9,12 @@ import numpy
 from .progress import progress
 from .fourierspace import FourierSpaceCorrelation, expo_sphere
 
-__all__ = ['StructureFactor', 'StructureFactorOptimized']
+__all__ = ['StructureFactor', 'StructureFactorLegacy', 'StructureFactorOptimized']
 
 _log = logging.getLogger(__name__)
 
 
-class StructureFactor(FourierSpaceCorrelation):
+class StructureFactorLegacy(FourierSpaceCorrelation):
     """
     Structure factor.
 
@@ -115,7 +115,7 @@ class StructureFactor(FourierSpaceCorrelation):
             self.value_nonorm.append(value)
 
 
-class StructureFactorOptimized(StructureFactor):
+class StructureFactorFast(StructureFactorLegacy):
     """
     Optimized structure factor.
 
@@ -188,3 +188,7 @@ class StructureFactorOptimized(StructureFactor):
             self.value_nonorm.append(value)
 
 
+# Defaults to legacy
+StructureFactor = StructureFactorLegacy
+# Backward compatible alias
+StructureFactorOptimized = StructureFactorFast
