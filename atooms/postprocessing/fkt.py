@@ -14,7 +14,9 @@ from .correlation import Correlation
 from .fourierspace import FourierSpaceCorrelation, expo_sphere
 from .progress import progress
 
-__all__ = ['SelfIntermediateScattering', 'SelfIntermediateScatteringFast', 'IntermediateScattering']
+__all__ = ['SelfIntermediateScattering',
+           'SelfIntermediateScatteringLegacy', 'SelfIntermediateScatteringFast',
+           'IntermediateScattering']
 
 _log = logging.getLogger(__name__)
 
@@ -41,7 +43,7 @@ def _extract_tau(k, t, f):
     return tau
 
 
-class SelfIntermediateScattering(FourierSpaceCorrelation):
+class SelfIntermediateScatteringLegacy(FourierSpaceCorrelation):
     """
     Self part of the intermediate scattering function.
 
@@ -52,7 +54,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
     symbol = 'fskt'
     short_name = 'F_s(k,t)'
     long_name = 'self intermediate scattering function'
-    phasespace = 'pos-unf'
+    phasespace = 'pos'
 
     #TODO: xyz files are 2 slower than hdf5 here
     def __init__(self, trajectory, kgrid=None, tgrid=None, nk=8,
@@ -80,7 +82,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
         
     def _compute(self):
         # Throw everything into a big numpy array (nframes, npos, ndim)
-        pos = numpy.array(self._pos_unf)
+        pos = numpy.array(self._pos)
 
         # To optimize without wasting too much memory (we have
         # troubles here) we group particles in blocks and tabulate the
@@ -89,7 +91,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
         # the order in the tabulated expo array to speed things up
         # Use 10 blocks, but do not exceed 200 particles
         number_of_blocks = 10
-        block = int(self._pos_unf[0].shape[0] / float(number_of_blocks))
+        block = int(pos[0].shape[0] / float(number_of_blocks))
         block = max(20, block)
         block = min(200, block)
         if len(self.kvector.keys()) == 0:
@@ -129,7 +131,7 @@ class SelfIntermediateScattering(FourierSpaceCorrelation):
                 _write_tau(out, self.analysis)
 
 
-class SelfIntermediateScatteringFast(SelfIntermediateScattering):
+class SelfIntermediateScatteringFast(SelfIntermediateScatteringLegacy):
     """
     Self part of the intermediate scattering function (fast version)
     
@@ -144,7 +146,7 @@ class SelfIntermediateScatteringFast(SelfIntermediateScattering):
             raise
 
         # Throw everything into a big numpy array (nframes, npos, ndim)
-        pos = numpy.array(self._pos_unf)
+        pos = numpy.array(self._pos)
 
         # To optimize without wasting too much memory (we have
         # troubles here) we group particles in blocks and tabulate the
@@ -159,7 +161,7 @@ class SelfIntermediateScatteringFast(SelfIntermediateScattering):
         target_size = self.lookup_mb * 1e6 / 16.  # 16 bytes for a (double) complex        
         number_of_blocks = int(pos_size * kvec_size / target_size)
         number_of_blocks = max(1, number_of_blocks)
-        block = int(self._pos_unf[0].shape[0] / float(number_of_blocks))
+        block = int(pos[0].shape[0] / float(number_of_blocks))
         block = max(1, block)
         block = min(pos.shape[1], block)
         if len(self.kvector.keys()) == 0:
@@ -189,15 +191,9 @@ class SelfIntermediateScatteringFast(SelfIntermediateScattering):
         self.value = [[acf[kk][ti] / cnt[kk][ti] for ti in tgrid] for kk in range(len(self.grid[0]))]
         self.value = [[self.value[kk][i] / self.value[kk][0] for i in range(len(self.value[kk]))] for kk in range(len(self.grid[0]))]
 
-    def analyze(self):
-        self.analysis['relaxation times tau'] = _extract_tau(self.grid[0], self.grid[1], self.value)
 
-    def write(self):
-        Correlation.write(self)
-        if self._output_file != '/dev/stdout':
-            with open(self._output_file + '.tau', 'w') as out:
-                _write_tau(out, self.analysis)
-                
+# Defaults to fast
+SelfIntermediateScattering = SelfIntermediateScatteringFast
 
 class IntermediateScattering(FourierSpaceCorrelation):
     """
