@@ -1,31 +1,38 @@
 # This file is part of atooms
-# Copyright 2010-2014, Daniele Coslovich
+# Copyright 2010-2018, Daniele Coslovich
 
 """Base correlation function."""
 
-import sys
 import os
-import copy
-import numpy
-import math
-import random
-import warnings
 import logging
 from collections import defaultdict
+
+import numpy
+from atooms.trajectory import Trajectory
+from atooms.trajectory.decorators import Unfolded
+from atooms.trajectory.decorators import change_species
+from atooms.system.particle import distinct_species
+from atooms.core.utils import Timer
 try:
     from medepy.metadata import dump as _dump
 except ImportError:
     from .helpers import _dump
-from .core import __version__
-from atooms.trajectory.decorators import Unfolded
-from atooms.core.utils import Timer
 
+from . import core
+from .helpers import adjust_skip
+from .progress import progress
 
-log = logging.getLogger(__name__)
+__all__ = ['acf', 'gcf', 'gcf_offset', 'Correlation']
+
+_log = logging.getLogger(__name__)
+#pp_output_path = '{trajectory.filename}.pp.{symbol}.{tag}'
+#pp_trajectory_format = None
 
 
 def acf(grid, skip, t, x):
-    """Auto correlation function.
+    """
+    Auto correlation function.
+
     Calculate the correlation between time t(i0) and t(i0+i)
     for all possible pairs (i0,i) provided by grid.
     """
@@ -41,77 +48,86 @@ def acf(grid, skip, t, x):
 
     # Return the ACF with the time differences sorted
     dt = sorted(cf.keys())
-    return dt, [cf[t] / cnt[t] for t in dt], cnt
+    return dt, [cf[ti] / cnt[ti] for ti in dt], cnt
+
 
 def gcf(f, grid, skip, t, x):
-    """Generalized correlation function.
+    """
+    Generalized correlation function.
+
     Pass a function to apply to the data.
     Exemple: mean square displacement.
     """
     # Calculate the correlation between time t(i0) and t(i0+i)
     # for all possible pairs (i0,i) provided by grid
-    acf = defaultdict(float)
+    cf = defaultdict(float)
     cnt = defaultdict(int)
     for i in grid:
         # Note: len(x) gives x.shape[0]
-        for i0 in range(0, len(x)-i-1, skip):
+        for i0 in progress(range(0, len(x)-i-1, skip)):
             # Get the actual time difference
             dt = t[i0+i] - t[i0]
-            acf[dt] += f(x[i0+i], x[i0])
+            cf[dt] += f(x[i0+i], x[i0])
             cnt[dt] += 1
 
     # Return the ACF with the time differences sorted
-    dt = sorted(acf.keys())
-    return dt, [acf[t] / cnt[t] for t in dt], [cnt[t] for t in dt]
+    dt = sorted(cf.keys())
+    return dt, [cf[ti] / cnt[ti] for ti in dt], [cnt[ti] for ti in dt]
+
 
 def gcf_offset(f, grid, skip, t, x, mask=None):
     """
     Generalized correlation function
 
     Pass a function `f` to apply to the data `x`.
-
-    Optionnally, filter the entries at time `t[i0]` according to `mask[i0]`.
+    Optionally, filter the entries at time `t[i0]` according to `mask[i0]`.
 
     Exemple: mean square displacement.
     """
     # Calculate the correlation between time t(i0) and t(i0+i)
     # for all possible pairs (i0,i) provided by grid
     if mask is None:
-        acf = defaultdict(float)
+        cf = defaultdict(float)
         cnt = defaultdict(int)
         # Standard calculation
-        for off, i in grid:
-            for i0 in range(off, len(x)-i-skip, skip):
+        for off, i in progress(grid, total=len(grid)):
+            for i0 in range(off, len(x)-i, skip):
                 # Get the actual time difference
                 dt = t[i0+i] - t[i0]
-                acf[dt] += f(x[i0+i], x[i0])
+                cf[dt] += f(x[i0+i], x[i0])
                 cnt[dt] += 1
 
         # Return the ACF with the time differences sorted
-        dt = sorted(acf.keys())
-        return dt, [acf[t] / cnt[t] for t in dt] #, [cnt[t] for t in dt]
+        dt = sorted(cf.keys())
+        return dt, [cf[ti] / cnt[ti] for ti in dt]
 
     else:
-        acf = defaultdict(float)
+        cf = defaultdict(float)
         cnt = defaultdict(list)
         # Filter data at time t_0 according to boolean mask
         for off, i in grid:
             for i0 in range(off, len(x)-i-skip, skip):
                 # Get the actual time difference
                 dt = t[i0+i] - t[i0]
-                acf[dt] += f(x[i0+i][mask[i0]], x[i0][mask[i0]])
+                cf[dt] += f(x[i0+i][mask[i0]], x[i0][mask[i0]])
                 cnt[dt].append(1)  #len(mask[i0]))
 
         # Return the ACF with the time differences sorted
-        dt = sorted(acf.keys())
-        return dt, [acf[t] / sum([cnt[t] for t in dt])] #, [cnt[t] for t in dt]
+        dt = sorted(cf.keys())
+        return dt, [cf[ti] / sum([cnt[ti] for ti in dt])]
 
 
-UPDATE = False
-OUTPUT_PATH = '{trajectory.filename}.pp.{short_name}.{tag}'
+def _subtract_mean(weight):
+    mean = 0
+    for current_field in weight:
+        mean += current_field.mean()
+    mean /= len(weight)
+    for current_field in weight:
+        current_field -= mean
+    return weight
+
 
 class Correlation(object):
-
     """
     Base class for correlation functions.
 
@@ -141,7 +157,7 @@ class Correlation(object):
 
     - if `nbodies` is 1: `self._pos` for positions, `self._vel` for
     velocities, `self._unf_pos` for PBC-unfolded positions
-    
+
     - if `nbodies` is 2, an additional suffix that take values 0 or 1
     is added to distinguish the two sets of particles,
     e.g. `self._pos_0` and `self._pos_1`
@@ -153,52 +169,116 @@ class Correlation(object):
     associated to the correlation function. This variable controls the
     internal arrays used to compute the correlation, see `phasespace`.
     """
-    
-    def __init__(self, trj, grid, symbol='', short_name='',
-                 description='', phasespace=None, output_path=None):
-        # TODO: we could force trajectory cast if a string is passed
-        # self.symbol =  'F_s(k,t)'
-        # self.short_name = 'fskt'
-        # self.description = 'Self intermediate scattering function'
-        # self.tag = 'A'
-        # self.tag_description = 'of particles A'  # 'of radius field'
-        self.trajectory = trj
+    static = False
+    """
+    Turn this to `True` is the correlation function is static,
+    i.e. not time-dependent. This may enable some optimizations.
+    """
+    symbol = ''
+    """Example: fskt"""
+    short_name = ''
+    """Example: F_s(k,t)"""
+    long_name = ''
+    """Example: Self intermediate scattering function"""
+    phasespace = ['pos', 'pos-unf', 'vel']
+    """
+    List of strings or string among ['pos', 'pos-unf', 'vel']. It
+    indicates which variables should be read from the trajectory file.
+    They will be available as self._pos, self._pos_unf, self._vel.
+    """
+
+    def __init__(self, trj, grid, output_path=None, norigins=None, fix_cm=False):
+        # Accept a trajectory-like instance or a path to a trajectory
+        if isinstance(trj, str):
+            self.trajectory = Trajectory(trj, mode='r', fmt=core.pp_trajectory_format)
+        else:
+            self.trajectory = trj
+        self._fix_cm = fix_cm
+        self._unfolded = None
         self.grid = grid
-        self.symbol = symbol
-        self.short_name = short_name
-        self.description = description
         self.value = []
-        self.results = {}
+        self.analysis = {}
         self.comments = None  # can be modified by user at run time
         self.tag = ''
-        self.tag_description = ''
-        self.output_path = output_path if output_path is not None else OUTPUT_PATH
-
-        # Make sure phasespace is a list
-        self._phasespace = phasespace if phasespace is not None else []
-        if not isinstance(phasespace, list) and not isinstance(phasespace, tuple):
-            self._phasespace = [phasespace]
+        self.tag_description = 'the whole system'
+        self.output_path = output_path if output_path is not None else core.pp_output_path
+        self.skip = adjust_skip(self.trajectory, norigins)
 
         # Callbacks
         self._cbk = []
         self._cbk_args = []
         self._cbk_kwargs = []
 
-        log.debug('%s for %s' % (self.description, self.trajectory.filename))
+        # Lists for one body correlations
+        self._pos = []
+        self._vel = []
+        self._ids = []
+        self._pos_unf = []
 
-        # If update mode is on, we will only do the calculation if the trajectory
-        # file is newer than any of the provided files
-        self._need_update = True
-        if UPDATE:
-            if os.path.exists(self._output_file) and self._output_file == '/dev/stdout':
-                if os.path.getmtime(self.trajectory.filename) < \
-                   os.path.getmtime(self._output_file):
-                    self._need_update = False
-                    self.read()
+        # Lists for two-body correlations
+        self._pos_0, self._pos_1 = [], []
+        self._vel_0, self._vel_1 = [], []
+        self._ids_0, self._ids_1 = [], []
+        self._pos_unf_0, self._pos_unf_1 = [], []
 
+        # Weights
+        self._weight = None
+        self._weight_0, self._weight_1 = None, None
+        self._weight_field = None
+        self._weight_fluctuations = False
+        
     def __str__(self):
-        return '%s' % self.description
+        return '{} at <{}>'.format(self.long_name, id(self))
 
+    def add_weight(self, trajectory=None, field=None, fluctuations=False):
+        """
+        Add weight from the given `field` in `trajectory`
+
+        If `trajectory` is `None`, `self.trajectory` will be used and
+        `field` must be a particle property.
+        
+        If `field` is `None`, `trajectory` is assumed to be a path an
+        xyz trajectory and we use the data in last column as a weight.
+
+        If both `field` and `trajectory` are `None` the function
+        returns immediately and the weight is not set.
+
+        The optional `fluctuations` option subtracts the mean,
+        calculated from the ensemble average, from the weight.
+        """
+        if trajectory is None and field is None:
+            return
+
+        self._weight = []
+        self._weight_fluctuations = fluctuations
+
+        # Guessing the field from the last column of an xyz file is
+        # not supported anymore
+        if field is None:
+            raise ValueError('provide field to use as weight')
+        else:
+            self._weight_field = field
+
+        # By default we use the same trajectory as for the phasespace
+        if trajectory is None:
+            self._weight_trajectory = self.trajectory
+        else:
+            self._weight_trajectory = trajectory           
+            # Copy over the field
+            from .helpers import copy_field
+            self.trajectory.add_callback(copy_field, self._weight_field, self._weight_trajectory)
+
+        # Make sure the steps are consistent
+        if self._weight_trajectory.steps != self.trajectory.steps:
+            raise ValueError('inconsistency between weight trajectory and trajectory')
+        
+        # Modify tag
+        fluct = 'fluctuations' if self._weight_fluctuations else ''
+        self.tag_description += ' with {} {} field'.format(self._weight_field.replace('_', ' '), fluct)
+        self.tag_description = self.tag_description.replace('  ', ' ')
+        self.tag += '.{}_{}'.format(self._weight_field, fluct)
+        self.tag.strip('_.')
+        
     def add_filter(self, cbk, *args, **kwargs):
         """Add filter callback `cbk` along with positional and keyword arguments"""
         if len(self._cbk) > self.nbodies:
@@ -207,81 +287,159 @@ class Correlation(object):
         self._cbk_args.append(args)
         self._cbk_kwargs.append(kwargs)
 
+    def need_update(self):
+        """Check if the trajectory file is newer than the output file"""
+        need = True
+        if os.path.exists(self._output_file) and self._output_file != '/dev/stdout':
+            if os.path.getmtime(self.trajectory.filename) < \
+               os.path.getmtime(self._output_file):
+                need = False
+        return need
+
     def _setup_arrays(self):
         """
         Dump positions and/or velocities at different time frames as a
         list of numpy array.
         """
+        # TODO: what happens if we call compute twice?? Shouldnt we reset the arrays?
+        # Ensure phasespace is a list.
+        # It may not be a class variable anymore after this
+        if not isinstance(self.phasespace, list) and \
+           not isinstance(self.phasespace, tuple):
+            self.phasespace = [self.phasespace]
+
+        # Setup arrays        
         if self.nbodies == 1:
             self._setup_arrays_onebody()
+            self._setup_weight_onebody()
         elif self.nbodies == 2:
             self._setup_arrays_twobody()
+            self._setup_weight_twobody()
 
     def _setup_arrays_onebody(self):
-        self._pos = []
-        self._vel = []
-        if 'pos' in self._phasespace or 'vel' in self._phasespace:
-            for s in self.trajectory:
+        """
+        Setup list of numpy arrays for one-body correlations.
+        
+        We also take care of dumping the weight if needed, see
+        `add_weight()`.
+        """
+        if 'pos' in self.phasespace or 'vel' in self.phasespace or 'ids' in self.phasespace:
+            ids = distinct_species(self.trajectory[0].particle)
+            for s in progress(self.trajectory):
                 # Apply filter if there is one
                 if len(self._cbk) > 0:
                     s = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
-                if 'pos' in self._phasespace:
+                if 'pos' in self.phasespace:
                     self._pos.append(s.dump('pos'))
-                if 'vel' in self._phasespace:
+                if 'vel' in self.phasespace:
                     self._vel.append(s.dump('vel'))
-
+                if 'ids' in self.phasespace:
+                    _ids = s.dump('species')
+                    _ids = numpy.array([ids.index(_) for _ in _ids], dtype=numpy.int32)
+                    self._ids.append(_ids)
+                    
         # Dump unfolded positions if requested
-        self._pos_unf = []
-        if 'pos-unf' in self._phasespace:
-            for s in Unfolded(self.trajectory, fixed_cm=True):
+        if 'pos-unf' in self.phasespace:
+            if self._unfolded is None:
+                self._unfolded = Unfolded(self.trajectory, fixed_cm=self._fix_cm)
+            for s in progress(self._unfolded):
                 # Apply filter if there is one
                 if len(self._cbk) > 0:
                     s = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
                 self._pos_unf.append(s.dump('pos'))
+                
+    def _setup_weight_onebody(self):
+        """
+        Setup list of numpy arrays for the weight, see `add_weight()`
+        """
+        if self._weight is None:
+            return
 
-        # If trajectory is grandcanonical, we make sure all samples
-        # have non-zero particles and raise an exception.
-        for data in [self._pos]:
-            if len(data) > 0:
-                if 0 in [len(p) for p in self._pos]:
-                    pass
-                    #raise ValueError('cannot handle null samples in GC trajectory')
+        # Dump arrays of weights
+        for s in progress(self.trajectory):
+            # Apply filter if there is one
+            # TODO: fix when weight trajectory does not contain actual particle info
+            # It should be possible to link the weight trajectory to the trajectory
+            # and return the trajectory particles with the weight
+            if len(self._cbk) > 0:
+                s = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])                
+            current_weight = s.dump('particle.%s' % self._weight_field)
+            self._weight.append(current_weight)
 
+        # Subtract global mean
+        if self._weight_fluctuations:
+            _subtract_mean(self._weight)
+            
+    def _setup_weight_twobody(self):
+        """
+        Setup list of numpy arrays for the weight, see `add_weight()`
+        """
+        if self._weight is None:
+            return
+
+        self._weight = []
+        self._weight_0 = []
+        self._weight_1 = []
+
+        # TODO: add checks on number of filters
+        if len(self._cbk) <= 1:
+            self._setup_weight_onebody()
+            self._weight_0 = self._weight
+            self._weight_1 = self._weight
+            return
+
+        # Dump arrays of weights
+        for s in progress(self.trajectory):
+            # Apply filters
+            if len(self._cbk) == 2:
+                s0 = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
+                s1 = self._cbk[1](s, *self._cbk_args[1], **self._cbk_kwargs[1])
+            self._weight_0.append(s0.dump('particle.%s' % self._weight_field))
+            self._weight_1.append(s1.dump('particle.%s' % self._weight_field))
+
+        # Subtract global mean
+        if self._weight_fluctuations:
+            _subtract_mean(self._weight_0)
+            _subtract_mean(self._weight_1)
+        
     def _setup_arrays_twobody(self):
+        """Setup list of numpy arrays for two-body correlations."""
         if len(self._cbk) <= 1:
             self._setup_arrays_onebody()
             self._pos_0 = self._pos
             self._pos_1 = self._pos
+            self._vel_0 = self._vel
+            self._vel_1 = self._vel
+            self._ids_0 = self._ids
+            self._ids_1 = self._ids
             return
 
-        self._pos_0, self._pos_1 = [], []
-        self._vel_0, self._vel_1 = [], []
-        if 'pos' in self._phasespace or 'vel' in self._phasespace:
-            for s in self.trajectory:
+        if 'pos' in self.phasespace or 'vel' in self.phasespace or 'ids' in self.phasespace:
+            ids = distinct_species(self.trajectory[0].particle)
+            for s in progress(self.trajectory):
                 s0 = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
                 s1 = self._cbk[1](s, *self._cbk_args[1], **self._cbk_kwargs[1])
-                if 'pos' in self._phasespace:
+                if 'pos' in self.phasespace:
                     self._pos_0.append(s0.dump('pos'))
                     self._pos_1.append(s1.dump('pos'))
-                if 'vel' in self._phasespace:
+                if 'vel' in self.phasespace:
                     self._vel_0.append(s0.dump('vel'))
                     self._vel_1.append(s1.dump('vel'))
-
+                if 'ids' in self.phasespace:
+                    _ids_0 = s0.dump('species')
+                    _ids_1 = s1.dump('species')
+                    _ids_0 = numpy.array([ids.index(_) for _ in _ids_0], dtype=numpy.int32)
+                    _ids_1 = numpy.array([ids.index(_) for _ in _ids_1], dtype=numpy.int32)
+                    self._ids_0.append(_ids_0)
+                    self._ids_1.append(_ids_1)
+                    
         # Dump unfolded positions if requested
-        self._pos_unf_0, self._pos_unf_1 = [], []
-        if 'pos-unf' in self._phasespace:
-            for s in Unfolded(self.trajectory):
+        if 'pos-unf' in self.phasespace:
+            for s in progress(Unfolded(self.trajectory)):
                 s0 = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
                 s1 = self._cbk[1](s, *self._cbk_args[1], **self._cbk_kwargs[1])
                 self._pos_unf_0.append(s0.dump('pos'))
                 self._pos_unf_1.append(s1.dump('pos'))
-
-        # If trajectory is grandcanonical, we make sure all samples
-        # have non-zero particles and raise an exception.
-        for data in [self._pos_0, self._pos_1]:
-            if 0 in [len(p) for p in data]:
-                #raise ValueError('cannot handle null samples in GC trajectory')
-                pass
 
     def compute(self):
         """
@@ -290,25 +448,27 @@ class Correlation(object):
         It wraps the _compute() method implemented by subclasses.
         This method also returns the tuple `self.grid`, `self.value`.
         """
-        if not self._need_update:
-            log.info('skip %s (%s) for %s' % (self.short_name, self.tag, self.trajectory.filename))
-            return
-
-        log.debug('setup')
+        _log.info('setup arrays for %s', self.tag_description)
         t = [Timer(), Timer()]
         t[0].start()
         self._setup_arrays()
         t[0].stop()
 
-        log.debug('compute')
+        _log.info('computing %s for %s', self.long_name, self.tag_description)
+        _log.info('using %s time origins out of %s',
+                  len(range(0, len(self.trajectory), self.skip)),
+                  len(self.trajectory))
         t[1].start()
         self._compute()
         t[1].stop()
 
-        log.info('computed %s %s for %s in %.1f sec [setup:%.0f%%, compute: %.0f%%]', self.description,
-                 self.tag_description, self.trajectory.filename, t[0].wall_time + t[1].wall_time,
-                 t[0].wall_time / (t[0].wall_time + t[1].wall_time) * 100,
-                 t[1].wall_time / (t[0].wall_time + t[1].wall_time) * 100)
+        _log.info('output file %s', self._output_file)
+        _log.info('done %s for %s in %.1f sec [setup:%.0f%%, compute: %.0f%%]',
+                  self.long_name,
+                  self.tag_description, t[0].wall_time + t[1].wall_time,
+                  t[0].wall_time / (t[0].wall_time + t[1].wall_time) * 100,
+                  t[1].wall_time / (t[0].wall_time + t[1].wall_time) * 100)
+        _log.info('')
 
         return self.grid, self.value
 
@@ -317,7 +477,10 @@ class Correlation(object):
         pass
 
     def analyze(self):
-        """Subclasses may implement this and store the results in the self.results dictonary"""
+        """
+        Subclasses may implement this and store the results in the
+        self.analysis dictonary
+        """
         pass
 
     @property
@@ -327,17 +490,18 @@ class Correlation(object):
         if self.output_path is None:
             filename = None
         else:
-            # Add self. prefix to all attributes
-            path = self.output_path.replace('{', '{0.')
-            try:
-                filename = path.format(self)
-            except:
-                print(path)
-                raise
-            # Strip unpleasant punctuation
+            filename = self.output_path.format(symbol=self.symbol,
+                                               short_name=self.short_name,
+                                               long_name=self.long_name.replace(' ', '_'),
+                                               tag=self.tag,
+                                               tag_description=self.tag_description.replace(' ', '_'),
+                                               trajectory=self.trajectory)
+            # Strip unpleasant punctuation from basename path
             for punct in ['.', '_', '-']:
-                filename = filename.replace(punct * 2, punct)
-                filename = filename.strip(punct)
+                subpaths = filename.split('/')
+                subpaths[-1] = subpaths[-1].replace(punct * 2, punct)
+                subpaths[-1] = subpaths[-1].strip(punct)
+                filename = '/'.join(subpaths)
         return filename
 
     def read(self):
@@ -345,12 +509,24 @@ class Correlation(object):
         with open(self._output_file, 'r') as inp:
             x = numpy.loadtxt(inp, unpack=True)
             if len(x) == 3:
-                self.grid, self.value = x
+                _log.warn("cannot read 3-columns files yet in %s", self._output_file)
             elif len(x) == 2:
                 self.grid, self.value = x
             else:
-                self.grid, self.value = x[0:2]
-                warnings.warn("Ignoring some columns in %s" % self._output_file)
+                self.grid, self.value = x[0: 2]
+                _log.warn("Ignoring some columns in %s", self._output_file)
+
+    @property
+    def grid_name(self):
+        """
+        Return the name of the grid variables
+
+        Example:
+        -------
+        If `self.name` is `F_s(k,t)`, the function returns `['k', 't']`
+        """
+        variables = self.short_name.split('(')[1][:-1]
+        return variables.split(',')
 
     def write(self):
         """Write the correlation function and the analysis data to file"""
@@ -373,29 +549,33 @@ class Correlation(object):
 
         # Comment line
         # Extract variables from parenthesis in symbol
-        variables = self.symbol.split('(')[1][:-1]
+        variables = self.short_name.split('(')[1][:-1]
         variables = variables.split(',')
-        columns = variables + [self.symbol]
+        columns = variables + [self.short_name]  #[self.symbol]
         if len(self.tag_description) > 0:
             conj = 'of'
         else:
             conj = ''
-        comments = _dump(title='%s %s %s %s' % (self.description, self.symbol, conj, self.tag_description),
+        comments = _dump(title='%s %s %s %s' % (self.long_name, self.short_name, conj, self.tag_description),
                          columns=columns,
-                         command='atooms-pp', version=__version__,
+                         command='atooms-pp', version=core.__version__,
                          description=None, note=None,
                          parents=self.trajectory.filename,
                          inline=False)
-        if not self.comments is None:
+        if self.comments is not None:
             comments += self.comments
 
         # Results of analysis
         analysis = ""
-        for x, f in self.results.items():
+        for x, f in self.analysis.items():
             if f is not None:
                 analysis += '# %s: %s\n' % (x, f)
 
         # Put it all together
+        # and make sure the path to the output file exists
+        import os
+        from atooms.core.utils import mkdir
+        mkdir(os.path.dirname(self._output_file))
         with open(self._output_file, 'w') as fh:
             fh.write(comments)
             if len(analysis) > 0:
@@ -403,17 +583,23 @@ class Correlation(object):
             numpy.savetxt(fh, dump, fmt="%g")
             fh.flush()
 
-    def do(self):
+    def do(self, update=False):
         """
         Do the full template pattern: compute, analyze and write the
         correlation function.
         """
+        if update and not self.need_update():
+            self.read()
+            return
+
         self.compute()
+
         try:
             self.analyze()
         except ImportError as e:
-            print('Could not analyze due to missing modules, continuing...')
-            print(e.message)
+            _log.warn('Could not analyze due to missing modules, continuing...')
+            _log.warn(e.message)
+
         self.write()
 
     def __call__(self):

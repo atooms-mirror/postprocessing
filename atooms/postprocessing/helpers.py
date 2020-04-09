@@ -1,44 +1,43 @@
 import copy
 
 
-def linear_grid(min,max,delta):
+def linear_grid(min_val, max_val, delta):
     """Linear grid."""
-    if type(delta) is int:
+    if isinstance(delta, int):
         n = delta
         if n > 1:
-            delta = (max - min) / (n-1)
+            delta = (max_val - min_val) / (n-1)
         else:
             delta = 0.0
     else:
-        n = int((max-min)/delta)+1
-    list = [min+i*delta for i in range(n)]
-    return list
+        n = int((max_val - min_val) / delta) + 1
+    return [min_val + i*delta for i in range(n)]
 
 
 def logx_grid(x1, x2, n):
     """Create a list of n numbers in logx scale from x1 to x2."""
     # the shape if a*x^n. if n=0 => a=x1, if n=N => x1*x^N=x2
     if x1 > 0:
-        xx = (x2/x1)**(1.0/n)
-        return [x1] + [x1 * xx**(i+1) for i in range(1,n)]
+        xx = (x2 / x1)**(1.0 / n)
+        return [x1] + [x1 * xx**(i+1) for i in range(1, n)]
     else:
-        xx = (x2)**(1.0/n)
-        return [x1] + [xx**(i+1)-1 for i in range(1,n)]
+        xx = x2**(1.0/n)
+        return [x1] + [xx**(i+1) - 1 for i in range(1, n)]
 
 
 def ifabsmm(x, f):
     """Interpolated absolute maximum."""
 
-    def _vertex_parabola(a,b,c):
+    def _vertex_parabola(a, b, c):
         """Returns the vertex (x,y) of a parabola of the type a*x**2 + b*x + c."""
         return -b/(2*a), - (b**2 - 4*a*c) / (4*a)
 
-    def _parabola_3points(x1,y1,x2,y2,x3,y3):
+    def _parabola_3points(x1, y1, x2, y2, x3, y3):
         """Parabola through 3 points."""
         delta = (x1 - x2)*(x1 - x3)*(x2 - x3)
-        a     = (x3 * (y2 - y1) + x2 * (y1 - y3) + x1 * (y3 - y2)) / delta
-        b     = (x3**2 * (y1 - y2) + x2**2 * (y3 - y1) + x1**2 * (y2 - y3)) / delta
-        c     = (x2 * x3 * (x2 - x3) * y1 + x3 * x1 * (x3 - x1) * y2 + x1 * x2 * (x1 - x2) * y3) / delta
+        a = (x3 * (y2 - y1) + x2 * (y1 - y3) + x1 * (y3 - y2)) / delta
+        b = (x3**2 * (y1 - y2) + x2**2 * (y3 - y1) + x1**2 * (y2 - y3)) / delta
+        c = (x2 * x3 * (x2 - x3) * y1 + x3 * x1 * (x3 - x1) * y2 + x1 * x2 * (x1 - x2) * y3) / delta
         return a, b, c
 
     # First uninterpolated minima and maxima
@@ -46,9 +45,7 @@ def ifabsmm(x, f):
     # Then perform parabolic interpolation
     ii = []
     for i in [imin, imax]:
-        i1 = i-1
-        i2 = i
-        i3 = i+1
+        i1, i2, i3 = i-1, i, i+1
         a, b, c = _parabola_3points(x[i1], f[i1], x[i2], f[i2], x[i3], f[i3])
         ii.append(_vertex_parabola(a, b, c))
     return ii[0], ii[1]
@@ -62,6 +59,7 @@ def linear_fit(xdata, ydata):
     """
     import numpy
     from math import sqrt
+
     n = len(ydata)
     dof = n - 2
     sx = numpy.sum(xdata)
@@ -72,10 +70,12 @@ def linear_fit(xdata, ydata):
 
     a = (n * sxy - sx * sy) / (n * sxx - sx**2)
     b = sy / n - a * sx / n
-    s = (n*syy - sy**2 - a**2 * (n*sxx - sx**2)) / (n*dof)
+    if dof > 0:
+        s = (n*syy - sy**2 - a**2 * (n*sxx - sx**2)) / (n*dof)
+    else:
+        s = 0.0
     sa = n * s / (n*sxx - sx**2)
     sb = sa * sxx / n
-
     return a, b, sqrt(sa), sqrt(sb)
 
 
@@ -90,7 +90,7 @@ def feqc(x, f, fstar):
     for i in range(min(len(x), len(f))):
         if (f[i] - fstar) * s < 0.0:
             # Linear interpolation
-            dxf   = (f[i] - f[i-1]) / (x[i] - x[i-1])
+            dxf = (f[i] - f[i-1]) / (x[i] - x[i-1])
             xstar = x[i-1] + (fstar - f[i-1]) / dxf
             istar = i
             return xstar, istar
@@ -111,58 +111,122 @@ def filter_species(system, species):
         s.particle = [p for p in system.particle if p.species == species]
     return s
 
+
+def copy_field(system, field, trajectory):
+    """
+    Copy particle property `field` from `trajectory` at the current
+    frame in system.
+
+    It requires atooms >= 1.10.0
+    """
+    # Only available in atooms > 1.10.0
+    so = trajectory[system.frame]
+    for p, po in zip(system.particle, so.particle):
+        x = getattr(po, field)
+        setattr(p, field, x)
+    return system
+
+
 def filter_all(system):
     s = copy.copy(system)
     s.particle = [p for p in system.particle]
     return s
 
-def adjust_skip(trajectory, n_origin=-1):
-    """ Utility function to set skip so as to keep computation time under control """
-    # TODO: We should also adjust it for Npart
-    if trajectory.block_size > 1:
-        return trajectory.block_size
-    else:
-        if n_origin > 0:
-            return max(1, int(len(trajectory.steps) / float(n_origin)))
+
+def adjust_skip(trajectory, n_origins=None):
+    """
+    Define interval between frames in trajectory so as to achieve a
+    given number of time origins.
+
+    Possible values of n_origins:
+    - None: heuristics to keep the product of steps * particles constant
+    - int: if -1, all origins are used, otherwise if n_origins >= 1 only n_origins
+    - float in the interval (0,1): the fraction of samples to consider as time origins
+    """
+    if n_origins is not None:
+        if float(n_origins) < 0 or n_origins == '1.0':
+            skip = 1 * trajectory.block_size  # all origins
+        elif float(n_origins) > 1:
+            nbl = len(trajectory.steps) // trajectory.block_size
+            skip = int(nbl / float(n_origins)) * trajectory.block_size
+        elif int(n_origins) == 1:
+            skip = len(trajectory.steps)
         else:
-            return 1
+            # A float between 0 and 1
+            skip = int(1 / float(n_origins)) * trajectory.block_size
+    else:
+        # Heuristics (to be improved)
+        if trajectory.block_size == 1:
+            block = 40000
+            # Ignore cache here
+            # This destroys the connection between decorated unfolded trajectory and folded trajectory
+            #_cache, trajectory.cache = trajectory.cache, False
+            skip = int(len(trajectory.steps) * len(trajectory[0].particle) / block)
+            #trajectory.cache = _cache
+        else:
+            # We stick to the block size
+            skip = trajectory.block_size
 
-def setup_t_grid(trajectory, t_grid):
-    def templated(entry, template, keep_multiple=False):
-        """Filter a list of entries so as to best match an input
-        template. Lazy, slow version O(N*M). Ex.:
-        entry=[1,2,3,4,5,10,20,100], template=[1,7,12,80] should
-        return [1,5,10,100].
-        """
-        match = [min(entry, key=lambda x: abs(x-t)) for t in template]
-        if not keep_multiple:
-            match = list(set(match))
-        return sorted(match)
+    # Make sure the skip is an multiple of block size
+    if skip % trajectory.block_size != 0 and int(n_origins) != 1:
+        raise ValueError('wrong skip {} {}'.format(skip, trajectory.block_size))
 
+    # Normalize anyway and make it even
+    skip = max(1, skip)
+    skip = min(len(trajectory.steps), skip)
+    return skip
+
+
+def _templated(entry, template, keep_multiple=False):
+    """
+    Filter a list of entries so as to best match an input
+    template. Lazy, slow version O(N*M).
+
+    Example:
+    --------
+    entry = [1,2,3,4,5,10,20,100]
+    template = [1,7,12,80]
+    templated(entry, template) == [1,5,10,100]
+    """
+    match = []
+    for t in template:
+        def compare(x):
+            return abs(x - t)
+        match.append(min(entry, key=compare))
+    if not keep_multiple:
+        match = list(set(match))
+    return sorted(match)
+
+
+def setup_t_grid(trajectory, t_grid, offset=True):
     # First get all possible time differences
     steps = trajectory.steps
     off_samp = {}
-    for off in range(trajectory.block_size):
+    if offset:
+        offset_range = range(trajectory.block_size)
+    else:
+        offset_range = [0]
+    for off in offset_range:
         for i in range(off, len(steps)-off):
-            if not steps[i] - steps[off] in off_samp:
+            if steps[i] - steps[off] not in off_samp:
                 off_samp[steps[i] - steps[off]] = (off, i-off)
 
     # Retain only those pairs of offsets and sample
     # difference that match the desired input. This is the grid
     # used internally to calculate the time correlation function.
     i_grid = set([int(round(t/trajectory.timestep)) for t in t_grid])
-    offsets = [off_samp[t] for t in templated(sorted(off_samp.keys()), sorted(i_grid))]
-    # TODO: add this as a test
-    # check = []
-    # for off, i in offsets:
-    #     for i0 in xrange(off, len(trajectory)-i, trajectory.block_size):
-    #         check.append(trajectory.steps[i0+i] - trajectory.steps[i0])
-    # print sorted(set(check)), sorted(dt)
+    offsets = [off_samp[t] for t in _templated(sorted(off_samp.keys()), sorted(i_grid))]
     return offsets
 
 
-# Add dump() from medepy for portability.
-# This should be dropped in the future.
+def partition(inp, nbl):
+    nel = len(inp) // nbl
+    a = []
+    for i in range(nbl):
+        a.append(slice(i * nel, (i+1) * nel))
+    return a
+
+
 def _dump(title, columns=None, command=None, version=None,
           description=None, note=None, parents=None, inline=False,
           comment='# ', extra_fields=None):
@@ -170,33 +234,11 @@ def _dump(title, columns=None, command=None, version=None,
     Return a string of comments filled with metadata.
     """
     import datetime
-    import os
+
     date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     if columns is not None:
-        columns_string  = ', '.join(columns)
-
-    # Checksums of parent files
-    if parents is not None:
-        try:
-            import md5
-            # Make sure parents is list
-            if not hasattr(parents, '__iter__'):
-                parents = [parents]
-            # Compute checksum
-            checksums = []
-            size_limit = 1e9
-            if max([os.path.getsize(f) for f in parents]) < size_limit:
-                for parentpath in parents:
-                    tag = md5.md5(open(parentpath).read()).hexdigest()
-                    checksums.append(tag)
-                checksums = ', '.join(checksums)
-            else:
-                checksums = None
-            # Convert to string
-            parents = ', '.join([os.path.basename(p) for p in parents])
-        except ImportError:
-            checksums = None
+        columns_string = ', '.join(columns)
 
     metadata = [('title', title),
                 ('columns', columns_string),
@@ -204,7 +246,6 @@ def _dump(title, columns=None, command=None, version=None,
                 ('command', command),
                 ('version', version),
                 ('parents', parents),
-                ('checksums', checksums),
                 ('description', description),
                 ('note', note)]
 

@@ -1,38 +1,42 @@
 #!/usr/bin/env python
 # This file is part of atooms
-# Copyright 2010-2014, Daniele Coslovich
+# Copyright 2010-2018, Daniele Coslovich
 
 """Stress autocorrelation function."""
 
 import numpy
+
 from .correlation import Correlation, gcf_offset
 from .helpers import setup_t_grid
+
+__all__ = ['StressAutocorrelation']
 
 
 class StressAutocorrelation(Correlation):
 
     """Stress autocorrelation function."""
 
-    def __init__(self, trajectory, tgrid):
-        Correlation.__init__(self, trajectory, tgrid, 'S(t)', 'sacf',
-                             'stress autocorrelation', ['vel'])
-        self._discrete_tgrid = setup_t_grid(trajectory, tgrid)
+    symbol = 'sacf'
+    short_name = 'S(t)'
+    long_name = 'stress autocorrelation'
+    phasespace = ['vel']
+
+    def __init__(self, trajectory, tgrid, norigins=None):
+        Correlation.__init__(self, trajectory, tgrid, norigins=norigins)
+        self._discrete_tgrid = setup_t_grid(self.trajectory, tgrid, offset=norigins != '1')
 
     def _get_stress(self):
         ndims = 3
         p = self.trajectory.read(0).particle
-        V = self.trajectory.read(0).cell.volume
         mass = numpy.array([pi.mass for pi in p])
         self._stress = []
         for i in self.trajectory.samples:
             s = self.trajectory.read(i).interaction.total_stress
-            l = 0
-            # Must be recreated otherwise we just append references to it
             slk = numpy.zeros(ndims)
+            l = 0
             for j in range(ndims):
-                for k in range(j+1,ndims):
-                    slk[l] = s[j,k] + numpy.sum(mass[:] * self._vel[i][:,j] * self._vel[i][:,k])
-#                    slk[l] = numpy.sum(mass[:] * self._vel[i][:,j] * self._vel[i][:,k])
+                for k in range(j+1, ndims):
+                    slk[l] = s[j, k] + numpy.sum(mass[:] * self._vel[i][:, j] * self._vel[i][:, k])
                     l += 1
             self._stress.append(slk)
 

@@ -5,10 +5,12 @@ DATE=$$(git show -s --format=%ci $(COMMIT) | cut -d ' ' -f 1)
 
 .PHONY: all dist test install version clean
 
+all: user
+
 dist: version
 	python setup.py sdist
 
-test:	version
+test:	
 	python -m unittest discover -s tests
 
 install: version
@@ -26,4 +28,4 @@ version:
 	@echo __date__ = \'$(DATE)\' >> ${PROJECT}/_commit.py
 
 clean:
-	rm -f ${PROJECT}/*pyc  ${PROJECT}/*/*pyc tests/*pyc data/*.pp.*
+	rm -rf ${PROJECT}/*pyc ${PROJECT}/*/*pyc ${PROJECT}/*/*so tests/*pyc data/*.pp.* build dist

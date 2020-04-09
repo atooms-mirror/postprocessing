@@ -71,7 +71,6 @@ contains
     allocate(expo(npart,ndim,-kmax:kmax))
     call setup_expo(k0,nmax,position,expo)
     sk = (0.d0, 0.d0)
-    print*, '----', ndim, npart, size(ikbin)
     do ii = 1,size(ikvec,2)
        i1   = ikvec(1,ii)
        i2   = ikvec(2,ii)
@@ -104,15 +103,32 @@ contains
        i1   = ikvec(1,ii)
        i2   = ikvec(2,ii)
        i3   = ikvec(3,ii)
-       !kbin = ikbin(ii)
-       !if (ii==4) print*, expo(:,1,i1) * expo(:,2,i2) * expo(:,3,i3)
        rho(ii) = sum(expo(:,1,i1) * expo(:,2,i2) * expo(:,3,i3))
        !sk(kbin) = sk(kbin) + rho*conjg(rho)
        !sk(kbin) = sk(kbin) + real(rho*conjg(rho),8)
     end do
   end subroutine sk_bare
 
-
+  ! This is the original python code
+  !   acf[kk][dt] += numpy.sum(x[i0+i, :, 0, ik[0]]*x[i0, :, 0, ik[0]].conjugate() *
+  !                            x[i0+i, :, 1, ik[1]]*x[i0, :, 1, ik[1]].conjugate() *
+  !                            x[i0+i, :, 2, ik[2]]*x[i0, :, 2, ik[2]].conjugate()).real
+  ! So we pass expo (x) and ik and do the sum
+  ! We also pass i0 and i do avoid slicing in numpy
+  ! This kernel vectorizes, while this is not the case for the implicit loop
+  function fskt_kernel(expo,t1,t2,ik) result (output)
+    complex(8),intent(in)       :: expo(:,:,:,:)  ! (nsteps, npart, ndim, kvec)
+    integer, intent(in)         :: t1,t2,ik(:)  ! (ndim)
+    complex(8)                  :: output, tmp(size(expo,2))
+    integer :: i
+    do i = 1,size(expo,2)
+       tmp(i) = expo(t1,i,1,ik(1)) * CONJG(expo(t2,i,1,ik(1))) * &
+                expo(t1,i,2,ik(2)) * CONJG(expo(t2,i,2,ik(2))) * &
+                expo(t1,i,3,ik(3)) * CONJG(expo(t2,i,3,ik(3)))
+    end do
+    output = SUM(tmp)
+  end function fskt_kernel
+  
   ! subroutine fskt(position,k0,kmax,ikvec,ikbin,fkt)
   !   real(8),intent(in)        :: position(:,:,:)  ! (ndim, npart, nsteps)
   !   real(8),intent(in)        :: k0
