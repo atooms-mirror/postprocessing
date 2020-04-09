@@ -10,7 +10,7 @@ all: user
 dist: version
 	python setup.py sdist
 
-test:	version
+test:	
 	python -m unittest discover -s tests
 
 install: version
