@@ -28,6 +28,14 @@ def filter_selected_ids(s, ids):
 def deviation(x, y):
     return (numpy.sum((x-y)**2)/len(x))**0.5
 
+def filter_2d(s):
+    s.cell.side = s.cell.side[0:2]
+    s.cell.center = s.cell.center[0:2]
+    for p in s.particle:
+        p.position = p.position[0:2]
+        p.velocity = p.velocity[0:2]
+    return s
+
 class Test(unittest.TestCase):
 
     def test_name(self):
@@ -291,7 +299,7 @@ class TestFourierSpace(unittest.TestCase):
     def test_fskt_partial(self):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         t = trajectory.TrajectoryXYZ(f)
-        p = postprocessing.SelfIntermediateScattering(t, [4, 7.3, 10], nk=40, norigins=0.2)
+        p = postprocessing.SelfIntermediateScatteringLegacy(t, [4, 7.3, 10], nk=40, norigins=0.2)
         p.add_filter(filter_species, 'A')
         p.compute()
         p.analyze()
@@ -311,7 +319,49 @@ class TestFourierSpace(unittest.TestCase):
             fct.compute()
             ref = postprocessing.Chi4SelfOverlap(th, tgrid=tgrid)
             ref.compute()
-            self.assertLess(deviation(numpy.array(ref.value), numpy.array(fct.value)), 0.1)
+            self.assertLess(deviation(numpy.array(ref.value), numpy.array(fct.value)), 0.1)            
+            
+    def test_fskt_2d(self):        
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        t = trajectory.TrajectoryXYZ(f)
+        t.add_callback(filter_2d)
+        p = postprocessing.SelfIntermediateScatteringLegacy(t, [4, 7.3, 10], nk=10)
+        p.add_filter(filter_species, 'A')
+        p.compute()
+        p.analyze()
+        tau = []
+        for key in sorted(p.analysis['relaxation times tau']):
+            tau.append(p.analysis['relaxation times tau'][key])
+        self.assertLess(abs(tau[0] - 13.48342847723456), 0.04)
+        self.assertLess(abs(tau[1] - 3.07899513664358), 0.04)
+        self.assertLess(abs(tau[2] - 0.9802163934982774), 0.04)
+        t.close()
 
+    def test_fkt_2d(self):        
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        t = trajectory.TrajectoryXYZ(f)
+        t.add_callback(filter_2d)
+        p = postprocessing.IntermediateScattering(t, [4, 7.3, 10], nk=100)
+        p.add_filter(filter_species, 'A')
+        p.compute()
+        p.analyze()
+        tau = []
+        for key in sorted(p.analysis['relaxation times tau']):
+            tau.append(p.analysis['relaxation times tau'][key])
+        self.assertLess(abs(tau[0] - 1.1341521365187757), 0.04)
+        self.assertLess(abs(tau[1] - 5.83114954720099), 0.04)
+        self.assertLess(abs(tau[2] - 0.859950963462569), 0.04)
+        t.close()
+
+    def test_sk_2d(self):
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        t = trajectory.TrajectoryXYZ(f)
+        t.add_callback(filter_2d)
+        p = postprocessing.StructureFactorLegacy(t, kmin=-1, kmax=4, ksamples=3, dk=0.2)
+        p.compute()
+        ref_value = numpy.array([ [0.06899986228704291, 0.0629709003150001, 0.07397620251792263]])
+        self.assertLess(deviation(p.value, ref_value), 0.04)
+        t.close()
+        
 if __name__ == '__main__':
     unittest.main()

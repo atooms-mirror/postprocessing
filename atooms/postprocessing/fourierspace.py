@@ -77,15 +77,28 @@ def expo_sphere_safe(k0, kmax, pos):
 
 
 def _k_norm(ik, k0, offset):
-    if isinstance(k0, list) or isinstance(k0, numpy.ndarray):
-        return math.sqrt((k0[0] * (ik[0] - offset))**2 +
-                         (k0[1] * (ik[1] - offset))**2 +
-                         (k0[2] * (ik[2] - offset))**2)
-    else:
-        return math.sqrt(float((ik[0]-offset)**2 +
-                               (ik[1]-offset)**2 +
-                               (ik[2]-offset)**2)) * k0
+    k_shift = k0*ik - offset
+    k_sq = numpy.dot(k_shift, k_shift)
+    return math.sqrt(k_sq)
 
+def _sphere(kmax):
+    ikvec = numpy.ndarray(3, dtype=numpy.int)
+    for ix in range(-kmax, kmax+1):
+        for iy in range(-kmax, kmax+1):
+            for iz in range(-kmax, kmax+1):
+                ikvec[0] = ix
+                ikvec[1] = iy
+                ikvec[2] = iz
+                yield ikvec
+                
+def _disk(kmax):
+    ikvec = numpy.ndarray(2, dtype=numpy.int)
+    for ix in range(-kmax, kmax+1):
+        for iy in range(-kmax, kmax+1):
+            ikvec[0] = ix
+            ikvec[1] = iy
+            yield ikvec
+                        
 
 class FourierSpaceCorrelation(Correlation):
 
@@ -117,7 +130,7 @@ class FourierSpaceCorrelation(Correlation):
         self.kmax = kmax
         self.ksamples = ksamples
         self.kgrid = []
-        self.k0 = 0.0
+        self.k0 = []
         self.kvector = {}
         self.selection = []
         self._kbin_max = 0
@@ -167,7 +180,7 @@ class FourierSpaceCorrelation(Correlation):
         # Setup the grid of wave-vectors
         self.kvector, self._kbin_max = self._setup_grid_sphere(len(self.kgrid) * [self.dk],
                                                                self.kgrid, self.k0)
-
+        
     @staticmethod
     def _setup_grid_sphere(dk, kgrid, k0):
         """
@@ -183,28 +196,31 @@ class FourierSpaceCorrelation(Correlation):
         # expo_grid() otherwise it wont find the vectors
         kmax = kgrid[-1] + dk[-1]
         kbin_max = 1 + int(kmax / min(k0))
-        # TODO: it would be more elegant an iterator over ix, iy, iz for sphere, hemisphere, ...
-        # unless kmax is very high it might be more efficient to
-        # operate on a 3d grid to construct the vectors
         kmax_sq = kmax**2
-        for ix in range(-kbin_max, kbin_max+1):
-            for iy in range(-kbin_max, kbin_max+1):
-                for iz in range(-kbin_max, kbin_max+1):
-                    # Slightly faster and more explicit than
-                    #   ksq = sum([(x*y)**2 for x, y in zip(k0, [ix, iy, iz])])
-                    ksq = ((k0[0]*ix)**2 + (k0[1]*iy)**2 + (k0[2]*iz)**2)
-                    if ksq > kmax_sq:
-                        continue
-                    # beware: numpy.sqrt is x5 slower than math one!
-                    knorm = math.sqrt(ksq)
-                    # Look for a shell of vectors in which the vector could fit.
-                    # This expression is general and allows arbitrary k grids
-                    # However, searching for the shell like this is not fast
-                    # (it costs about as much as the above)
-                    for ki, dki in zip(kgrid, dk):
-                        if abs(knorm - ki) < dki:
-                            kvec[ki].append((ix+kbin_max, iy+kbin_max, iz+kbin_max))
-                            break
+
+        # Choose iterator of spatial grid
+        ndims = len(k0)
+        if ndims == 3:
+            _iterator = _sphere
+        elif ndims == 2:
+            _iterator = _disk
+        else:
+            raise ValueError('unsupported dimension {}'.format(ndims))
+            
+        for ik in _iterator(kbin_max):
+            ksq = numpy.dot(k0*ik, k0*ik)
+            if ksq > kmax_sq:
+                continue
+            # beware: numpy.sqrt is x5 slower than math one!
+            knorm = math.sqrt(ksq)
+            # Look for a shell of vectors in which the vector could fit.
+            # This expression is general and allows arbitrary k grids
+            # However, searching for the shell like this is not fast
+            # (it costs about as much as the above)
+            for ki, dki in zip(kgrid, dk):
+                if abs(knorm - ki) < dki:
+                    kvec[ki].append(tuple(ik + kbin_max))
+                    break
 
         if len(kvec.keys()) != len(kgrid):
             _log.warning('some entries in the kgrid had no matching k-vector')
