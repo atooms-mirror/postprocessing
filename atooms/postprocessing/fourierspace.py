@@ -77,7 +77,7 @@ def expo_sphere_safe(k0, kmax, pos):
 
 
 def _k_norm(ik, k0, offset):
-    k_shift = k0*ik - offset
+    k_shift = k0 * (numpy.array(ik) - offset)
     k_sq = numpy.dot(k_shift, k_shift)
     return math.sqrt(k_sq)
 
@@ -157,6 +157,7 @@ class FourierSpaceCorrelation(Correlation):
         # We must fix the keys: just pop them to the their new positions
         # We sort both of them (better check len's)
         for k, kv in zip(sorted(self.kgrid), sorted(self.kvector)):
+            print k, kv
             self.kvector[k] = self.kvector.pop(kv)
 
         # Now compute
@@ -268,5 +269,6 @@ class FourierSpaceCorrelation(Correlation):
             av = 0.0
             for i in self.selection[kk]:
                 av += _k_norm(self.kvector[knorm][i], self.k0, self._kbin_max)
+            print knorm, av / len(self.selection[kk]), '---'
             k_grid.append(av / len(self.selection[kk]))
         return k_grid
