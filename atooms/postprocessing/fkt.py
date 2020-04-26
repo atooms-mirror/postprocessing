@@ -83,7 +83,7 @@ class SelfIntermediateScatteringLegacy(FourierSpaceCorrelation):
     def _compute(self):
         # Throw everything into a big numpy array (nframes, npos, ndim)
         pos = numpy.array(self._pos)
-
+        ndims = len(self.k0)
         # To optimize without wasting too much memory (we have
         # troubles here) we group particles in blocks and tabulate the
         # exponentials over time. This is more memory consuming but we
@@ -110,9 +110,21 @@ class SelfIntermediateScatteringLegacy(FourierSpaceCorrelation):
                         for i0 in range(off, x.shape[0]-i, skip):
                             # Get the actual time difference. steps must be accessed efficiently (cached!)
                             dt = self.trajectory.steps[i0+i] - self.trajectory.steps[i0]
-                            acf[kk][dt] += numpy.sum(x[i0+i, :, 0, ik[0]]*x[i0, :, 0, ik[0]].conjugate() *
-                                                     x[i0+i, :, 1, ik[1]]*x[i0, :, 1, ik[1]].conjugate() *
-                                                     x[i0+i, :, 2, ik[2]]*x[i0, :, 2, ik[2]].conjugate()).real
+                            # Dimensional switch
+                            if ndims == 3:
+                                acf[kk][dt] += numpy.sum(x[i0+i, :, 0, ik[0]]*x[i0, :, 0, ik[0]].conjugate() *
+                                                         x[i0+i, :, 1, ik[1]]*x[i0, :, 1, ik[1]].conjugate() *
+                                                         x[i0+i, :, 2, ik[2]]*x[i0, :, 2, ik[2]].conjugate()).real
+                            elif ndims == 2:
+                                acf[kk][dt] += numpy.sum(x[i0+i, :, 0, ik[0]]*x[i0, :, 0, ik[0]].conjugate() *
+                                                         x[i0+i, :, 1, ik[1]]*x[i0, :, 1, ik[1]].conjugate()).real
+
+                            else:
+                                # Arbitrary dimension (a bit slower)
+                                tmp = x[i0+i, :, 0, ik[0]]*x[i0, :, 0, ik[0]].conjugate()
+                                for idim in range(1, len(ik)):
+                                    tmp *= x[i0+i, :, idim, ik[idim]]*x[i0, :, idim, ik[idim]].conjugate()
+                                acf[kk][dt] += numpy.sum(tmp).real                            
                             cnt[kk][dt] += x.shape[1]
 
         tgrid = sorted(acf[0].keys())
@@ -227,6 +239,7 @@ class IntermediateScattering(FourierSpaceCorrelation):
         Tabulate densities
         """
         nsteps = len(self._pos_0)
+        ndims = len(self.k0)
         if len(self.kvector.keys()) == 0:
             raise ValueError('could not find any wave-vectors, try increasing dk')
         kmax = max(self.kvector.keys()) + self.dk
@@ -245,10 +258,30 @@ class IntermediateScattering(FourierSpaceCorrelation):
             for kk, knorm in enumerate(kgrid):
                 for i in selection[kk]:
                     ik = self.kvector[knorm][i]
-                    rho_0[it][ik] = numpy.sum(expo_0[..., 0, ik[0]] * expo_0[..., 1, ik[1]] * expo_0[..., 2, ik[2]])
+                    if ndims == 3:
+                        rho_0[it][ik] = numpy.sum(expo_0[..., 0, ik[0]] * expo_0[..., 1, ik[1]] * expo_0[..., 2, ik[2]])
+                    elif ndims == 2:
+                        rho_0[it][ik] = numpy.sum(expo_0[..., 0, ik[0]] * expo_0[..., 1, ik[1]])
+                    else:
+                        # Arbitrary dimension (a bit slower)
+                        tmp = expo_0[..., 0, ik[0]]
+                        for idim in range(1, len(ik)):
+                            tmp *= expo_0[..., idim, ik[idim]]
+                        rho_0[it][ik] += numpy.sum(tmp).real                            
+                        
                     # Same optimization as above: only calculate rho_1 if needed
                     if self._pos_1 is not self._pos_0:
-                        rho_1[it][ik] = numpy.sum(expo_1[..., 0, ik[0]] * expo_1[..., 1, ik[1]] * expo_1[..., 2, ik[2]])
+                        if ndims == 3:
+                            rho_1[it][ik] = numpy.sum(expo_1[..., 0, ik[0]] * expo_1[..., 1, ik[1]] * expo_1[..., 2, ik[2]])
+                        elif ndims == 2:
+                            rho_1[it][ik] = numpy.sum(expo_1[..., 0, ik[0]] * expo_1[..., 1, ik[1]])
+                        else:
+                            # Arbitrary dimension (a bit slower)
+                            tmp = expo_1[..., 0, ik[0]]
+                            for idim in range(1, len(ik)):
+                                tmp *= expo_1[..., idim, ik[idim]]
+                            rho_1[it][ik] += numpy.sum(tmp).real                            
+
             # Optimization
             if self._pos_1 is self._pos_0:
                 rho_1 = rho_0
