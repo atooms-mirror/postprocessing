@@ -160,6 +160,15 @@ class SelfIntermediateScatteringFast(SelfIntermediateScatteringLegacy):
         # Throw everything into a big numpy array (nframes, npos, ndim)
         pos = numpy.array(self._pos)
 
+        # Select the f90 kernel
+        ndims = len(self.k0)
+        if ndims == 3:
+            fskt_kernel = fourierspace_module.fskt_kernel_3d
+        elif ndims == 2:
+            fskt_kernel = fourierspace_module.fskt_kernel_2d
+        else:
+            fskt_kernel = fourierspace_module.fskt_kernel_nd
+            
         # To optimize without wasting too much memory (we have
         # troubles here) we group particles in blocks and tabulate the
         # exponentials over time. This is more memory consuming but we
@@ -193,7 +202,7 @@ class SelfIntermediateScatteringFast(SelfIntermediateScatteringLegacy):
                             # Get the actual time difference. steps must be accessed efficiently (cached!)
                             dt = self.trajectory.steps[i0+i] - self.trajectory.steps[i0]
                             # Call f90 kernel
-                            res = fourierspace_module.fskt_kernel(xf, i0+1, i0+1+i, numpy.array(ik, dtype=numpy.int32)+1)
+                            res = fskt_kernel(xf, i0+1, i0+1+i, numpy.array(ik, dtype=numpy.int32)+1)
                             acf[kk][dt] += res.real
                             cnt[kk][dt] += x.shape[1]
                             
