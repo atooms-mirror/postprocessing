@@ -325,7 +325,7 @@ class TestFourierSpace(unittest.TestCase):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         t = trajectory.TrajectoryXYZ(f)
         t.add_callback(filter_2d)
-        p = postprocessing.SelfIntermediateScatteringLegacy(t, [4, 7.3, 10], nk=10)
+        p = postprocessing.SelfIntermediateScattering(t, [4, 7.3, 10], nk=10)
         p.add_filter(filter_species, 'A')
         p.compute()
         p.analyze()
@@ -337,6 +337,22 @@ class TestFourierSpace(unittest.TestCase):
         self.assertLess(abs(tau[2] - 0.9802163934982774), 0.04)
         t.close()
 
+    def test_fskt_legacy_2d(self):        
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        t = trajectory.TrajectoryXYZ(f)
+        t.add_callback(filter_2d)
+        p = postprocessing.SelfIntermediateScatteringLegacy(t, [4, 7.3, 10], nk=10)
+        p.add_filter(filter_species, 'A')
+        p.compute()
+        p.analyze()
+        tau = []
+        for key in sorted(p.analysis['relaxation times tau']):
+            tau.append(p.analysis['relaxation times tau'][key])
+        self.assertLess(abs(tau[0] - 13.48342847723456), 0.04)
+        self.assertLess(abs(tau[1] - 3.07899513664358), 0.04)
+        self.assertLess(abs(tau[2] - 0.9802163934982774), 0.04)
+        t.close()
+        
     def test_fkt_2d(self):        
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         t = trajectory.TrajectoryXYZ(f)
