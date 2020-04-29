@@ -296,6 +296,21 @@ class TestFourierSpace(unittest.TestCase):
         self.assertLess(abs(tau[2] - 0.85719855804743605), 0.4)
         t.close()
 
+    def test_fkt_nonorm_partial(self):
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        t = trajectory.TrajectoryXYZ(f)
+        p = postprocessing.IntermediateScattering(t, [4, 7.3, 10], nk=40, normalize=False)
+        p.add_filter(filter_species, 'A')
+        p.compute()
+        p.analyze()
+        tau = []
+        for key in sorted(p.analysis['relaxation times tau']):
+            tau.append(p.analysis['relaxation times tau'][key])
+        self.assertLess(abs(tau[0] - 2.2792074711157104), 0.4)
+        self.assertLess(abs(tau[1] - 5.8463508731564975), 0.4)
+        self.assertLess(abs(tau[2] - 0.85719855804743605), 0.4)
+        t.close()
+        
     def test_fskt_partial(self):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         t = trajectory.TrajectoryXYZ(f)

@@ -117,13 +117,14 @@ class FourierSpaceCorrelation(Correlation):
     """
 
     def __init__(self, trajectory, grid, norigins=None, nk=8, dk=0.1,
-                 kmin=-1, kmax=10, ksamples=20, fix_cm=False):
+                 kmin=-1, kmax=10, ksamples=20, fix_cm=False, normalize=True):
         super(FourierSpaceCorrelation, self).__init__(trajectory,
                                                       grid, norigins=norigins, fix_cm=fix_cm)
         # Some additional variables. k0 = smallest wave vectors
         # compatible with the boundary conditions
         # TODO: document the additional data structures used to store k vectors
         # TODO: streamline k vectors data structures
+        self.normalize = normalize
         self.nk = nk
         self.dk = dk
         self.kmin = kmin
