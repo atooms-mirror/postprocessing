@@ -173,32 +173,28 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
         # semigrandcanonical is useless when applying filters.  
         N_0, N_1 = [], []
         gr_all = []
-        _, bins = numpy.histogram([], bins=self.grid)
+        dr = self.grid[1]
+        # Redefine grid to extend up to L (temporarily)
+        self.grid = linear_grid(0.0, min(self._side), dr)
+        gr, bins = numpy.histogram([], bins=self.grid)
         origins = range(0, ncfg, self.skip)
         for i in progress(origins):
             self._side = self.trajectory.read(i).cell.side
             if len(self._pos_0[i]) == 0 or len(self._pos_1[i]) == 0:
                 continue
-            hist, bins = numpy.histogram([], bins)
+            # Store number of particles for normalization
+            N_0.append(self._pos_0[i].shape[0])
+            N_1.append(self._pos_1[i].shape[0])
+            # Compute g(r)
             if self._pos_0 is self._pos_1:
                 x = self._pos_0[i].transpose()
-                idx = numpy.array(range(1, x.shape[1]+1))
-                N_0.append(len(idx))
-                N_1.append(x.shape[1])
-                distances = numpy.ndarray(len(idx)*x.shape[1])
-                k = compute.gr_self(idx, x, self._side, self._side/2, distances)
-                gr, bins = numpy.histogram(distances[:k], bins)                
+                compute.gr_self(x, self._side, gr, bins)
             else:
                 x = self._pos_0[i].transpose()
                 y = self._pos_1[i].transpose()
-                idx = numpy.array(range(1, x.shape[1]+1))
-                N_0.append(len(idx))
-                N_1.append(y.shape[1])
-                distances = numpy.ndarray(len(idx)*y.shape[1])
-                k = compute.gr_distinct(idx, x, y, self._side, self._side/2, distances)
-                gr, bins = numpy.histogram(distances[:k], bins)
-
-            gr_all.append(gr)
+                compute.gr_distinct(x, y, self._side, gr, bins)
+            # Damned copies in python
+            gr_all.append(gr.copy())
 
         # Normalization
         r = bins
@@ -221,5 +217,10 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
         self.grid = (r[:-1] + r[1:]) / 2.0
         self.value = gr / norm
 
+        # Restrict distances to L/2
+        where = self.grid < min(self._side / 2)
+        self.grid = self.grid[where]
+        self.value = self.value[where]
+        
 # Defaults to fast 
 RadialDistributionFunction = RadialDistributionFunctionFast

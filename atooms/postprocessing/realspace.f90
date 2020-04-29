@@ -163,8 +163,96 @@ contains
     end do
   end subroutine neighbors
 
-  subroutine gr_self(pidx, positions, box, hbox, distances, k)
-    integer(8), intent(in)    :: pidx(:)
+  subroutine gr_self(positions, box, hist, bins)
+    real(8), intent(in)       :: positions(:,:)
+    integer(8), intent(inout) :: hist(:)
+    real(8), intent(inout) :: bins(:)
+    real(8)                   :: distances(size(positions,2))  ! stack
+    real(8), intent(in)       :: box(:)
+    real(8)    :: dist(size(box)), dist_sq, pos(size(box)), dr, hbox(size(box))
+    integer(8) :: i, j, ii, bin, k
+    ! Since hist is already allocated in the main, 
+    ! we infer the bin width from its size and the max possible distance
+    dr = maxval(box) / size(hist)
+    hbox = box / 2
+    hist = 0
+    do i = 1, size(positions,2)
+       pos = positions(:,i)
+       ! Compute distances with particle i
+       k = 0
+       do j=i+1,size(positions,2)
+          k = k+1
+          dist(:) = positions(:,j) - pos(:)
+          !dist(1) = positions(1,j) - pos(1)
+          !dist(2) = positions(2,j) - pos(2)
+          !dist(3) = positions(3,j) - pos(3)
+          !if (abs(dist(1)) > hbox(1)) dist(1) = dist(1) - sign(box(1), dist(1))
+          !if (abs(dist(2)) > hbox(2)) dist(2) = dist(2) - sign(box(2), dist(2))
+          !if (abs(dist(3)) > hbox(3)) dist(3) = dist(3) - sign(box(3), dist(3))
+          where (abs(dist) > hbox)
+             dist = dist - sign(box,dist)
+          end where
+          !distances(k) = sqrt(dist(1)**2 + dist(2)**2 + dist(3)**2)
+          distances(k) = sqrt(sum(dist**2))
+       end do
+       ! Bin distances
+       do j=1,k
+          bin = floor(distances(j) / dr) + 1
+          hist(bin) = hist(bin) + 1
+       end do
+    end do
+    ! Bins
+    do j=1,size(bins)
+       bins(j) = dr * (j-1)
+    end do
+  end subroutine gr_self
+
+  subroutine gr_distinct(positions1, positions2, box, hist, bins)
+    real(8), intent(in)       :: positions1(:,:), positions2(:,:)
+    integer(8), intent(inout) :: hist(:)
+    real(8), intent(inout) :: bins(:)
+    real(8)                   :: distances(size(positions2,2))  ! stack
+    real(8), intent(in)       :: box(:)
+    real(8)    :: dist(size(box)), dist_sq, pos(size(box)), dr, hbox(size(box))
+    integer(8) :: i, j, ii, bin, k
+    ! Since hist is already allocated in the main, 
+    ! we infer the bin width from its size and the max possible distance
+    hbox = box / 2
+    dr = maxval(box) / size(hist)
+    hist = 0
+    do i=1,size(positions1,2)
+       pos = positions1(:,i)
+       ! Compute distances with particle i
+       k = 0
+       do j=1,size(positions2,2)
+          k = k+1
+          !dist(1) = positions1(1,j) - pos(1)
+          !dist(2) = positions1(2,j) - pos(2)
+          !dist(3) = positions1(3,j) - pos(3)
+          dist(:) = positions2(:,j) - pos(:)
+          !if (abs(dist(1)) > hbox(1)) dist(1) = dist(1) - sign(box(1), dist(1))
+          !if (abs(dist(2)) > hbox(2)) dist(2) = dist(2) - sign(box(2), dist(2))
+          !if (abs(dist(3)) > hbox(3)) dist(3) = dist(3) - sign(box(3), dist(3))
+          where (abs(dist) > hbox)
+             dist = dist - sign(box,dist)
+          end where
+          !distances(k) = sqrt(dist(1)**2 + dist(2)**2 + dist(3)**2)
+          distances(k) = sqrt(sum(dist**2))
+       end do
+       ! Bin distances
+       do j=1,k
+          bin = floor(distances(j) / dr) + 1
+          hist(bin) = hist(bin) + 1
+       end do
+    end do
+    ! Bins
+    do j=1,size(bins)
+       bins(j) = dr * (j-1)
+    end do
+  end subroutine gr_distinct
+
+  subroutine distances_self(start, end, positions, box, hbox, distances, k)
+    integer(8), intent(in)    :: start, end
     integer(8), intent(out) :: k
     real(8), intent(inout)    :: distances(:)
     real(8), intent(in)       :: positions(:,:)
@@ -172,8 +260,7 @@ contains
     real(8)    :: dist(size(box)), dist_sq, pos(size(box))
     integer(8) :: i, j, ii
     k = 0
-    do ii=1,size(pidx)
-       i = pidx(ii)
+    do i = start, end
        pos = positions(:,i)
        do j=i+1,size(positions,2)
           k = k+1
@@ -191,19 +278,18 @@ contains
           distances(k) = sqrt(sum(dist**2))
        end do
     end do
-  end subroutine gr_self
-
-  subroutine gr_distinct(pidx, positions1, positions2, box, hbox, distances, k)
-    integer(8), intent(in)    :: pidx(:)
-    integer(8), intent(out) :: k
+  end subroutine distances_self
+  
+  subroutine distances_distinct(start, end, positions1, positions2, box, hbox, distances, k)
+    integer(8), intent(in)    :: start, end
+    integer(8), intent(out)    :: k
     real(8), intent(inout)    :: distances(:)
     real(8), intent(in)       :: positions1(:,:), positions2(:,:)
     real(8), intent(in)       :: box(:), hbox(size(box))
     real(8)    :: dist(size(box)), dist_sq, pos(size(box))
     integer(8) :: i, j, ii
     k = 0
-    do ii=1,size(pidx)
-       i = pidx(ii)
+    do i=start, end
        pos = positions1(:,i)
        do j=1,size(positions2,2)
           k = k+1
@@ -221,6 +307,6 @@ contains
           distances(k) = sqrt(sum(dist**2))
        end do
     end do
-  end subroutine gr_distinct
+  end subroutine distances_distinct
   
 end module compute
