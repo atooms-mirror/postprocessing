@@ -66,7 +66,7 @@ def _compat(args):
 
     return args
 
-def gr(input_file, dr=0.04, grandcanonical=False, ndim=-1, *input_files, **global_args):
+def gr(input_file, dr=0.04, grandcanonical=False, ndim=-1, rmax=-1.0, *input_files, **global_args):
     """Radial distribution function"""
     global_args = _compat(global_args)
     if global_args['legacy']:
@@ -76,7 +76,7 @@ def gr(input_file, dr=0.04, grandcanonical=False, ndim=-1, *input_files, **globa
         
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         th._grandcanonical = grandcanonical
-        cf = backend(th, dr=dr,
+        cf = backend(th, dr=dr, rmax=rmax,
                      norigins=global_args['norigins'],
                      ndim=ndim)
         if global_args['filter'] is not None:
@@ -86,7 +86,7 @@ def gr(input_file, dr=0.04, grandcanonical=False, ndim=-1, *input_files, **globa
         ids = distinct_species(th[0].particle)
         if len(ids) > 1 and not global_args['no_partial']:
             cf = Partial(backend, ids, th,
-                         dr=dr, norigins=global_args['norigins'], ndim=ndim)
+                         dr=dr, rmax=rmax, norigins=global_args['norigins'], ndim=ndim)
             cf.do(update=global_args['update'])
 
 def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
