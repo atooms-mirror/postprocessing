@@ -16,7 +16,7 @@ def _pbc(t, N):
 
 # TODO: define iterator over cells
 
-class _LinkedCells(object):
+class LinkedCells(object):
 
     def __init__(self, rcut):
         self.rcut = rcut

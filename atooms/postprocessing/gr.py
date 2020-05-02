@@ -185,7 +185,7 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
         gr_all = []
         dr = self.grid[1]
 
-        from atooms.postprocessing.linkedcell import _LinkedCells
+        from atooms.postprocessing.linkedcells import LinkedCells
 
         # Use linked cells only if it is advantageous
         # - more than 3 cells along each side
@@ -199,7 +199,7 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
             nmax = self.rmax**ndims * rho
             if int(min(self._side / self.rmax)) > 3 and nmax < 1e8:
                 _log.info('using linked cells')
-                linkedcells = _LinkedCells(rcut=self.rmax)
+                linkedcells = LinkedCells(rcut=self.rmax)
             else:
                 _log.info('not using linked cells')
                 linkedcells = None
