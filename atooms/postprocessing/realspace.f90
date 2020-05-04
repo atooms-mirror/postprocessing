@@ -474,7 +474,7 @@ contains
   subroutine distances_single(position, other, box, hbox, distances, k)
     integer(8), intent(out)    :: k
     real(8), intent(inout)    :: distances(:)
-    real(8), intent(in)       :: positions(:), other(:,:)
+    real(8), intent(in)       :: position(:), other(:,:)
     real(8), intent(in)       :: box(:), hbox(size(box))
     real(8)    :: dist(size(box)), dist_sq, pos(size(box))
     integer(8) :: i, j, ii
