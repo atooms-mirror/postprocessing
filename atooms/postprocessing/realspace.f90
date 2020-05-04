@@ -470,6 +470,33 @@ contains
     end do
   end subroutine distances_distinct
 
+  ! Compute distances from a single particle at position 
+  subroutine distances_single(position, other, box, hbox, distances, k)
+    integer(8), intent(out)    :: k
+    real(8), intent(inout)    :: distances(:)
+    real(8), intent(in)       :: positions(:), other(:,:)
+    real(8), intent(in)       :: box(:), hbox(size(box))
+    real(8)    :: dist(size(box)), dist_sq, pos(size(box))
+    integer(8) :: i, j, ii
+    k = 0
+    pos = position
+    do j=1,size(other,2)
+       k = k+1
+       !dist(1) = positions1(1,j) - pos(1)
+       !dist(2) = positions1(2,j) - pos(2)
+       !dist(3) = positions1(3,j) - pos(3)
+       dist(:) = other(:,j) - pos(:)
+       !if (abs(dist(1)) > hbox(1)) dist(1) = dist(1) - sign(box(1), dist(1))
+       !if (abs(dist(2)) > hbox(2)) dist(2) = dist(2) - sign(box(2), dist(2))
+       !if (abs(dist(3)) > hbox(3)) dist(3) = dist(3) - sign(box(3), dist(3))
+       where (abs(dist) > hbox)
+          dist = dist - sign(box,dist)
+       end where
+       !distances(k) = sqrt(dist(1)**2 + dist(2)**2 + dist(3)**2)
+       distances(k) = sqrt(sum(dist**2))
+    end do
+  end subroutine distances_single
+  
   !! Find nearest neighbors 
   !!
   !! Neighbors list is in C-order for easier handling in python.
