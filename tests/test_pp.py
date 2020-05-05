@@ -39,10 +39,11 @@ def filter_2d(s):
 class Test(unittest.TestCase):
 
     def test_name(self):
+        reference_path = os.path.join(os.path.dirname(sys.argv[0]), '../data')
         default = postprocessing.core.pp_output_path
         postprocessing.core.pp_output_path = '{trajectory.filename}.pp.{short_name}.{tag_description}'
-        corr = postprocessing.SelfIntermediateScattering('data/trajectory.xyz')
-        self.assertEqual(corr._output_file, 'data/trajectory.xyz.pp.F_s(k,t).the_whole_system')
+        corr = postprocessing.SelfIntermediateScattering(os.path.join(reference_path, 'trajectory.xyz'))
+        self.assertEqual(os.path.basename(corr._output_file), 'trajectory.xyz.pp.F_s(k,t).the_whole_system')
         self.assertEqual(corr.grid_name, ['k', 't'])
         postprocessing.core.pp_output_path = default
         corr.trajectory.close()
