@@ -114,6 +114,9 @@ class FourierSpaceCorrelation(Correlation):
     computed over at most `nk` wave-vectors (k_x, k_y, k_z) such that
     their norm (k_x^2+k_y^2+k_z^2)^{1/2} lies within `dk` of the
     prescribed value k_i.
+
+    See the doc of `Correlation` for information about the rest of the
+    instance variables.
     """
 
     def __init__(self, trajectory, grid, norigins=None, nk=8, dk=0.1,
