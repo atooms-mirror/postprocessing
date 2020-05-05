@@ -39,10 +39,11 @@ def filter_2d(s):
 class Test(unittest.TestCase):
 
     def test_name(self):
+        reference_path = os.path.join(os.path.dirname(sys.argv[0]), '../data')
         default = postprocessing.core.pp_output_path
         postprocessing.core.pp_output_path = '{trajectory.filename}.pp.{short_name}.{tag_description}'
-        corr = postprocessing.SelfIntermediateScattering('data/trajectory.xyz')
-        self.assertEqual(corr._output_file, 'data/trajectory.xyz.pp.F_s(k,t).the_whole_system')
+        corr = postprocessing.SelfIntermediateScattering(os.path.join(reference_path, 'trajectory.xyz'))
+        self.assertEqual(os.path.basename(corr._output_file), 'trajectory.xyz.pp.F_s(k,t).the_whole_system')
         self.assertEqual(corr.grid_name, ['k', 't'])
         postprocessing.core.pp_output_path = default
         corr.trajectory.close()
@@ -296,6 +297,21 @@ class TestFourierSpace(unittest.TestCase):
         self.assertLess(abs(tau[2] - 0.85719855804743605), 0.4)
         t.close()
 
+    def test_fkt_nonorm_partial(self):
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        t = trajectory.TrajectoryXYZ(f)
+        p = postprocessing.IntermediateScattering(t, [4, 7.3, 10], nk=40, normalize=False)
+        p.add_filter(filter_species, 'A')
+        p.compute()
+        p.analyze()
+        tau = []
+        for key in sorted(p.analysis['relaxation times tau']):
+            tau.append(p.analysis['relaxation times tau'][key])
+        self.assertLess(abs(tau[0] - 2.2792074711157104), 0.4)
+        self.assertLess(abs(tau[1] - 5.8463508731564975), 0.4)
+        self.assertLess(abs(tau[2] - 0.85719855804743605), 0.4)
+        t.close()
+        
     def test_fskt_partial(self):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         t = trajectory.TrajectoryXYZ(f)

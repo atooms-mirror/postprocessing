@@ -4,6 +4,7 @@
 """Radial distribution function."""
 
 import math
+import logging
 
 import numpy
 
@@ -14,6 +15,8 @@ from .progress import progress
 __all__ = ['RadialDistributionFunction',
            'RadialDistributionFunctionLegacy',
            'RadialDistributionFunctionFast']
+
+_log = logging.getLogger(__name__)
 
 
 def gr_kernel(x, y, L, *args):
@@ -85,9 +88,14 @@ class RadialDistributionFunctionLegacy(Correlation):
     long_name = 'radial distribution function'
     phasespace = 'pos'
 
-    def __init__(self, trajectory, rgrid=None, norigins=None, dr=0.04, ndim=-1):
+    def __init__(self, trajectory, rgrid=None, norigins=None, dr=0.04, ndim=-1, rmax=-1.0):
         Correlation.__init__(self, trajectory, rgrid, norigins=norigins)
         self._side = self.trajectory.read(0).cell.side
+        self.rmax = rmax
+        """
+        Limit distance binning up to `rmax`. It may enable linked cells if
+        this is advantageous.
+        """
         if ndim > 0:
             # Only the first ndim coordinates are retained
             self._ndim = ndim
@@ -101,10 +109,12 @@ class RadialDistributionFunctionLegacy(Correlation):
             for i in range(len(rgrid)):
                 self.grid.append(rgrid[i] - (rgrid[1] - rgrid[0]) / 2)
             self.grid.append(rgrid[-1] + (rgrid[1] - rgrid[0]) / 2)
+            # Redefine max distance
+            self.rmax = rgrid[-1]
         else:
             L = min(self._side)
             self.grid = linear_grid(0.0, L / 2.0, dr)
-
+            
     def _compute(self):
         ncfg = len(self.trajectory)
         # Assume grandcanonical trajectory for generality.
@@ -173,32 +183,62 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
         # semigrandcanonical is useless when applying filters.  
         N_0, N_1 = [], []
         gr_all = []
-        _, bins = numpy.histogram([], bins=self.grid)
+        dr = self.grid[1]
+
+        from atooms.postprocessing.linkedcells import LinkedCells
+
+        # Use linked cells only if it is advantageous
+        # - more than 3 cells along each side
+        # - memory footprint is < ~1Gb
+        # These tests are done of the first framce
+        # TODO: if memory footprint is surpassed skip particles
+        if self.rmax > 0.0:
+            npart = len(self._pos_1[0])
+            ndims = len(self._side)
+            rho = npart / self._side.prod()
+            nmax = self.rmax**ndims * rho
+            if int(min(self._side / self.rmax)) > 3 and nmax < 1e8:
+                _log.info('using linked cells')
+                linkedcells = LinkedCells(rcut=self.rmax)
+            else:
+                _log.info('not using linked cells')
+                linkedcells = None
+        else:
+            # Maximum distance is L/2
+            self.rmax = min(self._side) / 2
+            linkedcells = None
+        
+        # Redefine grid to extend up to L
+        self.grid = linear_grid(0.0, min(self._side), dr)
+        gr, bins = numpy.histogram([], bins=self.grid)
         origins = range(0, ncfg, self.skip)
         for i in progress(origins):
             self._side = self.trajectory.read(i).cell.side
             if len(self._pos_0[i]) == 0 or len(self._pos_1[i]) == 0:
                 continue
-            hist, bins = numpy.histogram([], bins)
+            # Store number of particles for normalization
+            N_0.append(self._pos_0[i].shape[0])
+            N_1.append(self._pos_1[i].shape[0])
+
+            # Compute g(r)            
             if self._pos_0 is self._pos_1:
                 x = self._pos_0[i].transpose()
-                idx = numpy.array(range(1, x.shape[1]+1))
-                N_0.append(len(idx))
-                N_1.append(x.shape[1])
-                distances = numpy.ndarray(len(idx)*x.shape[1])
-                k = compute.gr_self(idx, x, self._side, self._side/2, distances)
-                gr, bins = numpy.histogram(distances[:k], bins)                
+                if linkedcells is None:
+                    compute.gr_self(x, self._side, bins[-1], gr, bins)
+                else:
+                    neighbors, number_of_neighbors = linkedcells.compute(self._side, self._pos_0[i], as_array=True)
+                    compute.gr_neighbors_self('C', x, neighbors, number_of_neighbors, self._side, bins[-1], gr, bins)
             else:
                 x = self._pos_0[i].transpose()
                 y = self._pos_1[i].transpose()
-                idx = numpy.array(range(1, x.shape[1]+1))
-                N_0.append(len(idx))
-                N_1.append(y.shape[1])
-                distances = numpy.ndarray(len(idx)*y.shape[1])
-                k = compute.gr_distinct(idx, x, y, self._side, self._side/2, distances)
-                gr, bins = numpy.histogram(distances[:k], bins)
-
-            gr_all.append(gr)
+                if linkedcells is None:
+                    compute.gr_distinct(x, y, self._side, bins[-1], gr, bins)
+                else:
+                    neighbors, number_of_neighbors = linkedcells.compute(self._side, self._pos_0[i], self._pos_1[i], as_array=True)
+                    compute.gr_neighbors_distinct('C', x, y, neighbors, number_of_neighbors, self._side, bins[-1], gr, bins)
+                    
+            # Damned copies in python
+            gr_all.append(gr.copy())
 
         # Normalization
         r = bins
@@ -221,5 +261,10 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
         self.grid = (r[:-1] + r[1:]) / 2.0
         self.value = gr / norm
 
+        # Restrict distances to L/2
+        where = self.grid < self.rmax
+        self.grid = self.grid[where]
+        self.value = self.value[where]
+        
 # Defaults to fast 
 RadialDistributionFunction = RadialDistributionFunctionFast

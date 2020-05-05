@@ -9,6 +9,8 @@ from collections import defaultdict
 import numpy
 from atooms.trajectory.utils import check_block_size
 
+from . import core
+from atooms.trajectory import Trajectory
 from .helpers import logx_grid, setup_t_grid
 from .correlation import Correlation
 from .fourierspace import FourierSpaceCorrelation, expo_sphere
@@ -32,18 +34,52 @@ def _write_tau(out, db):
         else:
             out.write('%g %g\n' % (k, tau))
 
-def _extract_tau(k, t, f):
+def _extract_tau(k, t, f, factor=1/numpy.exp(1.0)):
     from .helpers import feqc
+    # Ensure first point in time grid is t=0
+    # This will be enforced by the classes below but we never know
+    if t[0] > 0:
+        raise ValueError('First point in time grid must be zero')
     tau = {}
     for i, k in enumerate(k):
         try:
-            tau[k] = feqc(t, f[i], 1 / numpy.exp(1.0))[0]
+            tau[k] = feqc(t, f[i], f[i][0]*factor)[0]
         except ValueError:
             tau[k] = None
     return tau
 
 
-class SelfIntermediateScatteringLegacy(FourierSpaceCorrelation):
+class IntermediateScatteringBase(FourierSpaceCorrelation):
+
+    def __init__(self, trajectory, kgrid=None, tgrid=None, nk=1,
+                 tsamples=1, dk=0.1, kmin=1.0, kmax=10.0, ksamples=10,
+                 norigins=-1, fix_cm=False, normalize=True):
+        FourierSpaceCorrelation.__init__(self, trajectory, [kgrid, tgrid], norigins,
+                                         nk, dk, kmin, kmax, ksamples, fix_cm, normalize)
+        # Before setting up the time grid, we need to check periodicity over blocks
+        try:
+            check_block_size(self.trajectory.steps, self.trajectory.block_size)
+        except IndexError as e:
+            _log.warn('issue with trajectory blocks, the time grid may not correspond to the requested one (%s)', e.message)
+
+        # Setup time grid
+        if self.grid[1] is None:
+            self.grid[1] = logx_grid(0.0, self.trajectory.total_time * 0.75, tsamples)
+        else:
+            # If the values are normalized, we make sure the
+            # user-provided time grid includes t=0. It is removed
+            # after normalization
+            if self.normalize:
+                if self.grid[1][0] > 0:
+                    _log.info('adding t=0 to the time grid to normalize F_s(k,t)')
+                    self.grid[1] = [0.0] + self.grid[1]
+
+        # When a single time origin is requested,
+        # make sure no additional time origins except the first frame is used
+        self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid[1], offset=norigins != '1' and norigins != 1)
+
+
+class SelfIntermediateScatteringLegacy(IntermediateScatteringBase):
     """
     Self part of the intermediate scattering function.
 
@@ -56,30 +92,25 @@ class SelfIntermediateScatteringLegacy(FourierSpaceCorrelation):
     long_name = 'self intermediate scattering function'
     phasespace = 'pos'
 
-    #TODO: xyz files are 2 slower than hdf5 here
     def __init__(self, trajectory, kgrid=None, tgrid=None, nk=8,
                  tsamples=60, dk=0.1, kmin=1.0, kmax=10.0,
                  ksamples=10, norigins=-1, fix_cm=False,
-                 lookup_mb=64.0):
-        if norigins == '1':
-            no_offset = True
-        else:
-            no_offset = False
+                 lookup_mb=64.0, normalize=True):
+        # TODO: remove this backward compatible tgrid fix in a major release
+        # The default time grid should be the same for F_s(k,t) and F(k,t)
+        if isinstance(trajectory, str):
+            trajectory = Trajectory(trajectory, mode='r', fmt=core.pp_trajectory_format)
+        if tgrid is None:
+            tgrid = [0.0] + logx_grid(trajectory.timestep,
+                                      trajectory.total_time * 0.75, tsamples)
+        super(SelfIntermediateScatteringLegacy,
+              self).__init__(trajectory, kgrid=kgrid, tgrid=tgrid,
+                             nk=nk, tsamples=tsamples, dk=dk, kmin=kmin,
+                             kmax=kmax, ksamples=ksamples, norigins=norigins,
+                             fix_cm=fix_cm, normalize=normalize)
         self.lookup_mb = lookup_mb
         """Memory in Mb allocated for exponentials tabulation"""
-        FourierSpaceCorrelation.__init__(self, trajectory, [kgrid, tgrid], norigins,
-                                         nk, dk, kmin, kmax, ksamples, fix_cm)
-        # Before setting up the time grid, we need to check periodicity over blocks
-        try:
-            check_block_size(self.trajectory.steps, self.trajectory.block_size)
-        except IndexError as e:
-            _log.warn('issue with trajectory blocks, the time grid may not correspond to the requested one (%s)', e.message)
-        # Setup time grid
-        if tgrid is None:
-            self.grid[1] = [0.0] + logx_grid(self.trajectory.timestep,
-                                             self.trajectory.total_time * 0.75, tsamples)
-        self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid[1], offset=not no_offset)
-        
+
     def _compute(self):
         # Throw everything into a big numpy array (nframes, npos, ndim)
         pos = numpy.array(self._pos)
@@ -131,7 +162,12 @@ class SelfIntermediateScatteringLegacy(FourierSpaceCorrelation):
         self.grid[0] = self.kgrid
         self.grid[1] = [ti*self.trajectory.timestep for ti in tgrid]
         self.value = [[acf[kk][ti] / cnt[kk][ti] for ti in tgrid] for kk in range(len(self.grid[0]))]
-        self.value = [[self.value[kk][i] / self.value[kk][0] for i in range(len(self.value[kk]))] for kk in range(len(self.grid[0]))]
+
+        # Normalize
+        if self.normalize:
+            for k in range(len(self.grid[0])):
+                for i in range(len(self.value[k])):
+                    self.value[k][i] /= self.value[k][0]
 
     def analyze(self):
         self.analysis['relaxation times tau'] = _extract_tau(self.grid[0], self.grid[1], self.value)
@@ -210,13 +246,17 @@ class SelfIntermediateScatteringFast(SelfIntermediateScatteringLegacy):
         self.grid[0] = self.kgrid
         self.grid[1] = [ti*self.trajectory.timestep for ti in tgrid]
         self.value = [[acf[kk][ti] / cnt[kk][ti] for ti in tgrid] for kk in range(len(self.grid[0]))]
-        self.value = [[self.value[kk][i] / self.value[kk][0] for i in range(len(self.value[kk]))] for kk in range(len(self.grid[0]))]
+        # Normalize
+        if self.normalize:
+            for k in range(len(self.grid[0])):
+                for i in range(len(self.value[k])):
+                    self.value[k][i] /= self.value[k][0]
 
 
 # Defaults to fast
 SelfIntermediateScattering = SelfIntermediateScatteringFast
 
-class IntermediateScattering(FourierSpaceCorrelation):
+class IntermediateScattering(IntermediateScatteringBase):
     """
     Coherent intermediate scattering function.
 
@@ -231,17 +271,11 @@ class IntermediateScattering(FourierSpaceCorrelation):
     phasespace = 'pos'
 
     def __init__(self, trajectory, kgrid=None, tgrid=None, nk=100, dk=0.1, tsamples=60,
-                 kmin=1.0, kmax=10.0, ksamples=10, norigins=-1, fix_cm=False):
-        FourierSpaceCorrelation.__init__(self, trajectory, [kgrid, tgrid], norigins,
-                                         nk, dk, kmin, kmax, ksamples, fix_cm)
-        # Setup time grid
-        try:
-            check_block_size(self.trajectory.steps, self.trajectory.block_size)
-        except IndexError as e:
-            _log.warn('issue with trajectory blocks, the time grid may not correspond to the requested one (%s)', e.message)
-        if tgrid is None:
-            self.grid[1] = logx_grid(0.0, self.trajectory.total_time * 0.75, tsamples)
-        self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid[1], offset=norigins != '1')
+                 kmin=1.0, kmax=10.0, ksamples=10, norigins=-1, fix_cm=False, normalize=True):
+        super(IntermediateScattering, self).__init__(trajectory, kgrid=kgrid, tgrid=tgrid,
+                             nk=nk, tsamples=tsamples, dk=dk, kmin=kmin,
+                             kmax=kmax, ksamples=ksamples, norigins=norigins,
+                             fix_cm=fix_cm, normalize=normalize)
 
     def _tabulate_rho(self, kgrid, selection):
         """
@@ -321,18 +355,22 @@ class IntermediateScattering(FourierSpaceCorrelation):
         times = sorted(acf[0].keys())
         self.grid[0] = kgrid
         self.grid[1] = [ti*self.trajectory.timestep for ti in times]
-        if self._pos_0 is self._pos_1:
-            # First normalize by cnt (time counts), then by value at t=0
-            # We do not need to normalize by the average number of particles
-            # TODO: check normalization when not GC, does not give exactly the short time behavior as pp.x
-            nav = sum([p.shape[0] for p in self._pos]) / len(self._pos)
-            self.value_nonorm = [[acf[kk][ti] / (cnt[kk][ti]) for ti in times] for kk in range(len(self.grid[0]))]
+        # TODO: check normalization when not GC, does not give exactly the short time behavior as pp.x
+        # This switch is not used
+        # if self._pos_0 is self._pos_1:
+        #     nav = sum([p.shape[0] for p in self._pos]) / len(self._pos)
+        # else:
+        #     nav_0 = sum([p.shape[0] for p in self._pos_0]) / len(self._pos_0)
+        #     nav_1 = sum([p.shape[0] for p in self._pos_1]) / len(self._pos_1)
+        # First normalize by cnt (time counts), then by value at t=0
+        # We do not need to normalize by the average number of particles
+        self.value_nonorm = [[acf[kk][ti] / (cnt[kk][ti]) for ti in times] for kk in range(len(self.grid[0]))]
+
+        # Normalize
+        if self.normalize:
             self.value = [[v / self.value_nonorm[kk][0] for v in self.value_nonorm[kk]] for kk in range(len(self.grid[0]))]
         else:
-            # nav_0 = sum([p.shape[0] for p in self._pos_0]) / len(self._pos_0)
-            # nav_1 = sum([p.shape[0] for p in self._pos_1]) / len(self._pos_1)
-            self.value_nonorm = [[acf[kk][ti] / (cnt[kk][ti]) for ti in times] for kk in range(len(self.grid[0]))]
-            self.value = [[v / self.value_nonorm[kk][0] for v in self.value_nonorm[kk]] for kk in range(len(self.grid[0]))]
+            self.value = self.value_nonorm
 
     def analyze(self):
         self.analysis['relaxation times tau'] = _extract_tau(self.grid[0], self.grid[1], self.value)

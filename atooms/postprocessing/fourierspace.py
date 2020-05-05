@@ -114,16 +114,20 @@ class FourierSpaceCorrelation(Correlation):
     computed over at most `nk` wave-vectors (k_x, k_y, k_z) such that
     their norm (k_x^2+k_y^2+k_z^2)^{1/2} lies within `dk` of the
     prescribed value k_i.
+
+    See the doc of `Correlation` for information about the rest of the
+    instance variables.
     """
 
     def __init__(self, trajectory, grid, norigins=None, nk=8, dk=0.1,
-                 kmin=-1, kmax=10, ksamples=20, fix_cm=False):
+                 kmin=-1, kmax=10, ksamples=20, fix_cm=False, normalize=True):
         super(FourierSpaceCorrelation, self).__init__(trajectory,
                                                       grid, norigins=norigins, fix_cm=fix_cm)
         # Some additional variables. k0 = smallest wave vectors
         # compatible with the boundary conditions
         # TODO: document the additional data structures used to store k vectors
         # TODO: streamline k vectors data structures
+        self.normalize = normalize
         self.nk = nk
         self.dk = dk
         self.kmin = kmin
@@ -246,16 +250,53 @@ class FourierSpaceCorrelation(Correlation):
             selection.append(random.sample(list(range(nkmax)), min(self.nk, nkmax)))
         return kgrid, selection
 
-    def report(self):
-        s = []
-        for kk, knorm in enumerate(self.kgrid):
-            av = 0.0
-            for i in self.selection[kk]:
-                av += _k_norm(self.kvector[knorm][i], self.k0, self._kbin_max)
-            s.append("# k %g : k_av=%g (nk=%d)" % (knorm, av /
-                                                   len(self.selection[kk]),
-                                                   len(self.selection[kk])))
-        return '\n'.join(s)
+    @property
+    def kvectors(self):
+        """
+        Dictionary of actual kvectors used to compute the correlation
+        function
+
+        The keys of the dictionary are the kgrid values, i.e. the
+        average k values in each wave-vector shell. The values are
+        lists of wavevectors.
+        """
+        db = defaultdict(list)
+        for ik, knorm in enumerate(self.kgrid):
+            for isel in self.selection[ik]:
+                center_vec = numpy.array(self.kvector[knorm][isel]) - self._kbin_max
+                db[knorm].append(list(self.k0 * center_vec))
+        return db
+    
+    def report(self, verbose=False):
+        """
+        Return a formatted report of the wave-vector grid used to compute
+        the correlation function
+
+        The `verbose` option turns on writing of the individuals
+        wavectors (also accessible via the `kvectors` property).
+        """
+        txt = '# k-point, average, std, vectors in shell\n'
+        db = self.kvectors
+        for knorm in db:
+            knorms = []
+            for kvec in db[knorm]:
+                k_sq = numpy.dot(kvec, kvec)
+                knorms.append(math.sqrt(k_sq))
+            knorms = numpy.array(knorms)
+            txt += "{} {:f} {:f} {}\n".format(knorm, knorms.mean(),
+                                              knorms.std(),
+                                              len(db[knorm]))
+        if verbose:
+            txt += '\n# k-point, k-vector\n'
+            for knorm in db:
+                for kvec in db[knorm]:
+                    # Reformat numpy array
+                    as_str = str(kvec)
+                    as_str = as_str.replace(',', '')
+                    as_str = as_str.replace('[', '')
+                    as_str = as_str.replace(']', '')
+                    txt += '{} {}\n'.format(knorm, as_str)
+        return txt
 
     def _actual_k_grid(self):
         """
