@@ -327,6 +327,7 @@ class TestFourierSpace(unittest.TestCase):
         self.assertLess(abs(tau[2] - 0.97005294966138289), 0.04)
         t.close()
 
+
     def test_chi4_overlap(self):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         with trajectory.TrajectoryXYZ(f) as th:
@@ -393,6 +394,21 @@ class TestFourierSpace(unittest.TestCase):
         p.compute()
         ref_value = numpy.array([ [0.06899986228704291, 0.0629709003150001, 0.07397620251792263]])
         self.assertLess(deviation(p.value, ref_value), 0.04)
+        t.close()
+
+    def test_fourierspace_kgrid_unsorted(self):
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        t = trajectory.TrajectoryXYZ(f)
+        p_sorted = postprocessing.SelfIntermediateScatteringLegacy(t, [4, 7.3, 10], nk=40, norigins=0.2)
+        p_unsorted = postprocessing.SelfIntermediateScatteringLegacy(t, [10, 4, 7.3], nk=40, norigins=0.2)
+        
+        p_sorted.compute()
+        p_sorted.analyze()
+        p_unsorted.compute()
+        p_unsorted.analyze()
+
+        self.assertEqual(p_sorted.kgrid, p_unsorted.kgrid)
+        self.assertLess(deviation(numpy.array(p_sorted.value), numpy.array(p_unsorted.value)), 1e-14)
         t.close()
         
 if __name__ == '__main__':
