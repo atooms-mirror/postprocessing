@@ -330,7 +330,7 @@ contains
     real(8), intent(inout) :: bins(:)
     real(8)                   :: distances(size(positions,2))  ! stack
     real(8), intent(in)       :: box(:)
-    real(8)    :: dist(size(box)), dist_sq, pos(size(box)), dr, hbox(size(box))
+    real(8)    :: dist(size(box)), dist_sq, pos(size(box)), dr, hbox(size(box)), rdist
     integer(8) :: i, j, ii, bin, k
     ! Since hist is already allocated in the main, 
     ! we infer the bin width from its size and the max possible distance
@@ -342,7 +342,6 @@ contains
        ! Compute distances with particle i
        k = 0
        do j=i+1,size(positions,2)
-          k = k+1
           dist(:) = positions(:,j) - pos(:)
           !dist(1) = positions(1,j) - pos(1)
           !dist(2) = positions(2,j) - pos(2)
@@ -353,8 +352,12 @@ contains
           where (abs(dist) > hbox)
              dist = dist - sign(box,dist)
           end where
-          !distances(k) = sqrt(dist(1)**2 + dist(2)**2 + dist(3)**2)
-          distances(k) = sqrt(sum(dist**2))
+          rdist = sqrt(sum(dist**2))
+          if (rdist < rmax) then
+             k = k+1
+             distances(k) = rdist
+             !distances(k) = sqrt(dist(1)**2 + dist(2)**2 + dist(3)**2)
+          end if
        end do
        ! Bin distances
        do j=1,k
@@ -386,7 +389,6 @@ contains
        ! Compute distances with particle i
        k = 0
        do j=1,size(positions2,2)
-          k = k+1
           !dist(1) = positions1(1,j) - pos(1)
           !dist(2) = positions1(2,j) - pos(2)
           !dist(3) = positions1(3,j) - pos(3)
@@ -397,8 +399,12 @@ contains
           where (abs(dist) > hbox)
              dist = dist - sign(box,dist)
           end where
+          rdist = sqrt(sum(dist**2))
           !distances(k) = sqrt(dist(1)**2 + dist(2)**2 + dist(3)**2)
-          distances(k) = sqrt(sum(dist**2))
+          if (rdist < rmax) then
+             k = k+1
+             distances(k) = rdist
+          end if
        end do
        ! Bin distances
        do j=1,k

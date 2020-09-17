@@ -90,19 +90,11 @@ class RadialDistributionFunctionLegacy(Correlation):
 
     def __init__(self, trajectory, rgrid=None, norigins=None, dr=0.04, ndim=-1, rmax=-1.0):
         Correlation.__init__(self, trajectory, rgrid, norigins=norigins)
-        self._side = self.trajectory.read(0).cell.side
         self.rmax = rmax
         """
         Limit distance binning up to `rmax`. It may enable linked cells if
         this is advantageous.
         """
-        if ndim > 0:
-            # Only the first ndim coordinates are retained
-            self._ndim = ndim
-            self._volume = self._side[:ndim].prod()
-        else:
-            self._ndim = len(self._side)
-            self._volume = self._side.prod()
         if rgrid is not None:
             # Reconstruct bounds of grid for numpy histogram
             self.grid = []
@@ -112,11 +104,14 @@ class RadialDistributionFunctionLegacy(Correlation):
             # Redefine max distance
             self.rmax = rgrid[-1]
         else:
-            L = min(self._side)
-            self.grid = linear_grid(0.0, L / 2.0, dr)
+            # We only store the bin width. The maximum distance is
+            # adjusted at computing time
+            self.grid = [0.0, dr]
             
     def _compute(self):
         ncfg = len(self.trajectory)
+        system = self.trajectory.read(0)
+        ndims = system.number_of_dimensions
         # Assume grandcanonical trajectory for generality.
         # Note that testing if the trajectory is grandcanonical or
         # semigrandcanonical is useless when applying filters.  
@@ -128,27 +123,27 @@ class RadialDistributionFunctionLegacy(Correlation):
         _, r = numpy.histogram([], bins=self.grid)
         origins = range(0, ncfg, self.skip)
         for i in progress(origins):
-            self._side = self.trajectory.read(i).cell.side
+            system = self.trajectory.read(i)
+            side = system.cell.side
             if len(self._pos_0[i]) == 0 or len(self._pos_1[i]) == 0:
                 continue
             if self._pos_0 is self._pos_1:
-                gr = pairs_newton_hist(gr_kernel, self._pos_0[i], self._pos_1[i],
-                                       self._side, r)
+                gr = pairs_newton_hist(gr_kernel, self._pos_0[i], self._pos_1[i], side, r)
             else:
-                gr = pairs_hist(gr_kernel, self._pos_0[i], self._pos_1[i],
-                                self._side, r)
+                gr = pairs_hist(gr_kernel, self._pos_0[i], self._pos_1[i], side, r)
             gr_all.append(gr)
 
         # Normalization
-        if self._ndim == 2:
+        volume = system.cell.volume
+        if ndims == 2:
             vol = math.pi * (r[1:]**2 - r[:-1]**2)
-        elif self._ndim == 3:
+        elif ndims == 3:
             vol = 4 * math.pi / 3.0 * (r[1:]**3 - r[:-1]**3)
         else:
             from math import gamma
-            n2 = int(float(self._ndim) / 2)
-            vol = math.pi**n2 * (r[1:]**self._ndim-r[:-1]**self._ndim) / gamma(n2+1)
-        rho = N_1 / self._volume
+            n2 = int(float(ndims) / 2)
+            vol = math.pi**n2 * (r[1:]**ndims-r[:-1]**ndims) / gamma(n2+1)
+        rho = N_1 / volume
         if self._pos_0 is self._pos_1:
             norm = rho * vol * N_0 * 0.5  # use Newton III
         else:
@@ -176,66 +171,87 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
 
     def _compute(self):
         from atooms.postprocessing.realspace_wrap import compute
+        from atooms.postprocessing.linkedcells import LinkedCells
 
-        ncfg = len(self.trajectory)
         # Assume grandcanonical trajectory for generality.
         # Note that testing if the trajectory is grandcanonical or
         # semigrandcanonical is useless when applying filters.  
         N_0, N_1 = [], []
         gr_all = []
-        dr = self.grid[1]
 
-        from atooms.postprocessing.linkedcells import LinkedCells
+        # Grid setup.
+        # Get side of cell. If the system does not have a cell,
+        # wrap it in an infinite cell and estimate a reasonable grid.
+        system = self.trajectory.read(0)
+        ndims = system.number_of_dimensions
+        if system.cell is not None:
+            # Redefine grid to extend up to L
+            # This retains the original dr
+            self.grid = linear_grid(0.0, min(system.cell.side), float(self.grid[1]))
+            gr, bins = numpy.histogram([], bins=self.grid)
+        else:
+            import sys
+            # If there is no cell, then rmax must have been given
+            # This retains the original dr
+            dr = float(self.grid[1])
+            if self.rmax > 0:
+                self.grid = linear_grid(0.0, self.rmax, dr)
+            else:
+                self.grid = linear_grid(0.0, dr*1000, dr)
+            gr, bins = numpy.histogram([], bins=self.grid)
 
         # Use linked cells only if it is advantageous
         # - more than 3 cells along each side
         # - memory footprint is < ~1Gb
         # These tests are done of the first framce
         # TODO: if memory footprint is surpassed skip particles
-        if self.rmax > 0.0:
+        linkedcells = None
+        if self.rmax > 0.0 and system.cell is not None:
             npart = len(self._pos_1[0])
-            ndims = len(self._side)
-            rho = npart / self._side.prod()
+            rho = npart / system.cell.volume
             nmax = self.rmax**ndims * rho
-            if int(min(self._side / self.rmax)) > 3 and nmax < 1e8:
+            if int(min(system.cell.side / self.rmax)) > 3 and nmax < 1e8:
                 _log.info('using linked cells')
                 linkedcells = LinkedCells(rcut=self.rmax)
             else:
                 _log.info('not using linked cells')
                 linkedcells = None
-        else:
-            # Maximum distance is L/2
-            self.rmax = min(self._side) / 2
-            linkedcells = None
         
-        # Redefine grid to extend up to L
-        self.grid = linear_grid(0.0, min(self._side), dr)
-        gr, bins = numpy.histogram([], bins=self.grid)
-        origins = range(0, ncfg, self.skip)
+        # Main loop for average
+        origins = range(0, len(self.trajectory), self.skip)
         for i in progress(origins):
-            self._side = self.trajectory.read(i).cell.side
+            # Skip if there are no particles
             if len(self._pos_0[i]) == 0 or len(self._pos_1[i]) == 0:
                 continue
+            
             # Store number of particles for normalization
             N_0.append(self._pos_0[i].shape[0])
             N_1.append(self._pos_1[i].shape[0])
 
+            # Store side
+            system = self.trajectory.read(i)
+            if system.cell is not None:
+                side = system.cell.side
+            else:
+                side = numpy.ndarray(ndims, dtype=float)
+                side[:] = sys.float_info.max
+                
             # Compute g(r)            
             if self._pos_0 is self._pos_1:
                 x = self._pos_0[i].transpose()
                 if linkedcells is None:
-                    compute.gr_self(x, self._side, bins[-1], gr, bins)
+                    compute.gr_self(x, side, bins[-1], gr, bins)
                 else:
-                    neighbors, number_of_neighbors = linkedcells.compute(self._side, self._pos_0[i], as_array=True)
-                    compute.gr_neighbors_self('C', x, neighbors, number_of_neighbors, self._side, bins[-1], gr, bins)
+                    neighbors, number_of_neighbors = linkedcells.compute(side, self._pos_0[i], as_array=True)
+                    compute.gr_neighbors_self('C', x, neighbors, number_of_neighbors, side, bins[-1], gr, bins)
             else:
                 x = self._pos_0[i].transpose()
                 y = self._pos_1[i].transpose()
                 if linkedcells is None:
-                    compute.gr_distinct(x, y, self._side, bins[-1], gr, bins)
+                    compute.gr_distinct(x, y, side, bins[-1], gr, bins)
                 else:
-                    neighbors, number_of_neighbors = linkedcells.compute(self._side, self._pos_0[i], self._pos_1[i], as_array=True)
-                    compute.gr_neighbors_distinct('C', x, y, neighbors, number_of_neighbors, self._side, bins[-1], gr, bins)
+                    neighbors, number_of_neighbors = linkedcells.compute(side, self._pos_0[i], self._pos_1[i], as_array=True)
+                    compute.gr_neighbors_distinct('C', x, y, neighbors, number_of_neighbors, side, bins[-1], gr, bins)
                     
             # Damned copies in python
             gr_all.append(gr.copy())
@@ -244,15 +260,20 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
         r = bins
         N_0 = numpy.average(N_0)
         N_1 = numpy.average(N_1)
-        if self._ndim == 2:
+        if system.cell is not None:
+            volume = system.cell.volume
+        else:
+            # TODO: this only works with recent atooms
+            volume = len(system.particle) / system.density
+        if ndims == 2:
             vol = math.pi * (r[1:]**2 - r[:-1]**2)
-        elif self._ndim == 3:
+        elif ndims == 3:
             vol = 4 * math.pi / 3.0 * (r[1:]**3 - r[:-1]**3)
         else:
             from math import gamma
-            n2 = int(float(self._ndim) / 2)
-            vol = math.pi**n2 * (r[1:]**self._ndim-r[:-1]**self._ndim) / gamma(n2+1)
-        rho = N_1 / self._volume
+            n2 = int(float(ndims) / 2)
+            vol = math.pi**n2 * (r[1:]**ndims-r[:-1]**ndims) / gamma(n2+1)
+        rho = N_1 / volume
         if self._pos_0 is self._pos_1:
             norm = rho * vol * N_0 * 0.5  # use Newton III
         else:
@@ -262,7 +283,10 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
         self.value = gr / norm
 
         # Restrict distances to L/2
-        where = self.grid < self.rmax
+        if self.rmax > 0:
+            where = self.grid < self.rmax
+        else:
+            where = self.grid < self.grid[-1] / 2
         self.grid = self.grid[where]
         self.value = self.value[where]
         
