@@ -377,7 +377,7 @@ contains
     real(8), intent(inout) :: bins(:)
     real(8)                   :: distances(size(positions2,2))  ! stack
     real(8), intent(in)       :: box(:)
-    real(8)    :: dist(size(box)), dist_sq, pos(size(box)), dr, hbox(size(box))
+    real(8)    :: dist(size(box)), dist_sq, pos(size(box)), dr, hbox(size(box)), rdist
     integer(8) :: i, j, ii, bin, k
     ! Since hist is already allocated in the main, 
     ! we infer the bin width from its size and the max possible distance
