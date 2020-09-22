@@ -82,8 +82,7 @@ class LinkedCells(object):
                 folded = _pbc(list(self._neigh_cell[i][j]), self.n_cell)
                 self._neigh_cell[i][j] = tuple(folded)
 
-    def adjust(self, npart, box, newton):
-        # TODO: why npart?
+    def adjust(self, box, newton):
         self.box = box
         self.hbox = box / 2
         self.n_cell = (box / self.rcut).astype(int)
@@ -94,9 +93,18 @@ class LinkedCells(object):
         x = ((pos + self.hbox) / self.box_cell)
         return x.astype(numpy.int)
 
-    def compute(self, box, pos, other=None, as_array=False):
+    def on_border(self, pos):
+        index = list(self._index(pos))
+        found = False
+        for i in range(len(index)):
+            if index[i] == self.n_cell[i] - 1 or index[i] == 0:
+                found = True
+                break
+        return found
+
+    def compute(self, box, pos, other=None, as_array=False, newton=True):
         if not self._is_adjusted:
-            self.adjust(pos.shape[0], box, newton=other is None)
+            self.adjust(box, newton=other is None and newton)
             self._is_adjusted = True
         # We only need positions here but how can we be sure that
         # this is the same set of particles we use when retrieving
@@ -118,6 +126,7 @@ class LinkedCells(object):
             particle_in_cell[tuple(icell)].append(ipart)
 
         for ipart in range(pos.shape[0]):
+            #print(ipart, pos[ipart], box, index[ipart])
             icell = tuple(index[ipart])
             # Initialize an empty list
             neighbors = []

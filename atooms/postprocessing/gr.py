@@ -223,10 +223,6 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
             # Skip if there are no particles
             if len(self._pos_0[i]) == 0 or len(self._pos_1[i]) == 0:
                 continue
-            
-            # Store number of particles for normalization
-            N_0.append(self._pos_0[i].shape[0])
-            N_1.append(self._pos_1[i].shape[0])
 
             # Store side
             system = self.trajectory.read(i)
@@ -235,14 +231,35 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
             else:
                 side = numpy.ndarray(ndims, dtype=float)
                 side[:] = sys.float_info.max
+
+            # When using linked cells, we precalculate the neighbors
+            if linkedcells:
+                if self._pos_0 is self._pos_1:
+                    neighbors, number_of_neighbors = linkedcells.compute(side, self._pos_0[i], as_array=True)
+                else:
+                    neighbors, number_of_neighbors = linkedcells.compute(side, self._pos_0[i], self._pos_1[i], as_array=True)
                 
-            # Compute g(r)            
-            if self._pos_0 is self._pos_1:
+            # In presence of a non-periodic cell, which just bounds the physical domain,
+            # we crop particles on the cell borders to avoid artifacts.
+            # This is only possible when linked cells are activated
+            crop = []
+            if not numpy.any(system.cell.periodic) and linkedcells:
+                crop = []
+                for pos in self._pos_0[i]:
+                    if not linkedcells.on_border(pos):
+                        crop.append(pos)
+                crop = numpy.array(crop)
+                
+            # Store number of particles for normalization
+            N_0.append(self._pos_0[i].shape[0] - len(crop))
+            N_1.append(self._pos_1[i].shape[0])
+
+            # Compute g(r)
+            if self._pos_0 is self._pos_1 and len(crop) == 0:
                 x = self._pos_0[i].transpose()
                 if linkedcells is None:
                     compute.gr_self(x, side, bins[-1], gr, bins)
                 else:
-                    neighbors, number_of_neighbors = linkedcells.compute(side, self._pos_0[i], as_array=True)
                     compute.gr_neighbors_self('C', x, neighbors, number_of_neighbors, side, bins[-1], gr, bins)
             else:
                 x = self._pos_0[i].transpose()
@@ -250,7 +267,6 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
                 if linkedcells is None:
                     compute.gr_distinct(x, y, side, bins[-1], gr, bins)
                 else:
-                    neighbors, number_of_neighbors = linkedcells.compute(side, self._pos_0[i], self._pos_1[i], as_array=True)
                     compute.gr_neighbors_distinct('C', x, y, neighbors, number_of_neighbors, side, bins[-1], gr, bins)
                     
             # Damned copies in python
@@ -274,7 +290,9 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
             n2 = int(float(ndims) / 2)
             vol = math.pi**n2 * (r[1:]**ndims-r[:-1]**ndims) / gamma(n2+1)
         rho = N_1 / volume
-        if self._pos_0 is self._pos_1:
+        
+        # TODO: the check on crop relies on a loop-scope variable
+        if self._pos_0 is self._pos_1 and len(crop) == 0:
             norm = rho * vol * N_0 * 0.5  # use Newton III
         else:
             norm = rho * vol * N_0
