@@ -207,10 +207,11 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
         # TODO: if memory footprint is surpassed skip particles
         linkedcells = None
         if self.rmax > 0.0 and system.cell is not None:
-            npart = len(self._pos_1[0])
-            rho = npart / system.cell.volume
+            n_0 = len(self._pos_0[0])
+            n_1 = len(self._pos_1[0])
+            rho = n_1 / system.cell.volume
             nmax = self.rmax**ndims * rho
-            if int(min(system.cell.side / self.rmax)) > 3 and nmax < 1e8:
+            if int(min(system.cell.side / self.rmax)) > 3 and nmax * n_0 < 1e6:
                 _log.info('using linked cells')
                 linkedcells = LinkedCells(rcut=self.rmax)
             else:
@@ -224,6 +225,9 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
             if len(self._pos_0[i]) == 0 or len(self._pos_1[i]) == 0:
                 continue
 
+            # Switch between self and distinct calculation
+            distinct = self._pos_0 is not self._pos_1
+            
             # Store side
             system = self.trajectory.read(i)
             if system.cell is not None:
@@ -238,36 +242,43 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
                     neighbors, number_of_neighbors = linkedcells.compute(side, self._pos_0[i], as_array=True)
                 else:
                     neighbors, number_of_neighbors = linkedcells.compute(side, self._pos_0[i], self._pos_1[i], as_array=True)
-                
-            # In presence of a non-periodic cell, which just bounds the physical domain,
-            # we crop particles on the cell borders to avoid artifacts.
-            # This is only possible when linked cells are activated
-            crop = []
-            if not numpy.any(system.cell.periodic) and linkedcells:
-                crop = []
-                for pos in self._pos_0[i]:
-                    if not linkedcells.on_border(pos):
-                        crop.append(pos)
-                crop = numpy.array(crop)
+
+            # Transpose the arrays for fortran
+            # TODO: can we avoid this?
+            if distinct:
+                pos_0 = self._pos_0[i].transpose()
+                pos_1 = self._pos_1[i].transpose()
+            else:
+                pos_0 = self._pos_0[i].transpose()
+                pos_1 = pos_0
+
+            # With a non-periodic cell, which just bounds the physical
+            # domain, we must crop particles close to the surface
+            # self_term = 0
+            if not numpy.any(system.cell.periodic):
+                #mask = numpy.ndarray(pos_0.shape[1], dtype=numpy.bool)
+                # TODO: bool does not work
+                mask = compute.on_surface(pos_0, side, self.rmax)
+                mask = mask == 1
+                pos_0 = pos_0[:, mask]
+                # Force distinct calculation
+                distinct = True
                 
             # Store number of particles for normalization
-            N_0.append(self._pos_0[i].shape[0] - len(crop))
-            N_1.append(self._pos_1[i].shape[0])
+            N_0.append(pos_0.shape[1])
+            N_1.append(pos_1.shape[1])
 
             # Compute g(r)
-            if self._pos_0 is self._pos_1 and len(crop) == 0:
-                x = self._pos_0[i].transpose()
+            if not distinct:
                 if linkedcells is None:
-                    compute.gr_self(x, side, bins[-1], gr, bins)
+                    compute.gr_self(pos_0, side, bins[-1], gr, bins)
                 else:
-                    compute.gr_neighbors_self('C', x, neighbors, number_of_neighbors, side, bins[-1], gr, bins)
+                    compute.gr_neighbors_self('C', pos_0, neighbors, number_of_neighbors, side, bins[-1], gr, bins)
             else:
-                x = self._pos_0[i].transpose()
-                y = self._pos_1[i].transpose()
                 if linkedcells is None:
-                    compute.gr_distinct(x, y, side, bins[-1], gr, bins)
+                    compute.gr_distinct(pos_0, pos_1, side, bins[-1], gr, bins)
                 else:
-                    compute.gr_neighbors_distinct('C', x, y, neighbors, number_of_neighbors, side, bins[-1], gr, bins)
+                    compute.gr_neighbors_distinct('C', pos_0, pos_1, neighbors, number_of_neighbors, side, bins[-1], gr, bins)
                     
             # Damned copies in python
             gr_all.append(gr.copy())
@@ -289,13 +300,12 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
             from math import gamma
             n2 = int(float(ndims) / 2)
             vol = math.pi**n2 * (r[1:]**ndims-r[:-1]**ndims) / gamma(n2+1)
-        rho = N_1 / volume
         
-        # TODO: the check on crop relies on a loop-scope variable
-        if self._pos_0 is self._pos_1 and len(crop) == 0:
-            norm = rho * vol * N_0 * 0.5  # use Newton III
-        else:
-            norm = rho * vol * N_0
+        rho = N_1 / volume
+        norm = rho * vol * N_0
+        if not distinct:
+            # We used Newton III
+            norm /= 2
         gr = numpy.average(gr_all, axis=0)
         self.grid = (r[:-1] + r[1:]) / 2.0
         self.value = gr / norm

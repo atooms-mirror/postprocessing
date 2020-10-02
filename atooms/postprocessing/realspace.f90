@@ -42,6 +42,20 @@ contains
        index(:,i) = int((pos(:,i) + hbox(:)) / cell(:))
     end do
   end subroutine bin_in_cell
+
+  ! Return a logical mask that tells which particles are close to the
+  ! surface of the cell (within a distance delta)
+  subroutine on_surface(pos,box,delta,mask)
+    real(8), intent(in)    :: pos(:,:)
+    real(8), intent(in)    :: box(:), delta
+    logical, intent(out) :: mask(size(pos, 2))
+    real(8) :: hbox(size(box))
+    integer :: i
+    hbox = box / 2
+    do i = 1,size(pos,2)
+       mask(i) = any(abs(pos(:,i)) > hbox(:) - delta)
+    end do
+  end subroutine on_surface
   
   subroutine bond_angle(center,positions,neighbors,box,dtheta,hist)
     ! Parameters
