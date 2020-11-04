@@ -9,12 +9,35 @@ import numpy
 from .progress import progress
 from .fourierspace import FourierSpaceCorrelation, expo_sphere
 
-__all__ = ['StructureFactor', 'StructureFactorOptimized']
+__all__ = ['StructureFactor', 'StructureFactorLegacy', 'StructureFactorOptimized']
 
 _log = logging.getLogger(__name__)
 
 
-class StructureFactor(FourierSpaceCorrelation):
+def is_cell_variable(trajectory, tests=1):
+    """
+    Simple test to check if cell changes.
+
+    We compare the first frame to an integer number `tests` of other
+    frames starting from the end of `trajectory`.
+    """
+    is_variable = False
+    frames = len(trajectory)
+    if tests > 0:
+        skip = max(1, int(frames / float(tests)))
+    else:
+        skip = 1
+    L0 = trajectory[0].cell.side
+    for sample in range(frames-1, 0, -skip):
+        cell = trajectory[sample].cell
+        L1 = cell.side
+        if numpy.any(L0 != L1):
+            is_variable = True
+            break
+    return is_variable
+
+
+class StructureFactorLegacy(FourierSpaceCorrelation):
     """
     Structure factor.
 
@@ -35,9 +58,8 @@ class StructureFactor(FourierSpaceCorrelation):
         self._is_cell_variable = None
 
     def _compute(self):
-        from atooms.trajectory.utils import is_cell_variable
-
         nsteps = len(self._pos_0)
+        ndims = len(self.k0)
         # Setup k vectors and tabulate rho
         kgrid, selection = self.kgrid, self.selection
         kmax = max(self.kvector.keys()) + self.dk
@@ -70,27 +92,57 @@ class StructureFactor(FourierSpaceCorrelation):
                 weight_0, weight_1 = 1.0, 1.0
             else:
                 weight_0, weight_1 = self._weight_0[i], self._weight_1[i]
-                
+
+            # Nice spaghetti here
             for kk, knorm in enumerate(kgrid):
                 for k in selection[kk]:
                     ik = self.kvector[knorm][k]
                     if expo_0 is expo_1:
                         # Identical species
-                        rho_0 = numpy.sum(weight_0 *
-                                          expo_0[..., 0, ik[0]] *
-                                          expo_0[..., 1, ik[1]] *
-                                          expo_0[..., 2, ik[2]])
+                        if ndims == 3:
+                            rho_0 = numpy.sum(weight_0 *
+                                              expo_0[..., 0, ik[0]] *
+                                              expo_0[..., 1, ik[1]] *
+                                              expo_0[..., 2, ik[2]])
+                        elif ndims == 2:
+                            rho_0 = numpy.sum(weight_0 *
+                                              expo_0[..., 0, ik[0]] *
+                                              expo_0[..., 1, ik[1]])
+                        else:
+                            tmp = weight_0 * expo_0[..., 0, ik[0]]
+                            for idim in range(1, ndims):
+                                tmp *= expo_0[..., idim, ik[idim]]
+                            rho_0 = numpy.sum(tmp)
+
                         rho_1 = rho_0
                     else:
                         # Cross correlation
-                        rho_0 = numpy.sum(weight_0 *
-                                          expo_0[..., 0, ik[0]] *
-                                          expo_0[..., 1, ik[1]] *
-                                          expo_0[..., 2, ik[2]])
-                        rho_1 = numpy.sum(weight_1 *
-                                          expo_1[..., 0, ik[0]] *
-                                          expo_1[..., 1, ik[1]] *
-                                          expo_1[..., 2, ik[2]])
+                        if ndims == 3:
+                            rho_0 = numpy.sum(weight_0 *
+                                              expo_0[..., 0, ik[0]] *
+                                              expo_0[..., 1, ik[1]] *
+                                              expo_0[..., 2, ik[2]])
+                            rho_1 = numpy.sum(weight_1 *
+                                              expo_1[..., 0, ik[0]] *
+                                              expo_1[..., 1, ik[1]] *
+                                              expo_1[..., 2, ik[2]])
+                        elif ndims == 2:
+                            rho_0 = numpy.sum(weight_0 *
+                                              expo_0[..., 0, ik[0]] *
+                                              expo_0[..., 1, ik[1]])
+                            rho_1 = numpy.sum(weight_1 *
+                                              expo_1[..., 0, ik[0]] *
+                                              expo_1[..., 1, ik[1]])
+                        else:
+                            tmp = weight_0 * expo_0[..., 0, ik[0]]
+                            for idim in range(ndims):
+                                tmp *= expo_0[..., idim, ik[idim]]
+                            rho_0 = numpy.sum(tmp)
+                            tmp = weight_0 * expo_1[..., 0, ik[0]]
+                            for idim in range(ndims):
+                                tmp *= expo_1[..., idim, ik[idim]]
+                            rho_1 = numpy.sum(tmp)
+                            
                     # Cumulate averages
                     rho_0_av[kk] += rho_0
                     rho_1_av[kk] += rho_1
@@ -115,7 +167,7 @@ class StructureFactor(FourierSpaceCorrelation):
             self.value_nonorm.append(value)
 
 
-class StructureFactorOptimized(StructureFactor):
+class StructureFactorFast(StructureFactorLegacy):
     """
     Optimized structure factor.
 
@@ -188,3 +240,7 @@ class StructureFactorOptimized(StructureFactor):
             self.value_nonorm.append(value)
 
 
+# Defaults to legacy
+StructureFactor = StructureFactorLegacy
+# Backward compatible alias
+StructureFactorOptimized = StructureFactorFast

@@ -10,11 +10,12 @@ all: user
 dist: version
 	python setup.py sdist
 
-test:	version
+test:	
 	python -m unittest discover -s tests
 
 install: version
 	python setup.py config_fc --opt '-O3 -funroll-loops' install
+#	python setup.py config_fc --opt '-O3 -funroll-loops -fbounds-check' install
 
 user: version
 	python setup.py config_fc --opt '-O3 -funroll-loops' install --user

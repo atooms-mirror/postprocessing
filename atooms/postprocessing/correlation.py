@@ -131,25 +131,34 @@ class Correlation(object):
     """
     Base class for correlation functions.
 
+    The correlation function is calculated for the trajectory `trj`. This can be:
+
+    - an object implementing the atooms `Trajectory` interface
+    - the path to a trajectory file in a format recognized by atooms
+
     A correlation function A(x) is defined over a grid of real
     entries {x_i} given by the list `grid`. To each entry of the grid,
     the correlation function has a corresponding value A_i=A(x_i). The
     latter values are stored in the `value` list.
 
-    Correlation functions depending on multiple variables must provide
-    a list of grids, one for each variable. The order is one specified
-    by in the `symbol` variable, see below.
+    Correlation functions that depend on several variables, A(x,y,...)
+    must provide a list of grids, one for each variable. The order is
+    one specified by the `symbol` class variable, see below.
+
+    The correlation function A is calculated as a statistical average
+    over several time origins in the trajectory `trj`. The `norigins`
+    variable can be used to tune the number of time origins used to
+    carry out the average. `norigins` can take the following values:
+
+    - `norigins=-1`: all origins are used
+    - an integer >= 1: use only `n_origins` time origins
+    - a float in the interval (0,1): use only a fraction `norigins` of frames as time origins
+    - `None`: a heuristics is used to keep the product of steps times particles constant
 
     Subclasses must provide a symbolic expression of the correlation
-    function through the `symbol` string variable. The following
+    function through the `symbol` class variable. The following
     convention is used: if a correlation function A depends on
-    variables x and y, then `symbol='A(x,y)'`.
-
-    The interface of subclasses should enforce the following
-    convention for grid and samples variables passed to __init__()
-    methods: if the correlation function variable is `x`, e.g. the
-    correlation function is `A(x)`, then the associated grid variable
-    is `xgrid` and the number of samples in that grid is `tsamples`.
+    variables x and y, then `symbol = 'A(x,y)'`.
 
     The `phasespace` variable allow subclasses to access a list of 2d
     numpy arrays with particles coordinates via the following private
@@ -193,7 +202,8 @@ class Correlation(object):
             self.trajectory = Trajectory(trj, mode='r', fmt=core.pp_trajectory_format)
         else:
             self.trajectory = trj
-        self._unfolded = Unfolded(self.trajectory, fixed_cm=fix_cm)
+        self._fix_cm = fix_cm
+        self._unfolded = None
         self.grid = grid
         self.value = []
         self.analysis = {}
@@ -339,6 +349,8 @@ class Correlation(object):
                     
         # Dump unfolded positions if requested
         if 'pos-unf' in self.phasespace:
+            if self._unfolded is None:
+                self._unfolded = Unfolded(self.trajectory, fixed_cm=self._fix_cm)
             for s in progress(self._unfolded):
                 # Apply filter if there is one
                 if len(self._cbk) > 0:
@@ -443,7 +455,8 @@ class Correlation(object):
         Compute the correlation function.
 
         It wraps the _compute() method implemented by subclasses.
-        This method also returns the tuple `self.grid`, `self.value`.
+        This method sets the `self.grid` and `self.value` variables,
+        which are also returned.
         """
         _log.info('setup arrays for %s', self.tag_description)
         t = [Timer(), Timer()]
@@ -526,7 +539,22 @@ class Correlation(object):
         return variables.split(',')
 
     def write(self):
-        """Write the correlation function and the analysis data to file"""
+        """
+        Write the correlation function and the analysis data to file
+
+        The `output_path` instance variable is used to define the
+        output files by interpolating the following variables:
+
+        - symbol
+        - short_name
+        - long_name
+        - tag
+        - tag_description
+        - trajectory
+
+        The default is defined by core.pp_output_path, which currently
+        looks like '{trajectory.filename}.pp.{symbol}.{tag}'
+        """
         def is_iterable(maybe_iterable):
             try:
                 iter(maybe_iterable)
@@ -569,6 +597,10 @@ class Correlation(object):
                 analysis += '# %s: %s\n' % (x, f)
 
         # Put it all together
+        # and make sure the path to the output file exists
+        import os
+        from atooms.core.utils import mkdir
+        mkdir(os.path.dirname(self._output_file))
         with open(self._output_file, 'w') as fh:
             fh.write(comments)
             if len(analysis) > 0:

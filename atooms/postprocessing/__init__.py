@@ -7,6 +7,7 @@ logging.getLogger(__name__).addHandler(logging.NullHandler())
 from .correlation import *
 from .partial import *
 from .filter import Filter
+from .susceptibility import Susceptibility
 
 # Real space correlation functions
 from .alpha2 import *

@@ -41,10 +41,14 @@ class MeanSquareDisplacement(Correlation):
     phasespace = 'pos-unf'
 
     def __init__(self, trajectory, tgrid=None, rmax=-1.0, norigins=None,
-                 tsamples=30, sigma=1.0, fix_cm=False):
+                 tsamples=30, sigma=1.0, fix_cm=False, no_offset=False):
         self.rmax = rmax
         self.sigma = sigma
         self.tsamples = tsamples
+        self._norigins = norigins
+        # Offsets in time grid are only relevant with periodic blocks
+        # Use the no_offset parameter to disable them
+        self._no_offset = no_offset
         Correlation.__init__(self, trajectory, tgrid, norigins=norigins, fix_cm=fix_cm)        
         
     def _compute(self):
@@ -64,8 +68,10 @@ class MeanSquareDisplacement(Correlation):
             else:
                 self.grid = linear_grid(0.0, t_max, self.tsamples)
 
-        #self.grid = [_*self.trajectory.timestep for _ in self.trajectory.steps[:30]]
-        self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid)
+        # Setup time grid
+        # We disable offsets if only one time origin is requested or if no_offset is True
+        self._discrete_tgrid = setup_t_grid(self.trajectory, self.grid,
+                                            offset=self._norigins != '1' and not self._no_offset)
         # Note that the grid is redefined
         self.grid, self.value = gcf_offset(msd, self._discrete_tgrid, self.skip,
                                            self.trajectory.steps, self._pos_unf)

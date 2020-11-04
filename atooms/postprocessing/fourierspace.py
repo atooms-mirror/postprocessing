@@ -35,6 +35,7 @@ def expo_sphere(k0, kmax, pos):
     # This leaves many unused vectors in the other directions, which
     # could be dropped using different nkmax for x, y, z
     nk_max = 1 + int(kmax / min(k0))
+    # The shape of expo is nframes, N, ndim, 2*nk+1
     expo = numpy.ndarray((len(pos), ) + pos[0].shape + (2*nk_max+1, ), numpy.complex)
     expo[..., nk_max] = numpy.complex(1.0, 0.0)
     # First fill positive k
@@ -76,15 +77,28 @@ def expo_sphere_safe(k0, kmax, pos):
 
 
 def _k_norm(ik, k0, offset):
-    if isinstance(k0, list) or isinstance(k0, numpy.ndarray):
-        return math.sqrt((k0[0] * (ik[0] - offset))**2 +
-                         (k0[1] * (ik[1] - offset))**2 +
-                         (k0[2] * (ik[2] - offset))**2)
-    else:
-        return math.sqrt(float((ik[0]-offset)**2 +
-                               (ik[1]-offset)**2 +
-                               (ik[2]-offset)**2)) * k0
+    k_shift = k0 * (numpy.array(ik) - offset)
+    k_sq = numpy.dot(k_shift, k_shift)
+    return math.sqrt(k_sq)
 
+def _sphere(kmax):
+    ikvec = numpy.ndarray(3, dtype=numpy.int)
+    for ix in range(-kmax, kmax+1):
+        for iy in range(-kmax, kmax+1):
+            for iz in range(-kmax, kmax+1):
+                ikvec[0] = ix
+                ikvec[1] = iy
+                ikvec[2] = iz
+                yield ikvec
+                
+def _disk(kmax):
+    ikvec = numpy.ndarray(2, dtype=numpy.int)
+    for ix in range(-kmax, kmax+1):
+        for iy in range(-kmax, kmax+1):
+            ikvec[0] = ix
+            ikvec[1] = iy
+            yield ikvec
+                        
 
 class FourierSpaceCorrelation(Correlation):
 
@@ -100,23 +114,27 @@ class FourierSpaceCorrelation(Correlation):
     computed over at most `nk` wave-vectors (k_x, k_y, k_z) such that
     their norm (k_x^2+k_y^2+k_z^2)^{1/2} lies within `dk` of the
     prescribed value k_i.
+
+    See the doc of `Correlation` for information about the rest of the
+    instance variables.
     """
 
     def __init__(self, trajectory, grid, norigins=None, nk=8, dk=0.1,
-                 kmin=-1, kmax=10, ksamples=20):
+                 kmin=-1, kmax=10, ksamples=20, fix_cm=False, normalize=True):
         super(FourierSpaceCorrelation, self).__init__(trajectory,
-                                                      grid, norigins=norigins)
+                                                      grid, norigins=norigins, fix_cm=fix_cm)
         # Some additional variables. k0 = smallest wave vectors
         # compatible with the boundary conditions
         # TODO: document the additional data structures used to store k vectors
         # TODO: streamline k vectors data structures
+        self.normalize = normalize
         self.nk = nk
         self.dk = dk
         self.kmin = kmin
         self.kmax = kmax
         self.ksamples = ksamples
         self.kgrid = []
-        self.k0 = 0.0
+        self.k0 = []
         self.kvector = {}
         self.selection = []
         self._kbin_max = 0
@@ -159,6 +177,8 @@ class FourierSpaceCorrelation(Correlation):
             else:
                 self.kgrid = linear_grid(min(self.k0), self.kmax, self.ksamples)
         else:
+            # Sort, since code below depends on kgrid[0] being the smallest k-value.
+            self.kgrid.sort()
             # If the first wave-vector is negative we replace it by k0
             if self.kgrid[0] < 0.0:
                 self.kgrid[0] = min(self.k0)
@@ -166,7 +186,7 @@ class FourierSpaceCorrelation(Correlation):
         # Setup the grid of wave-vectors
         self.kvector, self._kbin_max = self._setup_grid_sphere(len(self.kgrid) * [self.dk],
                                                                self.kgrid, self.k0)
-
+        
     @staticmethod
     def _setup_grid_sphere(dk, kgrid, k0):
         """
@@ -175,34 +195,38 @@ class FourierSpaceCorrelation(Correlation):
         the values specified in the input list kgrid.
         Returns a dictonary of lists of wavevectors, one entry for each element in the grid.
         """
+        _log.info('setting up the wave-vector grid')
         kvec = defaultdict(list)
         # With elongated box, we choose the smallest k0 component to
         # setup the integer grid. This must be consistent with
         # expo_grid() otherwise it wont find the vectors
         kmax = kgrid[-1] + dk[-1]
         kbin_max = 1 + int(kmax / min(k0))
-        # TODO: it would be more elegant an iterator over ix, iy, iz for sphere, hemisphere, ...
-        # unless kmax is very high it might be more efficient to
-        # operate on a 3d grid to construct the vectors
         kmax_sq = kmax**2
-        for ix in range(-kbin_max, kbin_max+1):
-            for iy in range(-kbin_max, kbin_max+1):
-                for iz in range(-kbin_max, kbin_max+1):
-                    # Slightly faster and more explicit than
-                    #   ksq = sum([(x*y)**2 for x, y in zip(k0, [ix, iy, iz])])
-                    ksq = ((k0[0]*ix)**2 + (k0[1]*iy)**2 + (k0[2]*iz)**2)
-                    if ksq > kmax_sq:
-                        continue
-                    # beware: numpy.sqrt is x5 slower than math one!
-                    knorm = math.sqrt(ksq)
-                    # Look for a shell of vectors in which the vector could fit.
-                    # This expression is general and allows arbitrary k grids
-                    # However, searching for the shell like this is not fast
-                    # (it costs about as much as the above)
-                    for ki, dki in zip(kgrid, dk):
-                        if abs(knorm - ki) < dki:
-                            kvec[ki].append((ix+kbin_max, iy+kbin_max, iz+kbin_max))
-                            break
+
+        # Choose iterator of spatial grid
+        ndims = len(k0)
+        if ndims == 3:
+            _iterator = _sphere
+        elif ndims == 2:
+            _iterator = _disk
+        else:
+            raise ValueError('unsupported dimension {}'.format(ndims))
+            
+        for ik in _iterator(kbin_max):
+            ksq = numpy.dot(k0*ik, k0*ik)
+            if ksq > kmax_sq:
+                continue
+            # beware: numpy.sqrt is x5 slower than math one!
+            knorm = math.sqrt(ksq)
+            # Look for a shell of vectors in which the vector could fit.
+            # This expression is general and allows arbitrary k grids
+            # However, searching for the shell like this is not fast
+            # (it costs about as much as the above)
+            for ki, dki in zip(kgrid, dk):
+                if abs(knorm - ki) < dki:
+                    kvec[ki].append(tuple(ik + kbin_max))
+                    break
 
         if len(kvec.keys()) != len(kgrid):
             _log.warning('some entries in the kgrid had no matching k-vector')
@@ -228,16 +252,53 @@ class FourierSpaceCorrelation(Correlation):
             selection.append(random.sample(list(range(nkmax)), min(self.nk, nkmax)))
         return kgrid, selection
 
-    def report(self):
-        s = []
-        for kk, knorm in enumerate(self.kgrid):
-            av = 0.0
-            for i in self.selection[kk]:
-                av += _k_norm(self.kvector[knorm][i], self.k0, self._kbin_max)
-            s.append("# k %g : k_av=%g (nk=%d)" % (knorm, av /
-                                                   len(self.selection[kk]),
-                                                   len(self.selection[kk])))
-        return '\n'.join(s)
+    @property
+    def kvectors(self):
+        """
+        Dictionary of actual kvectors used to compute the correlation
+        function
+
+        The keys of the dictionary are the kgrid values, i.e. the
+        average k values in each wave-vector shell. The values are
+        lists of wavevectors.
+        """
+        db = defaultdict(list)
+        for ik, knorm in enumerate(self.kgrid):
+            for isel in self.selection[ik]:
+                center_vec = numpy.array(self.kvector[knorm][isel]) - self._kbin_max
+                db[knorm].append(list(self.k0 * center_vec))
+        return db
+    
+    def report(self, verbose=False):
+        """
+        Return a formatted report of the wave-vector grid used to compute
+        the correlation function
+
+        The `verbose` option turns on writing of the individuals
+        wavectors (also accessible via the `kvectors` property).
+        """
+        txt = '# k-point, average, std, vectors in shell\n'
+        db = self.kvectors
+        for knorm in db:
+            knorms = []
+            for kvec in db[knorm]:
+                k_sq = numpy.dot(kvec, kvec)
+                knorms.append(math.sqrt(k_sq))
+            knorms = numpy.array(knorms)
+            txt += "{} {:f} {:f} {}\n".format(knorm, knorms.mean(),
+                                              knorms.std(),
+                                              len(db[knorm]))
+        if verbose:
+            txt += '\n# k-point, k-vector\n'
+            for knorm in db:
+                for kvec in db[knorm]:
+                    # Reformat numpy array
+                    as_str = str(kvec)
+                    as_str = as_str.replace(',', '')
+                    as_str = as_str.replace('[', '')
+                    as_str = as_str.replace(']', '')
+                    txt += '{} {}\n'.format(knorm, as_str)
+        return txt
 
     def _actual_k_grid(self):
         """
