@@ -143,8 +143,8 @@ def ik(input_file, trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0,
                                ksamples=ksamples).do(update=global_args['update'])
 
 def msd(input_file, tmax=-1.0, tmax_fraction=0.75, tsamples=30,
-        sigma=1.0, func='linear', rmsd_max=-1.0, fix_cm=False, *input_files,
-        **global_args):
+        sigma=1.0, func='linear', rmsd_max=-1.0, fix_cm=False,
+        no_offset=False, *input_files, **global_args):
     """Mean square displacement"""
     func = _func_db[func]
     global_args = _compat(global_args)
@@ -159,12 +159,12 @@ def msd(input_file, tmax=-1.0, tmax_fraction=0.75, tsamples=30,
         ids = distinct_species(th[0].particle)
         pp.MeanSquareDisplacement(th, tgrid=t_grid,
                                   norigins=global_args['norigins'],
-                                  sigma=sigma, rmax=rmsd_max,
+                                  sigma=sigma, rmax=rmsd_max, no_offset=no_offset,
                                   fix_cm=fix_cm).do(update=global_args['update'])
         if len(ids) > 1:
             Partial(pp.MeanSquareDisplacement, ids, th, tgrid=t_grid,
                     norigins=global_args['norigins'], sigma=sigma,
-                    rmax=rmsd_max).do(update=global_args['update'])
+                    rmax=rmsd_max, no_offset=no_offset).do(update=global_args['update'])
 
 def vacf(input_file, tmax=-1.0, tmax_fraction=0.10,
          tsamples=30, func='linear', *input_files, **global_args):
