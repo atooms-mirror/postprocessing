@@ -26,7 +26,16 @@ def logx_grid(x1, x2, n):
 
 
 def ifabsmm(x, f):
-    """Interpolated absolute maximum."""
+    """
+    Find absolute maximum and absolute minimum of f(x) using a
+    parabolic interpolation.
+
+    Given x and f(x), the function returns a tuple of two entries, the
+    first one being (x_min, f(x_min)), the second (x_max, f(x_max)).
+
+    If the maximum of the minimum lies on the boundary of the
+    interval, no interpolation is performed.
+    """
 
     def _vertex_parabola(a, b, c):
         """Returns the vertex (x,y) of a parabola of the type a*x**2 + b*x + c."""
@@ -41,13 +50,14 @@ def ifabsmm(x, f):
         return a, b, c
 
     # First uninterpolated minima and maxima
+    f = list(f)
     imin, imax = f.index(min(f)), f.index(max(f))
     # Then perform parabolic interpolation
     ii = []
     for i in [imin, imax]:
         if i == len(f)-1 or i == 0:
             # At boundaries we do nothing
-            ii.append(i)
+            ii.append((x[i], f[i]))
         else:
             # Parabola around i
             i1, i2, i3 = i-1, i, i+1
