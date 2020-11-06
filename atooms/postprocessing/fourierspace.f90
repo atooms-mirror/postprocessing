@@ -33,15 +33,15 @@ contains
 
   subroutine sk_bare(expo,ikvec,rho)
     complex(8),intent(in)        :: expo(:,:,:)  ! (ndim, npart)
+    integer, intent(in)       :: ikvec(:,:) ! (ndim, nvec), (nvec)
 !    real(8),intent(in)        :: k0
 !    integer, intent(in)       :: ikbin(:),ikvec(:,:) ! (ndim, nvec), (nvec)
-    integer, intent(in)       :: ikvec(:,:) ! (ndim, nvec), (nvec)
 !    complex(8), intent(inout) :: sk(:)
 !    real(8), intent(inout) :: sk(:)
-    integer                   :: nmax(3)  !?
 !    complex(8),     pointer   :: expo(:,:,:)
-    integer     :: i1, i2, i3, ii, npart, ndim
-    integer     :: kbin, kmax
+    ! integer                   :: nmax(3)
+    !integer     :: kbin, kmax, npart, ndim
+    integer     :: i1, i2, i3, ii
     complex(8), intent(inout) :: rho(:)
     ! ndim = size(position,1)
     ! npart = size(position,2)
