@@ -45,9 +45,14 @@ def ifabsmm(x, f):
     # Then perform parabolic interpolation
     ii = []
     for i in [imin, imax]:
-        i1, i2, i3 = i-1, i, i+1
-        a, b, c = _parabola_3points(x[i1], f[i1], x[i2], f[i2], x[i3], f[i3])
-        ii.append(_vertex_parabola(a, b, c))
+        if i == len(f)-1 or i == 0:
+            # At boundaries we do nothing
+            ii.append(i)
+        else:
+            # Parabola around i
+            i1, i2, i3 = i-1, i, i+1
+            a, b, c = _parabola_3points(x[i1], f[i1], x[i2], f[i2], x[i3], f[i3])
+            ii.append(_vertex_parabola(a, b, c))
     return ii[0], ii[1]
 
 
