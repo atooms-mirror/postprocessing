@@ -243,7 +243,7 @@ contains
     end if    
     ! Since hist is already allocated in the main, 
     ! we infer the bin width from its size and the max possible distance
-    dr = rmax / size(hist)
+    dr = rmax / (size(hist) - 1)
     hbox = box / 2
     hist = 0
     do i = 1, size(positions,2)
@@ -299,7 +299,7 @@ contains
     end if    
     ! Since hist is already allocated in the main, 
     ! we infer the bin width from its size and the max possible distance
-    dr = rmax / size(hist)
+    dr = rmax / (size(hist) - 1)
     hbox = box / 2
     hist = 0
     do i = 1, size(positions,2)
@@ -348,7 +348,7 @@ contains
     integer(8) :: i, j, ii, bin, k
     ! Since hist is already allocated in the main, 
     ! we infer the bin width from its size and the max possible distance
-    dr = rmax / size(hist)
+    dr = rmax / (size(hist) - 1)
     hbox = box / 2
     hist = 0
     do i = 1, size(positions,2)
@@ -396,7 +396,7 @@ contains
     ! Since hist is already allocated in the main, 
     ! we infer the bin width from its size and the max possible distance
     hbox = box / 2
-    dr = rmax / size(hist)
+    dr = rmax / (size(hist) - 1)
     hist = 0
     do i=1,size(positions1,2)
        pos = positions1(:,i)
