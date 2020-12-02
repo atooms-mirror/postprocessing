@@ -4,57 +4,16 @@ module fourierspace_module
 
 contains
 
-  subroutine sk_one(position,k0,kmax,ikvec,ikbin,sk)
-    real(8),intent(in)        :: position(:,:)  ! (ndim, npart)
-    real(8),intent(in)        :: k0
-    integer, intent(in)       :: ikvec(:,:), ikbin(:)  ! (ndim, nvec), (nvec)
-!    complex(8), intent(inout) :: sk(:)
-    real(8), intent(inout) :: sk(:)
-    integer                   :: nmax(3)  !?
-    complex(8),     pointer   :: expo(:,:,:)
-    integer     :: i1, i2, i3, ii, npart, ndim
-    integer     :: kbin, kmax
-    complex(8) :: rho
-    ndim = size(position,1)
-    npart = size(position,2)
-    allocate(expo(npart,ndim,-kmax:kmax))
-    call setup_expo(k0,nmax,position,expo)
-    sk = (0.d0, 0.d0)
-    do ii = 1,size(ikvec,2)
-       i1   = ikvec(1,ii)
-       i2   = ikvec(2,ii)
-       i3   = ikvec(3,ii)
-       kbin = ikbin(ii)
-       rho = sum(expo(:,1,i1) * expo(:,2,i2) * expo(:,3,i3))
-       !sk(kbin) = sk(kbin) + rho*conjg(rho)
-       sk(kbin) = sk(kbin) + real(rho*conjg(rho),8)
-    end do
-  end subroutine sk_one
-
   subroutine sk_bare(expo,ikvec,rho)
     complex(8),intent(in)        :: expo(:,:,:)  ! (ndim, npart)
     integer, intent(in)       :: ikvec(:,:) ! (ndim, nvec), (nvec)
-!    real(8),intent(in)        :: k0
-!    integer, intent(in)       :: ikbin(:),ikvec(:,:) ! (ndim, nvec), (nvec)
-!    complex(8), intent(inout) :: sk(:)
-!    real(8), intent(inout) :: sk(:)
-!    complex(8),     pointer   :: expo(:,:,:)
-    ! integer                   :: nmax(3)
-    !integer     :: kbin, kmax, npart, ndim
     integer     :: i1, i2, i3, ii
     complex(8), intent(inout) :: rho(:)
-    ! ndim = size(position,1)
-    ! npart = size(position,2)
-    ! allocate(expo(npart,ndim,-kmax:kmax))
-    ! call setup_expo(k0,nmax,position,expo)
-    ! sk = (0.d0, 0.d0)
     do ii = 1,size(ikvec,2)
        i1   = ikvec(1,ii)
        i2   = ikvec(2,ii)
        i3   = ikvec(3,ii)
        rho(ii) = sum(expo(:,1,i1) * expo(:,2,i2) * expo(:,3,i3))
-       !sk(kbin) = sk(kbin) + rho*conjg(rho)
-       !sk(kbin) = sk(kbin) + real(rho*conjg(rho),8)
     end do
   end subroutine sk_bare
 

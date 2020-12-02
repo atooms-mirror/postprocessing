@@ -429,6 +429,7 @@ class TestFourierSpace(unittest.TestCase):
         t.close()
 
     def test_gr_crop(self):
+        # TODO: fix this test
         import numpy
         import atooms.postprocessing as pp
         import atooms.trajectory as trj

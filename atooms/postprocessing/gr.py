@@ -106,9 +106,10 @@ class RadialDistributionFunctionLegacy(Correlation):
             # wrap it in an infinite cell and estimate a reasonable grid.
             ndims = system.number_of_dimensions
             if system.cell is not None:
-                # Redefine grid to extend up to L / 2
+                # Redefine grid to extend up to L
+                # The grid will be cropped later to L/2
                 # This retains the original dr
-                self.grid = linear_grid(0.0, min(system.cell.side) / 2, self.dr)
+                self.grid = linear_grid(0.0, min(system.cell.side), self.dr)
             else:
                 # If there is no cell, then rmax must have been given
                 # This retains the original dr
@@ -174,11 +175,14 @@ class RadialDistributionFunctionLegacy(Correlation):
         self.grid = (r[:-1] + r[1:]) / 2.0
         self.value = gr / norm
 
-        # Restrict distances to L/2
+        # Restrict distances to L/2 (in last frame) or rmax 
         if self.rmax > 0:
             where = self.grid <= self.rmax
-            self.grid = self.grid[where]
-            self.value = self.value[where]
+        else:
+            side = system.cell.side
+            where = self.grid <= min(side) / 2
+        self.grid = self.grid[where]
+        self.value = self.value[where]
 
 
 class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
@@ -326,11 +330,14 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
         self.grid = (r[:-1] + r[1:]) / 2.0
         self.value = gr / norm
 
-        # Restrict distances to L/2
+        # Restrict distances to L/2 (in last frame) or rmax 
         if self.rmax > 0:
-            where = self.grid < self.rmax
-            self.grid = self.grid[where]
-            self.value = self.value[where]
+            where = self.grid <= self.rmax
+        else:
+            side = system.cell.side
+            where = self.grid <= min(side) / 2
+        self.grid = self.grid[where]
+        self.value = self.value[where]
 
 # Defaults to fast
 RadialDistributionFunction = RadialDistributionFunctionFast
