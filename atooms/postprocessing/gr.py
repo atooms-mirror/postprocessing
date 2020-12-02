@@ -340,4 +340,8 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
         self.value = self.value[where]
 
 # Defaults to fast
-RadialDistributionFunction = RadialDistributionFunctionFast
+try:
+    import atooms.postprocessing.realspace_wrap
+    RadialDistributionFunction = RadialDistributionFunctionFast
+except ImportError:
+    RadialDistributionFunction = RadialDistributionFunctionLegacy
