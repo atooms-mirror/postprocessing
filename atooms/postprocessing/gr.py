@@ -90,31 +90,54 @@ class RadialDistributionFunctionLegacy(Correlation):
 
     def __init__(self, trajectory, rgrid=None, norigins=None, dr=0.04, ndim=-1, rmax=-1.0):
         Correlation.__init__(self, trajectory, rgrid, norigins=norigins)
+        self.dr = dr
         self.rmax = rmax
         """
         Limit distance binning up to `rmax`. It may enable linked cells if
         this is advantageous.
         """
-        if rgrid is not None:
-            # Reconstruct bounds of grid for numpy histogram
-            self.grid = []
-            for i in range(len(rgrid)):
-                self.grid.append(rgrid[i] - (rgrid[1] - rgrid[0]) / 2)
-            self.grid.append(rgrid[-1] + (rgrid[1] - rgrid[0]) / 2)
-            # Redefine max distance
-            self.rmax = rgrid[-1]
-        else:
-            # We only store the bin width. The maximum distance is
-            # adjusted at computing time
-            self.grid = [0.0, dr]
-            
+
+    def _setup_grid(self, system):
+        """
+        Deferred grid setup
+        """
+        if self.grid is None:
+            # Get side of cell. If the system does not have a cell,
+            # wrap it in an infinite cell and estimate a reasonable grid.
+            ndims = system.number_of_dimensions
+            if system.cell is not None:
+                # Redefine grid to extend up to L
+                # The grid will be cropped later to L/2
+                # This retains the original dr
+                self.grid = linear_grid(0.0, min(system.cell.side), self.dr)
+            else:
+                # If there is no cell, then rmax must have been given
+                # This retains the original dr
+                if self.rmax > 0:
+                    self.grid = linear_grid(0.0, self.rmax, self.dr)
+                else:
+                    self.grid = linear_grid(0.0, self.dr*1000, self.dr)
+
+        # Internal max distance (/= user provided rmax)
+        self._rmax = self.grid[-1]
+        
+        # Reconstruct bounds of grid for numpy histogram
+        grid = []
+        for i in range(len(self.grid)):
+            grid.append(self.grid[i] - (self.grid[1] - self.grid[0]) / 2)
+        grid.append(self.grid[-1] + (self.grid[1] - self.grid[0]) / 2)
+        self.grid = grid
+
     def _compute(self):
         ncfg = len(self.trajectory)
         system = self.trajectory.read(0)
         ndims = system.number_of_dimensions
+        self._setup_grid(system)
+        gr, bins = numpy.histogram([], bins=self.grid)
+
         # Assume grandcanonical trajectory for generality.
         # Note that testing if the trajectory is grandcanonical or
-        # semigrandcanonical is useless when applying filters.  
+        # semigrandcanonical is useless when applying filters.
         # N_0, N_1 = len(self._pos_0[0]), len(self._pos_1[0])
         N_0 = numpy.average([len(x) for x in self._pos_0])
         N_1 = numpy.average([len(x) for x in self._pos_1])
@@ -152,6 +175,15 @@ class RadialDistributionFunctionLegacy(Correlation):
         self.grid = (r[:-1] + r[1:]) / 2.0
         self.value = gr / norm
 
+        # Restrict distances to L/2 (in last frame) or rmax 
+        if self.rmax > 0:
+            where = self.grid <= self.rmax
+        else:
+            side = system.cell.side
+            where = self.grid <= min(side) / 2
+        self.grid = self.grid[where]
+        self.value = self.value[where]
+
 
 class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
     """
@@ -175,7 +207,7 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
 
         # Assume grandcanonical trajectory for generality.
         # Note that testing if the trajectory is grandcanonical or
-        # semigrandcanonical is useless when applying filters.  
+        # semigrandcanonical is useless when applying filters.
         N_0, N_1 = [], []
         gr_all = []
 
@@ -184,21 +216,8 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
         # wrap it in an infinite cell and estimate a reasonable grid.
         system = self.trajectory.read(0)
         ndims = system.number_of_dimensions
-        if system.cell is not None:
-            # Redefine grid to extend up to L
-            # This retains the original dr
-            self.grid = linear_grid(0.0, min(system.cell.side), float(self.grid[1]))
-            gr, bins = numpy.histogram([], bins=self.grid)
-        else:
-            import sys
-            # If there is no cell, then rmax must have been given
-            # This retains the original dr
-            dr = float(self.grid[1])
-            if self.rmax > 0:
-                self.grid = linear_grid(0.0, self.rmax, dr)
-            else:
-                self.grid = linear_grid(0.0, dr*1000, dr)
-            gr, bins = numpy.histogram([], bins=self.grid)
+        self._setup_grid(system)
+        gr, bins = numpy.histogram([], bins=self.grid)
 
         # Use linked cells only if it is advantageous
         # - more than 3 cells along each side
@@ -217,7 +236,7 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
             else:
                 _log.info('not using linked cells')
                 linkedcells = None
-        
+
         # Main loop for average
         origins = range(0, len(self.trajectory), self.skip)
         for i in progress(origins):
@@ -227,12 +246,13 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
 
             # Switch between self and distinct calculation
             distinct = self._pos_0 is not self._pos_1
-            
+
             # Store side
             system = self.trajectory.read(i)
             if system.cell is not None:
                 side = system.cell.side
             else:
+                import sys
                 side = numpy.ndarray(ndims, dtype=float)
                 side[:] = sys.float_info.max
 
@@ -263,7 +283,7 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
                 pos_0 = pos_0[:, mask]
                 # Force distinct calculation
                 distinct = True
-                
+
             # Store number of particles for normalization
             N_0.append(pos_0.shape[1])
             N_1.append(pos_1.shape[1])
@@ -271,15 +291,15 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
             # Compute g(r)
             if not distinct:
                 if linkedcells is None:
-                    compute.gr_self(pos_0, side, bins[-1], gr, bins)
+                    compute.gr_self(pos_0, side, self._rmax, gr, bins)
                 else:
-                    compute.gr_neighbors_self('C', pos_0, neighbors, number_of_neighbors, side, bins[-1], gr, bins)
+                    compute.gr_neighbors_self('C', pos_0, neighbors, number_of_neighbors, side, self._rmax, gr, bins)
             else:
                 if linkedcells is None:
-                    compute.gr_distinct(pos_0, pos_1, side, bins[-1], gr, bins)
+                    compute.gr_distinct(pos_0, pos_1, side, self._rmax, gr, bins)
                 else:
-                    compute.gr_neighbors_distinct('C', pos_0, pos_1, neighbors, number_of_neighbors, side, bins[-1], gr, bins)
-                    
+                    compute.gr_neighbors_distinct('C', pos_0, pos_1, neighbors, number_of_neighbors, side, self._rmax, gr, bins)
+
             # Damned copies in python
             gr_all.append(gr.copy())
 
@@ -300,7 +320,7 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
             from math import gamma
             n2 = int(float(ndims) / 2)
             vol = math.pi**n2 * (r[1:]**ndims-r[:-1]**ndims) / gamma(n2+1)
-        
+
         rho = N_1 / volume
         norm = rho * vol * N_0
         if not distinct:
@@ -310,13 +330,14 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
         self.grid = (r[:-1] + r[1:]) / 2.0
         self.value = gr / norm
 
-        # Restrict distances to L/2
+        # Restrict distances to L/2 (in last frame) or rmax 
         if self.rmax > 0:
-            where = self.grid < self.rmax
+            where = self.grid <= self.rmax
         else:
-            where = self.grid < self.grid[-1] / 2
+            side = system.cell.side
+            where = self.grid <= min(side) / 2
         self.grid = self.grid[where]
         self.value = self.value[where]
-        
-# Defaults to fast 
+
+# Defaults to fast
 RadialDistributionFunction = RadialDistributionFunctionFast
