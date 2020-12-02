@@ -5,8 +5,7 @@ import glob
 
 # We use numpy distutils to compile and wrap f90 code via f2py
 import setuptools
-from numpy.distutils.core import setup, Extension
-
+    
 with open('README.md', 'r') as fh:
     readme = fh.read()
 
@@ -24,12 +23,6 @@ args = dict(name='atooms-pp',
             packages=['atooms', 'atooms/postprocessing'],
             scripts=glob.glob(os.path.join('bin', '*.py')),
             install_requires=['atooms>=1.10,<3', 'numpy', 'argh', 'tqdm'],
-            ext_modules=[Extension('atooms.postprocessing.realspace_wrap',
-                                   sources=['atooms/postprocessing/realspace.f90'],
-                                   extra_f90_compile_args=[]),
-                         Extension('atooms.postprocessing.fourierspace_wrap', 
-                                   sources=['atooms/postprocessing/fourierspace.f90'],
-                                   extra_f90_compile_args=[])],
             license='GPLv3',
             setup_requires = ['numpy'],
             classifiers=[
@@ -43,5 +36,18 @@ args = dict(name='atooms-pp',
                 'Topic :: Scientific/Engineering :: Physics',
             ]
 )
+
+try:
+    from numpy.distutils.core import setup, Extension
+    
+    args["ext_modules"] = [Extension('atooms.postprocessing.realspace_wrap',
+                                     sources=['atooms/postprocessing/realspace.f90'],
+                                     extra_f90_compile_args=[]),
+                           Extension('atooms.postprocessing.fourierspace_wrap', 
+                                     sources=['atooms/postprocessing/fourierspace.f90'],
+                                     extra_f90_compile_args=[])]
+
+except (ModuleNotFoundError, ImportError):
+    from distutils.core import setup
 
 setup(**args)
