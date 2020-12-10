@@ -275,7 +275,7 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
             # With a non-periodic cell, which just bounds the physical
             # domain, we must crop particles close to the surface
             # self_term = 0
-            if not numpy.any(system.cell.periodic):
+            if hasattr(system.cell, 'periodic') and not numpy.any(system.cell.periodic):
                 #mask = numpy.ndarray(pos_0.shape[1], dtype=numpy.bool)
                 # TODO: bool does not work
                 mask = compute.on_surface(pos_0, side, self.rmax)
