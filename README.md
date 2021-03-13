@@ -5,7 +5,7 @@ Python post processing tools to compute static and dynamic correlation functions
 - Real space: radial distribution function, mean square displacement, time-dependent overlap functions, non-Gaussian parameter
 - Fourier space: structure factor, intermediate scattering functions, four-point dynamic susceptibility
 
-This package relies on [atooms](https://gitlab.info-ufr.univ-montp2.fr/atooms/postprocessing.git) to read trajectory files.
+This package relies on [atooms](https://framagit.org/atooms/postprocessing.git) to read trajectory files.
 
 Quick start
 ------------
@@ -22,7 +22,7 @@ should work fine.
 As an example, we compute the structure factor S(k) for the trajectory
 file `trajectory.xyz` contained in the `data/` directory.
 
-![https://www.coulomb.univ-montp2.fr/perso/daniele.coslovich/anim.gif](https://gitlab.info-ufr.univ-montp2.fr/atooms/postprocessing/raw/develop/docs/anim.gif)
+![https://www-dft.ts.infn.it/~coslovich/anim.gif](https://framagit.org/atooms/postprocessing/raw/develop/docs/anim.gif)
 
 In the example above, we used 20% of the available time frames to compute the averages using the `--norigins` flag. Without it, atooms-pp applies an heuristics to determine the number of time frames required to achieve a reasonable data quality.
 
@@ -41,12 +41,12 @@ with Trajectory('data/trajectory.xyz') as t:
      p.do()
 ```
 
-Checkout the [tutorial](https://www.coulomb.univ-montp2.fr/perso/daniele.coslovich/pp_notebook/) and [notebook](https://gitlab.info-ufr.univ-montp2.fr/atooms/postprocessing/raw/develop/docs/tutorial.ipynb) for more details.
+Checkout the [tutorial](https://www-dft.ts.infn.it/~coslovich/pp_notebook/) and [notebook](https://framagit.org/atooms/postprocessing/raw/develop/docs/tutorial.ipynb) for more details.
 
 Requirements
 ------------
 - [numpy](https://pypi.org/project/numpy/)
-- [atooms](https://gitlab.info-ufr.univ-montp2.fr/atooms/postprocessing.git)
+- [atooms](https://framagit.org/atooms/postprocessing.git)
 - [optional] [argh](https://pypi.org/project/argh/) (only needed when using `pp.py`)
 - [optional] [tqdm](https://pypi.org/project/tqdm/) (enable progress bars)
 - [optional] [argcomplete](https://pypi.org/project/argcomplete/) (enable tab-completion for `pp.py`)
@@ -59,7 +59,7 @@ pip install --user atooms-pp
 ```
 or cloning the project repo 
 ```
-git clone https://gitlab.info-ufr.univ-montp2.fr/atooms/postprocessing.git
+git clone https://framagit.org/atooms/postprocessing.git
 cd postprocessing
 make user
 ```
