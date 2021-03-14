@@ -36,7 +36,7 @@ class CustomHelpFormatter(argparse.RawDescriptionHelpFormatter):
         return help
 
     def __add_whitespace(self, idx, iWSpace, text):
-        if idx is 0:
+        if idx == 0:
             return text
         return (" " * iWSpace) + text
 
