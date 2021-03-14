@@ -234,14 +234,6 @@ def setup_t_grid(trajectory, t_grid, offset=True):
     return offsets
 
 
-def partition(inp, nbl):
-    nel = len(inp) // nbl
-    a = []
-    for i in range(nbl):
-        a.append(slice(i * nel, (i+1) * nel))
-    return a
-
-
 def _dump(title, columns=None, command=None, version=None,
           description=None, note=None, parents=None, inline=False,
           comment='# ', extra_fields=None):
