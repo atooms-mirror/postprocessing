@@ -187,11 +187,7 @@ class SelfIntermediateScatteringFast(SelfIntermediateScatteringLegacy):
     for information on the instance variables.
     """        
     def _compute(self):
-        try:
-            from atooms.postprocessing.fourierspace_wrap import fourierspace_module
-        except ImportError:
-            _log.error('f90 wrapper missing or not functioning')
-            raise
+        from atooms.postprocessing.fourierspace_wrap import fourierspace_module
 
         # Throw everything into a big numpy array (nframes, npos, ndim)
         pos = numpy.array(self._pos)
@@ -254,7 +250,12 @@ class SelfIntermediateScatteringFast(SelfIntermediateScatteringLegacy):
 
 
 # Defaults to fast
-SelfIntermediateScattering = SelfIntermediateScatteringFast
+try:
+    import atooms.postprocessing.fourierspace_wrap
+    SelfIntermediateScattering = SelfIntermediateScatteringFast
+except ImportError:
+    SelfIntermediateScattering = SelfIntermediateScatteringLegacy
+
 
 class IntermediateScattering(IntermediateScatteringBase):
     """
