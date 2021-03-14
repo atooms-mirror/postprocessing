@@ -226,15 +226,15 @@ contains
     end do
   end subroutine neighbors
 
-  subroutine gr_neighbors_self(offset, positions, neighbors, number_of_neighbors, box, rmax, hist, bins)
+  subroutine gr_neighbors_self(offset, positions, neighbors, number_of_neighbors, box, dr, hist, bins)
     character(1), intent(in)  :: offset
-    real(8), intent(in)       :: positions(:,:), rmax
+    real(8), intent(in)       :: positions(:,:), dr
     integer(8), intent(in)    :: neighbors(:,:), number_of_neighbors(:)
     integer(8), intent(inout) :: hist(:)
     real(8), intent(inout) :: bins(:)
     real(8)                   :: distances(size(positions,2))  ! stack
     real(8), intent(in)       :: box(:)
-    real(8)    :: dist(size(box)), dist_sq, pos(size(box)), dr, hbox(size(box))
+    real(8)    :: dist(size(box)), dist_sq, pos(size(box)), rmax, hbox(size(box))
     integer(8) :: i, j, ii, jj, bin, k, delta
     if (offset == 'C') then
        delta = 1
@@ -243,7 +243,7 @@ contains
     end if    
     ! Since hist is already allocated in the main, 
     ! we infer the bin width from its size and the max possible distance
-    dr = rmax / (size(hist) - 1)
+    rmax = dr * size(hist)
     hbox = box / 2
     hist = 0
     do i = 1, size(positions,2)
@@ -278,19 +278,19 @@ contains
     end do
     ! Bins
     do j=1,size(bins)
-       bins(j) = dr * (j-1)
+       bins(j) = dr * (j-1) + dr / 2
     end do
   end subroutine gr_neighbors_self
 
-  subroutine gr_neighbors_distinct(offset, positions, other, neighbors, number_of_neighbors, box, rmax, hist, bins)
+  subroutine gr_neighbors_distinct(offset, positions, other, neighbors, number_of_neighbors, box, dr, hist, bins)
     character(1), intent(in)  :: offset
-    real(8), intent(in)       :: positions(:,:), other(:,:), rmax
+    real(8), intent(in)       :: positions(:,:), other(:,:), dr
     integer(8), intent(in)    :: neighbors(:,:), number_of_neighbors(:)
     integer(8), intent(inout) :: hist(:)
     real(8), intent(inout) :: bins(:)
     real(8)                   :: distances(size(positions,2))  ! stack
     real(8), intent(in)       :: box(:)
-    real(8)    :: dist(size(box)), dist_sq, pos(size(box)), dr, hbox(size(box))
+    real(8)    :: dist(size(box)), dist_sq, pos(size(box)), rmax, hbox(size(box))
     integer(8) :: i, j, ii, jj, bin, k, delta
     if (offset == 'C') then
        delta = 1
@@ -299,7 +299,7 @@ contains
     end if    
     ! Since hist is already allocated in the main, 
     ! we infer the bin width from its size and the max possible distance
-    dr = rmax / (size(hist) - 1)
+    rmax = dr * size(hist)
     hbox = box / 2
     hist = 0
     do i = 1, size(positions,2)
@@ -334,21 +334,21 @@ contains
     end do
     ! Bins
     do j=1,size(bins)
-       bins(j) = dr * (j-1)
+       bins(j) = dr * (j-1) + dr / 2
     end do
   end subroutine gr_neighbors_distinct
   
-  subroutine gr_self(positions, box, rmax, hist, bins)
-    real(8), intent(in)       :: positions(:,:), rmax
+  subroutine gr_self(positions, box, dr, hist, bins)
+    real(8), intent(in)       :: positions(:,:), dr
     integer(8), intent(inout) :: hist(:)
-    real(8), intent(inout) :: bins(:)
-    real(8)                   :: distances(size(positions,2))  ! stack
+    real(8), intent(inout)    :: bins(:)
     real(8), intent(in)       :: box(:)
-    real(8)    :: dist(size(box)), dist_sq, pos(size(box)), dr, hbox(size(box)), rdist
+    real(8)                   :: distances(size(positions,2))  ! stack
+    real(8)    :: dist(size(box)), dist_sq, pos(size(box)), hbox(size(box)), rdist, rmax
     integer(8) :: i, j, ii, bin, k
-    ! Since hist is already allocated in the main, 
-    ! we infer the bin width from its size and the max possible distance
-    dr = rmax / (size(hist) - 1)
+    ! Hist is already allocated in the main, 
+    ! Bins are defined as i*dr + dr/2 with i=1,...,size(bins)
+    rmax = dr * size(bins)
     hbox = box / 2
     hist = 0
     do i = 1, size(positions,2)
@@ -381,22 +381,22 @@ contains
     end do
     ! Bins
     do j=1,size(bins)
-       bins(j) = dr * (j-1)
+       bins(j) = dr * (j-1) + dr / 2
     end do
   end subroutine gr_self
 
-  subroutine gr_distinct(positions1, positions2, box, rmax, hist, bins)
-    real(8), intent(in)       :: positions1(:,:), positions2(:,:), rmax
+  subroutine gr_distinct(positions1, positions2, box, dr, hist, bins)
+    real(8), intent(in)       :: positions1(:,:), positions2(:,:), dr
     integer(8), intent(inout) :: hist(:)
     real(8), intent(inout) :: bins(:)
     real(8)                   :: distances(size(positions2,2))  ! stack
     real(8), intent(in)       :: box(:)
-    real(8)    :: dist(size(box)), dist_sq, pos(size(box)), dr, hbox(size(box)), rdist
+    real(8)    :: dist(size(box)), dist_sq, pos(size(box)), rmax, hbox(size(box)), rdist
     integer(8) :: i, j, ii, bin, k
     ! Since hist is already allocated in the main, 
     ! we infer the bin width from its size and the max possible distance
     hbox = box / 2
-    dr = rmax / (size(hist) - 1)
+    rmax = dr * size(hist)
     hist = 0
     do i=1,size(positions1,2)
        pos = positions1(:,i)
@@ -428,7 +428,7 @@ contains
     end do
     ! Bins
     do j=1,size(bins)
-       bins(j) = dr * (j-1)
+       bins(j) = dr * (j-1) + dr / 2
     end do
   end subroutine gr_distinct
 

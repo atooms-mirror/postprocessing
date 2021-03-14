@@ -121,18 +121,18 @@ class RadialDistributionFunctionLegacy(Correlation):
         # Internal max distance (/= user provided rmax)
         self._rmax = self.grid[-1]
         
+    def _compute(self):
+        ncfg = len(self.trajectory)
+        system = self.trajectory.read(0)
+        ndims = system.number_of_dimensions
+        self._setup_grid(system)
+        
         # Reconstruct bounds of grid for numpy histogram
         grid = []
         for i in range(len(self.grid)):
             grid.append(self.grid[i] - (self.grid[1] - self.grid[0]) / 2)
         grid.append(self.grid[-1] + (self.grid[1] - self.grid[0]) / 2)
         self.grid = grid
-
-    def _compute(self):
-        ncfg = len(self.trajectory)
-        system = self.trajectory.read(0)
-        ndims = system.number_of_dimensions
-        self._setup_grid(system)
         gr, bins = numpy.histogram([], bins=self.grid)
 
         # Assume grandcanonical trajectory for generality.
@@ -216,8 +216,10 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
         system = self.trajectory.read(0)
         ndims = system.number_of_dimensions
         self._setup_grid(system)
-        gr, bins = numpy.histogram([], bins=self.grid)
-
+        dr = self.grid[1] - self.grid[0]
+        gr = numpy.zeros(len(self.grid), dtype=int)
+        bins = numpy.array(self.grid)
+        
         # Use linked cells only if it is advantageous
         # - more than 3 cells along each side
         # - memory footprint is < ~1Gb
@@ -290,20 +292,21 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
             # Compute g(r)
             if not distinct:
                 if linkedcells is None:
-                    compute.gr_self(pos_0, side, self._rmax, gr, bins)
+                    compute.gr_self(pos_0, side, dr, gr, bins)
                 else:
-                    compute.gr_neighbors_self('C', pos_0, neighbors, number_of_neighbors, side, self._rmax, gr, bins)
+                    compute.gr_neighbors_self('C', pos_0, neighbors, number_of_neighbors, side, dr, gr, bins)
             else:
                 if linkedcells is None:
-                    compute.gr_distinct(pos_0, pos_1, side, self._rmax, gr, bins)
+                    compute.gr_distinct(pos_0, pos_1, side, dr, gr, bins)
                 else:
-                    compute.gr_neighbors_distinct('C', pos_0, pos_1, neighbors, number_of_neighbors, side, self._rmax, gr, bins)
+                    compute.gr_neighbors_distinct('C', pos_0, pos_1, neighbors, number_of_neighbors, side, dr, gr, bins)
 
             # Damned copies in python
             gr_all.append(gr.copy())
 
         # Normalization
-        r = bins
+        # Array r is used to compute shells, we thus use the bin boundaries
+        r = bins - (bins[1] - bins[0]) / 2
         N_0 = numpy.average(N_0)
         N_1 = numpy.average(N_1)
         if system.cell is not None:
@@ -326,8 +329,10 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
             # We used Newton III
             norm /= 2
         gr = numpy.average(gr_all, axis=0)
-        self.grid = (r[:-1] + r[1:]) / 2.0
-        self.value = gr / norm
+
+        # We crop the last entry
+        self.grid = bins[:-1]
+        self.value = gr[:-1] / norm
 
         # Restrict distances to L/2 (in last frame) or rmax 
         if self.rmax > 0:
