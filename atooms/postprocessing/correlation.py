@@ -53,9 +53,10 @@ def acf(grid, skip, t, x):
 
 def gcf(f, grid, skip, t, x):
     """
-    Generalized correlation function.
+    Generalized auto-correlation function <f(x[i], x[i0])>
 
-    Pass a function to apply to the data.
+    Pass a function `f` to apply to the data at each frame.
+
     Exemple: mean square displacement.
     """
     # Calculate the correlation between time t(i0) and t(i0+i)
@@ -77,9 +78,9 @@ def gcf(f, grid, skip, t, x):
 
 def gcf_offset(f, grid, skip, t, x):
     """
-    Generalized correlation function
+    Generalized auto-correlation function <f(x[i], x[i0])> using a grid with offsets
 
-    Pass a function `f` to apply to the data `x`.
+    Pass a function `f` to apply to the data `x` at each frame.
 
     Exemple: mean square displacement.
     """

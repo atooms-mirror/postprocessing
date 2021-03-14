@@ -178,15 +178,9 @@ class TestFourierSpace(unittest.TestCase):
         p.compute()
         ref_value = numpy.array([0.075820086512828039, 0.065300213310725302, 0.082485082309989494])
         self.assertLess(deviation(p.value, ref_value), 0.04)
+        # Trivial report dump (no check)
+        txt = p.report()
         t.close()
-
-    # def test_sk_opti(self):
-    #     f = os.path.join(self.reference_path, 'kalj-small.xyz')
-    #     t = trajectory.TrajectoryXYZ(f)
-    #     p = postprocessing.StructureFactorOptimized(t, kmin=-1, kmax=4, ksamples=3, dk=0.2)
-    #     p.compute()
-    #     ref_value = numpy.array([0.075820086512828039, 0.065300213310725302, 0.082485082309989494])
-    #     self.assertLess(deviation(p.value, ref_value), 0.05)
 
     def test_sk_update(self):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
