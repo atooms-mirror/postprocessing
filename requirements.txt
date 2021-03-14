@@ -1,0 +1,4 @@
+numpy
+atooms>=1.10,<3
+argh # optional
+tqdm # optional
