@@ -1,9 +1,17 @@
-Post processing
-==================
-Python post processing tools to compute static and dynamic correlation functions from particle simulations
+Postprocessing
+==============
+[![pypi](https://img.shields.io/pypi/v/atooms-pp.svg)](https://pypi.python.org/pypi/atooms-pp/)
+[![version](https://img.shields.io/pypi/pyversions/atooms-pp.svg)](https://pypi.python.org/pypi/atooms-pp/)
+[![license](https://img.shields.io/pypi/l/atooms-pp.svg)](https://en.wikipedia.org/wiki/GNU_General_Public_License)
+[![pipeline](https://framagit.org/atooms/postprocessing/badges/develop/pipeline.svg)](https://framagit.org/atooms/postprocessing/badges/develop/pipeline.svg)
+[![coverage report](https://framagit.org/atooms/postprocessing/badges/develop/coverage.svg)](https://framagit.org/atooms/postprocessing/-/commits/develop)
+
+Post-processing tools to compute static and dynamic correlation functions from simulations of interacting particles, such as molecular dynamics or Monte Carlo simulations.
 
 - Real space: radial distribution function, mean square displacement, time-dependent overlap functions, non-Gaussian parameter
 - Fourier space: structure factor, intermediate scattering functions, four-point dynamic susceptibility
+
+...and more.
 
 This package relies on [atooms](https://framagit.org/atooms/postprocessing.git) to read trajectory files.
 
