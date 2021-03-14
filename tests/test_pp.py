@@ -39,7 +39,7 @@ def filter_2d(s):
 class Test(unittest.TestCase):
 
     def test_name(self):
-        reference_path = os.path.join(os.path.dirname(sys.argv[0]), '../data')
+        reference_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
         default = postprocessing.core.pp_output_path
         postprocessing.core.pp_output_path = '{trajectory.filename}.pp.{short_name}.{tag_description}'
         corr = postprocessing.SelfIntermediateScattering(os.path.join(reference_path, 'trajectory.xyz'))
