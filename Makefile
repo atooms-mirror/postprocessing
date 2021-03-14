@@ -10,8 +10,9 @@ all: user
 dist: version
 	python setup.py sdist
 
-test:	
-	python -m unittest discover -s tests
+test:	version
+	coverage run --source atooms -m unittest discover -s tests
+	coverage report
 
 install: version
 	python setup.py config_fc --opt '-O3 -funroll-loops' install
