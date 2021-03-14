@@ -9,7 +9,7 @@ import numpy
 from .progress import progress
 from .fourierspace import FourierSpaceCorrelation, expo_sphere
 
-__all__ = ['StructureFactor', 'StructureFactorLegacy', 'StructureFactorOptimized']
+__all__ = ['StructureFactor', 'StructureFactorLegacy', 'StructureFactorOptimized', 'StructureFactorFast']
 
 _log = logging.getLogger(__name__)
 
