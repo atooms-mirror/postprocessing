@@ -105,7 +105,8 @@ class TestRealSpace(unittest.TestCase):
         ts.close()
 
     def test_gr_partial_fast(self):
-        self._test_gr_partial(postprocessing.RadialDistributionFunctionFast)
+        # This will test fast if available
+        self._test_gr_partial(postprocessing.RadialDistributionFunction)
 
     def test_gr_partial_legacy(self):
         self._test_gr_partial(postprocessing.RadialDistributionFunctionLegacy)
