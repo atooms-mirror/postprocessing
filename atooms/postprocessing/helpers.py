@@ -142,12 +142,6 @@ def copy_field(system, field, trajectory):
     return system
 
 
-def filter_all(system):
-    s = copy.copy(system)
-    s.particle = [p for p in system.particle]
-    return s
-
-
 def adjust_skip(trajectory, n_origins=None):
     """
     Define interval between frames in trajectory so as to achieve a
