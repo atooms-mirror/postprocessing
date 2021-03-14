@@ -63,10 +63,10 @@ test:f90:
   - cd atooms/postprocessing
   - f2py -c -m realspace_wrap realspace.f90
   - f2py -c -m fourierspace_wrap fourierspace.f90
-  - cd ..
+  - cd ../../
   - pip install coverage
-  - coverage run --source atooms -m unittest discover
-  - coverage report -m    
+  - coverage run --source atooms -m unittest discover -s tests
+  - coverage report -m
 
 # .run:
 #   script:
