@@ -22,19 +22,6 @@ class LinkedCells(object):
         self.rcut = rcut
         self.neighbors = []
         self._is_adjusted = False
-        self.__all_cells = None
-        self.__ghost_cells = None
-        
-    @property
-    def _all_cells(self):
-        if self.__all_cells is None:
-            self.__all_cells = []
-            for ix in range(self.n_cell[0]):
-                for iy in range(self.n_cell[1]):
-                    for iz in range(self.n_cell[2]):
-                        self.__all_cells.append((ix, iy, iz))
-
-        return self.__all_cells
 
     def _map(self, newton):
         self._neigh_cell = {}
