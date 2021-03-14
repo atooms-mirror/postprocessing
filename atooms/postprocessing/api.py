@@ -186,7 +186,7 @@ def vacf(input_file, tmax=-1.0, tmax_fraction=0.10,
 
 def fkt(input_file, tmax=-1.0, tmax_fraction=0.75,
         tsamples=60, kmin=7.0, kmax=7.0, ksamples=1, dk=0.1, nk=100,
-        kgrid=None, func='logx', fix_cm=False, *input_files,
+        kgrid=None, func='logx', fix_cm=False, total=False, *input_files,
         **global_args):
     """Total intermediate scattering function"""
     global_args = _compat(global_args)
