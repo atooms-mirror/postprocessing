@@ -109,14 +109,14 @@ class RadialDistributionFunctionLegacy(Correlation):
                 # Redefine grid to extend up to L
                 # The grid will be cropped later to L/2
                 # This retains the original dr
-                self.grid = linear_grid(0.0, min(system.cell.side), self.dr)
+                self.grid = linear_grid(self.dr/2, min(system.cell.side), self.dr)
             else:
                 # If there is no cell, then rmax must have been given
                 # This retains the original dr
                 if self.rmax > 0:
-                    self.grid = linear_grid(0.0, self.rmax, self.dr)
+                    self.grid = linear_grid(self.dr/2, self.rmax, self.dr)
                 else:
-                    self.grid = linear_grid(0.0, self.dr*1000, self.dr)
+                    self.grid = linear_grid(self.dr/2, self.dr*1000, self.dr)
 
         # Internal max distance (/= user provided rmax)
         self._rmax = self.grid[-1]
@@ -174,7 +174,7 @@ class RadialDistributionFunctionLegacy(Correlation):
         gr = numpy.average(gr_all, axis=0)
         self.grid = (r[:-1] + r[1:]) / 2.0
         self.value = gr / norm
-
+        print(self.grid[:4], r[:4], 'ini')
         # Restrict distances to L/2 (in last frame) or rmax 
         if self.rmax > 0:
             where = self.grid <= self.rmax
