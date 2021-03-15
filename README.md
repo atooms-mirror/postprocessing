@@ -4,7 +4,7 @@ Postprocessing
 [![version](https://img.shields.io/pypi/pyversions/atooms-pp.svg)](https://pypi.python.org/pypi/atooms-pp/)
 [![license](https://img.shields.io/pypi/l/atooms-pp.svg)](https://en.wikipedia.org/wiki/GNU_General_Public_License)
 [![pipeline](https://framagit.org/atooms/postprocessing/badges/develop/pipeline.svg)](https://framagit.org/atooms/postprocessing/badges/develop/pipeline.svg)
-[![coverage report](https://framagit.org/atooms/postprocessing/badges/develop/coverage.svg?job=test:f90:)](https://framagit.org/atooms/postprocessing/-/commits/develop)
+[![coverage report](https://framagit.org/atooms/postprocessing/badges/develop/coverage.svg?job=test:f90)](https://framagit.org/atooms/postprocessing/-/commits/develop)
 
 Post-processing tools to compute static and dynamic correlation functions from simulations of interacting particles, such as molecular dynamics or Monte Carlo simulations.
 
