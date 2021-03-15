@@ -186,8 +186,12 @@ class TestFourierSpace(unittest.TestCase):
         self._test_sk(postprocessing.StructureFactor)
 
     def test_sk_fast(self):
-        self._test_sk(postprocessing.StructureFactorFast)
-        
+        try:
+            import atooms.postprocessing.fourierspace_wrap
+            self._test_sk(postprocessing.StructureFactorFast)
+        except ImportError:
+            self.skipTest('missing f90')
+
     def test_sk_update(self):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         t = trajectory.TrajectoryXYZ(f)
