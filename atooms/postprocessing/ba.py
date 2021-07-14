@@ -75,12 +75,14 @@ class BondAngleDistribution(Correlation):
         # the whole trajectory.
         # We store the cutoffs into a (nsp, nsp) array 
         # where the index follows the alphabetic order of species names
+        ids = distinct_species(self.trajectory[0].particle)
         if self.rcut is None:
             rcut = _default_rcut(self.trajectory)
-            ids = distinct_species(self.trajectory[0].particle)
             self.rcut = numpy.ndarray((len(ids), len(ids)))
             for species_pair in rcut:
                 self.rcut[ids.index(species_pair[0]), ids.index(species_pair[1])] = rcut[species_pair]
+        else:
+            self.rcut = numpy.array(self.rcut)
 
         for isp in range(len(ids)):
             for jsp in range(len(ids)):

@@ -20,8 +20,10 @@ class VelocityAutocorrelation(Correlation):
     long_name = 'velocity autocorrelation'
     phasespace = ['vel']
 
-    def __init__(self, trajectory, tgrid, norigins=None):
+    def __init__(self, trajectory, tgrid=None, norigins=None):
         Correlation.__init__(self, trajectory, tgrid, norigins=norigins)
+        if self.grid is None:
+            self.grid = linear_grid(0.0, trajectory.total_time * 0.10, tsamples)
         self._discrete_tgrid = setup_t_grid(self.trajectory, tgrid, offset=norigins != '1')
 
     def _compute(self):

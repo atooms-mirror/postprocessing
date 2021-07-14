@@ -53,9 +53,10 @@ def acf(grid, skip, t, x):
 
 def gcf(f, grid, skip, t, x):
     """
-    Generalized correlation function.
+    Generalized auto-correlation function <f(x[i], x[i0])>
 
-    Pass a function to apply to the data.
+    Pass a function `f` to apply to the data at each frame.
+
     Exemple: mean square displacement.
     """
     # Calculate the correlation between time t(i0) and t(i0+i)
@@ -75,46 +76,29 @@ def gcf(f, grid, skip, t, x):
     return dt, [cf[ti] / cnt[ti] for ti in dt], [cnt[ti] for ti in dt]
 
 
-def gcf_offset(f, grid, skip, t, x, mask=None):
+def gcf_offset(f, grid, skip, t, x):
     """
-    Generalized correlation function
+    Generalized auto-correlation function <f(x[i], x[i0])> using a grid with offsets
 
-    Pass a function `f` to apply to the data `x`.
-    Optionally, filter the entries at time `t[i0]` according to `mask[i0]`.
+    Pass a function `f` to apply to the data `x` at each frame.
 
     Exemple: mean square displacement.
     """
     # Calculate the correlation between time t(i0) and t(i0+i)
     # for all possible pairs (i0,i) provided by grid
-    if mask is None:
-        cf = defaultdict(float)
-        cnt = defaultdict(int)
-        # Standard calculation
-        for off, i in progress(grid, total=len(grid)):
-            for i0 in range(off, len(x)-i, skip):
-                # Get the actual time difference
-                dt = t[i0+i] - t[i0]
-                cf[dt] += f(x[i0+i], x[i0])
-                cnt[dt] += 1
+    cf = defaultdict(float)
+    cnt = defaultdict(int)
+    # Standard calculation
+    for off, i in progress(grid, total=len(grid)):
+        for i0 in range(off, len(x)-i, skip):
+            # Get the actual time difference
+            dt = t[i0+i] - t[i0]
+            cf[dt] += f(x[i0+i], x[i0])
+            cnt[dt] += 1
 
-        # Return the ACF with the time differences sorted
-        dt = sorted(cf.keys())
-        return dt, [cf[ti] / cnt[ti] for ti in dt]
-
-    else:
-        cf = defaultdict(float)
-        cnt = defaultdict(list)
-        # Filter data at time t_0 according to boolean mask
-        for off, i in grid:
-            for i0 in range(off, len(x)-i-skip, skip):
-                # Get the actual time difference
-                dt = t[i0+i] - t[i0]
-                cf[dt] += f(x[i0+i][mask[i0]], x[i0][mask[i0]])
-                cnt[dt].append(1)  #len(mask[i0]))
-
-        # Return the ACF with the time differences sorted
-        dt = sorted(cf.keys())
-        return dt, [cf[ti] / sum([cnt[ti] for ti in dt])]
+    # Return the ACF with the time differences sorted
+    dt = sorted(cf.keys())
+    return dt, [cf[ti] / cnt[ti] for ti in dt]
 
 
 def _subtract_mean(weight):

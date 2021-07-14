@@ -142,12 +142,6 @@ def copy_field(system, field, trajectory):
     return system
 
 
-def filter_all(system):
-    s = copy.copy(system)
-    s.particle = [p for p in system.particle]
-    return s
-
-
 def adjust_skip(trajectory, n_origins=None):
     """
     Define interval between frames in trajectory so as to achieve a
@@ -232,14 +226,6 @@ def setup_t_grid(trajectory, t_grid, offset=True):
     i_grid = set([int(round(t/trajectory.timestep)) for t in t_grid])
     offsets = [off_samp[t] for t in _templated(sorted(off_samp.keys()), sorted(i_grid))]
     return offsets
-
-
-def partition(inp, nbl):
-    nel = len(inp) // nbl
-    a = []
-    for i in range(nbl):
-        a.append(slice(i * nel, (i+1) * nel))
-    return a
 
 
 def _dump(title, columns=None, command=None, version=None,

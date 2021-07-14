@@ -39,7 +39,7 @@ def filter_2d(s):
 class Test(unittest.TestCase):
 
     def test_name(self):
-        reference_path = os.path.join(os.path.dirname(sys.argv[0]), '../data')
+        reference_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
         default = postprocessing.core.pp_output_path
         postprocessing.core.pp_output_path = '{trajectory.filename}.pp.{short_name}.{tag_description}'
         corr = postprocessing.SelfIntermediateScattering(os.path.join(reference_path, 'trajectory.xyz'))
@@ -84,7 +84,7 @@ class TestRealSpace(unittest.TestCase):
             self.assertLess(deviation(p.value, ref_value[i]), 4e-2)
         ts.close()
 
-    def test_gr_partial(self):
+    def _test_gr_partial(self, cls):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         ts = trajectory.TrajectoryXYZ(f)
         ref = {}
@@ -92,17 +92,24 @@ class TestRealSpace(unittest.TestCase):
         ref[('B', 'B')] = numpy.array([ 0.31065645,  0.51329066,  0.67485665,  0.78039485])
         ref[('A', 'B')] = numpy.array([ 4.25950671,  3.86572027,  2.70020052,  1.78935426])
         for i in ['A', 'B']:
-            p = postprocessing.RadialDistributionFunction(ts)
+            p = cls(ts)
             p.add_filter(filter_species, i)
             r, gr = p.compute()
             self.assertLess(deviation(gr[21:25], ref[(i, i)]), 4e-2)
 
-        p = postprocessing.RadialDistributionFunction(ts)
+        p = cls(ts)
         p.add_filter(filter_species, 'A')
         p.add_filter(filter_species, 'B')
         r, gr = p.compute()
         self.assertLess(deviation(gr[21:25], ref[('A', 'B')]), 4e-2)
         ts.close()
+
+    def test_gr_partial_fast(self):
+        # This will test fast if available
+        self._test_gr_partial(postprocessing.RadialDistributionFunction)
+
+    def test_gr_partial_legacy(self):
+        self._test_gr_partial(postprocessing.RadialDistributionFunctionLegacy)
 
     def test_gr_partial_2(self):
         from atooms.postprocessing.partial import Partial
@@ -143,10 +150,10 @@ class TestRealSpace(unittest.TestCase):
         from atooms.postprocessing.filter import Filter
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         ts = trajectory.TrajectoryXYZ(f)
-        
+
         gr_AX = Filter(postprocessing.RadialDistributionFunction(ts), 'species == "A"')
         gr_AX.compute()
-        
+
         gr_AA = Filter(postprocessing.RadialDistributionFunction(ts), 'species == "A", species == "A"')
         gr_AA.compute()
 
@@ -155,7 +162,7 @@ class TestRealSpace(unittest.TestCase):
 
         self.assertLess(deviation(gr_AX.value[15:25], 0.8 * gr_AA.value[15:25] + 0.2 * gr_AB.value[15:25]), 0.04)
         ts.close()
-        
+
 class TestFourierSpace(unittest.TestCase):
 
     def setUp(self):
@@ -164,22 +171,26 @@ class TestFourierSpace(unittest.TestCase):
         if not os.path.exists(self.reference_path):
             self.reference_path = os.path.join(os.path.dirname(sys.argv[0]), '../data')
 
-    def test_sk(self):
+    def _test_sk(self, cls):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         t = trajectory.TrajectoryXYZ(f)
-        p = postprocessing.StructureFactor(t, kmin=-1, kmax=4, ksamples=3, dk=0.2)
+        p = cls(t, kmin=-1, kmax=4, ksamples=3, dk=0.2)
         p.compute()
         ref_value = numpy.array([0.075820086512828039, 0.065300213310725302, 0.082485082309989494])
         self.assertLess(deviation(p.value, ref_value), 0.04)
+        # Trivial report dump (no check)
+        txt = p.report()
         t.close()
-        
-    # def test_sk_opti(self):
-    #     f = os.path.join(self.reference_path, 'kalj-small.xyz')
-    #     t = trajectory.TrajectoryXYZ(f)
-    #     p = postprocessing.StructureFactorOptimized(t, kmin=-1, kmax=4, ksamples=3, dk=0.2)
-    #     p.compute()
-    #     ref_value = numpy.array([0.075820086512828039, 0.065300213310725302, 0.082485082309989494])
-    #     self.assertLess(deviation(p.value, ref_value), 0.05)
+
+    def test_sk(self):
+        self._test_sk(postprocessing.StructureFactor)
+
+    def test_sk_fast(self):
+        try:
+            import atooms.postprocessing.fourierspace_wrap
+            self._test_sk(postprocessing.StructureFactorFast)
+        except ImportError:
+            self.skipTest('missing f90')
 
     def test_sk_update(self):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
@@ -268,7 +279,7 @@ class TestFourierSpace(unittest.TestCase):
         self.assertLess(deviation(p.value, ref_value), 1e-2)
         th.close()
         tt.close()
-        
+
     def test_sk_field_partial(self):
         """
         Test that weight works with partial correlation
@@ -328,7 +339,7 @@ class TestFourierSpace(unittest.TestCase):
         self.assertLess(abs(tau[1] - 5.8463508731564975), 0.4)
         self.assertLess(abs(tau[2] - 0.85719855804743605), 0.4)
         t.close()
-        
+
     def test_fskt_partial(self):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         t = trajectory.TrajectoryXYZ(f)
@@ -353,9 +364,9 @@ class TestFourierSpace(unittest.TestCase):
             fct.compute()
             ref = postprocessing.Chi4SelfOverlap(th, tgrid=tgrid)
             ref.compute()
-            self.assertLess(deviation(numpy.array(ref.value), numpy.array(fct.value)), 0.1)            
-            
-    def test_fskt_2d(self):        
+            self.assertLess(deviation(numpy.array(ref.value), numpy.array(fct.value)), 0.1)
+
+    def test_fskt_2d(self):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         t = trajectory.TrajectoryXYZ(f)
         t.add_callback(filter_2d)
@@ -371,7 +382,7 @@ class TestFourierSpace(unittest.TestCase):
         self.assertLess(abs(tau[2] - 0.9802163934982774), 0.04)
         t.close()
 
-    def test_fskt_legacy_2d(self):        
+    def test_fskt_legacy_2d(self):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         t = trajectory.TrajectoryXYZ(f)
         t.add_callback(filter_2d)
@@ -386,8 +397,8 @@ class TestFourierSpace(unittest.TestCase):
         self.assertLess(abs(tau[1] - 3.07899513664358), 0.04)
         self.assertLess(abs(tau[2] - 0.9802163934982774), 0.04)
         t.close()
-        
-    def test_fkt_2d(self):        
+
+    def test_fkt_2d(self):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         t = trajectory.TrajectoryXYZ(f)
         t.add_callback(filter_2d)
@@ -418,7 +429,7 @@ class TestFourierSpace(unittest.TestCase):
         t = trajectory.TrajectoryXYZ(f)
         p_sorted = postprocessing.SelfIntermediateScatteringLegacy(t, [4, 7.3, 10], nk=40, norigins=0.2)
         p_unsorted = postprocessing.SelfIntermediateScatteringLegacy(t, [10, 4, 7.3], nk=40, norigins=0.2)
-        
+
         p_sorted.compute()
         p_sorted.analyze()
         p_unsorted.compute()
@@ -428,6 +439,18 @@ class TestFourierSpace(unittest.TestCase):
         self.assertLess(deviation(numpy.array(p_sorted.value), numpy.array(p_unsorted.value)), 1e-14)
         t.close()
 
+    def test_ba(self):
+        """Check on cut-off for neighbors determination"""
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        t = trajectory.TrajectoryXYZ(f)
+        p = postprocessing.BondAngleDistribution(t)
+        p.compute()
+        q = postprocessing.BondAngleDistribution(t, rcut=p.rcut)
+        q.compute()
+        self.assertLess(deviation(p.value, q.value), 0.001)
+        t.close()
+        
+    @unittest.skip('Broken test')
     def test_gr_crop(self):
         # TODO: fix this test
         import numpy
@@ -457,13 +480,13 @@ class TestFourierSpace(unittest.TestCase):
             return system
 
         def crop(system, L):
-            new = []    
+            new = []
             for p in system.particle:
                 if numpy.all(numpy.abs(p.position) < L / 2):
                     new.append(p)
             system.particle = new
             return system
-        
+
         rmax = L / 10
         th = trj.TrajectoryRam()
         th[0] = system
@@ -474,8 +497,8 @@ class TestFourierSpace(unittest.TestCase):
         gr = pp.RadialDistributionFunction(th, dr=1.0, rmax=rmax)
         gr.compute()
         self.assertLess(abs(gr.value[-1] - 1.0), 0.1)
-        
 
-        
+
+
 if __name__ == '__main__':
     unittest.main()

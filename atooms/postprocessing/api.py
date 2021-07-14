@@ -186,7 +186,7 @@ def vacf(input_file, tmax=-1.0, tmax_fraction=0.10,
 
 def fkt(input_file, tmax=-1.0, tmax_fraction=0.75,
         tsamples=60, kmin=7.0, kmax=7.0, ksamples=1, dk=0.1, nk=100,
-        kgrid=None, func='logx', fix_cm=False, *input_files,
+        kgrid=None, func='logx', fix_cm=False, total=False, *input_files,
         **global_args):
     """Total intermediate scattering function"""
     global_args = _compat(global_args)
@@ -203,6 +203,10 @@ def fkt(input_file, tmax=-1.0, tmax_fraction=0.75,
         else:
             k_grid = linear_grid(kmin, kmax, ksamples)
         ids = distinct_species(th[0].particle)
+        if total or len(ids) == 1:
+            pp.IntermediateScattering(th, k_grid, t_grid,
+                    norigins=global_args['norigins'],
+                    nk=nk, dk=dk, fix_cm=fix_cm).do(update=global_args['update'])
         if len(ids) > 1:
             Partial(pp.IntermediateScattering, ids, th, k_grid, t_grid,
                     norigins=global_args['norigins'],
@@ -230,11 +234,11 @@ def fskt(input_file, tmax=-1.0, tmax_fraction=0.75, tsamples=60,
             k_grid = [float(_) for _ in kgrid.split(',')]
         else:
             k_grid = linear_grid(kmin, kmax, ksamples)
-        if total:
+        ids = distinct_species(th[0].particle)
+        if total or len(ids) == 1:
             backend(th, k_grid, t_grid, nk, dk=dk,
                     norigins=global_args['norigins'], fix_cm=fix_cm,
                     lookup_mb=lookup_mb).do(update=global_args['update'])
-        ids = distinct_species(th[0].particle)
         if len(ids) > 1:
             Partial(backend, ids, th, k_grid, t_grid, nk, dk=dk,
                     norigins=global_args['norigins'], fix_cm=fix_cm,

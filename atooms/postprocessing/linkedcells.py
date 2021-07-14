@@ -22,33 +22,6 @@ class LinkedCells(object):
         self.rcut = rcut
         self.neighbors = []
         self._is_adjusted = False
-        self.__all_cells = None
-        self.__ghost_cells = None
-        
-    @property
-    def _all_cells(self):
-        if self.__all_cells is None:
-            self.__all_cells = []
-            for ix in range(self.n_cell[0]):
-                for iy in range(self.n_cell[1]):
-                    for iz in range(self.n_cell[2]):
-                        self.__all_cells.append((ix, iy, iz))
-
-        return self.__all_cells
-
-    @property
-    def _ghost_cells(self):
-        if self.__ghost_cells is None:
-            self.__ghost_cells = []
-            for ix in range(-1, self.n_cell[0]+1):
-                for iy in range(-1, self.n_cell[1]+1):
-                    for iz in range(-1, self.n_cell[2]+1):
-                        if ix == -1 or ix == self.n_cell[0] or \
-                           iy == -1 or iy == self.n_cell[1] or \
-                           iz == -1 or iz == self.n_cell[2]:
-                            self.__ghost_cells.append((ix, iy, iz))
-
-        return self.__ghost_cells
 
     def _map(self, newton):
         self._neigh_cell = {}
@@ -76,7 +49,6 @@ class LinkedCells(object):
         # Apply PBC to neighboring "ghost" cells 
         for i in self._neigh_cell:
             for j in range(len(self._neigh_cell[i])):
-                #if self._neigh_cell[i][j] in self._ghost_cells:
                 # if numpy.any(numpy.array(self._neigh_cell[i][j]) < 0) or \
                 #    numpy.any(numpy.array(self._neigh_cell[i][j]) >= self.n_cell):
                 folded = _pbc(list(self._neigh_cell[i][j]), self.n_cell)
@@ -126,7 +98,6 @@ class LinkedCells(object):
             particle_in_cell[tuple(icell)].append(ipart)
 
         for ipart in range(pos.shape[0]):
-            #print(ipart, pos[ipart], box, index[ipart])
             icell = tuple(index[ipart])
             # Initialize an empty list
             neighbors = []
