@@ -439,6 +439,17 @@ class TestFourierSpace(unittest.TestCase):
         self.assertLess(deviation(numpy.array(p_sorted.value), numpy.array(p_unsorted.value)), 1e-14)
         t.close()
 
+    def test_ba(self):
+        """Check on cut-off for neighbors determination"""
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        t = trajectory.TrajectoryXYZ(f)
+        p = postprocessing.BondAngleDistribution(t)
+        p.compute()
+        q = postprocessing.BondAngleDistribution(t, rcut=p.rcut)
+        q.compute()
+        self.assertLess(deviation(p.value, q.value), 0.001)
+        t.close()
+        
     @unittest.skip('Broken test')
     def test_gr_crop(self):
         # TODO: fix this test
