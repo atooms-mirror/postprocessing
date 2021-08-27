@@ -82,7 +82,7 @@ def _k_norm(ik, k0, offset):
     return math.sqrt(k_sq)
 
 def _sphere(kmax):
-    ikvec = numpy.ndarray(3, dtype=numpy.int)
+    ikvec = numpy.ndarray(3, dtype=int)
     for ix in range(-kmax, kmax+1):
         for iy in range(-kmax, kmax+1):
             for iz in range(-kmax, kmax+1):
@@ -92,7 +92,7 @@ def _sphere(kmax):
                 yield ikvec
                 
 def _disk(kmax):
-    ikvec = numpy.ndarray(2, dtype=numpy.int)
+    ikvec = numpy.ndarray(2, dtype=int)
     for ix in range(-kmax, kmax+1):
         for iy in range(-kmax, kmax+1):
             ikvec[0] = ix
