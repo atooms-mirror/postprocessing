@@ -63,6 +63,7 @@ class IntermediateScatteringBase(FourierSpaceCorrelation):
             _log.warn('issue with trajectory blocks, the time grid may not correspond to the requested one ({})', e)
 
         # Setup time grid
+        # The default time grid is the same for F_s(k,t) and F(k,t)
         if self.grid[1] is None:
             self.grid[1] = logx_grid(0.0, self.trajectory.total_time * 0.75, tsamples)
         else:
@@ -96,13 +97,6 @@ class SelfIntermediateScatteringLegacy(IntermediateScatteringBase):
                  tsamples=60, dk=0.1, kmin=1.0, kmax=10.0,
                  ksamples=10, norigins=-1, fix_cm=False,
                  lookup_mb=64.0, normalize=True):
-        # TODO: remove this backward compatible tgrid fix in a major release
-        # The default time grid should be the same for F_s(k,t) and F(k,t)
-        if isinstance(trajectory, str):
-            trajectory = Trajectory(trajectory, mode='r', fmt=core.pp_trajectory_format)
-        if tgrid is None:
-            tgrid = [0.0] + logx_grid(trajectory.timestep,
-                                      trajectory.total_time * 0.75, tsamples)
         super(SelfIntermediateScatteringLegacy,
               self).__init__(trajectory, kgrid=kgrid, tgrid=tgrid,
                              nk=nk, tsamples=tsamples, dk=dk, kmin=kmin,

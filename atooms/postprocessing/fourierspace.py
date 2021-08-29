@@ -33,8 +33,6 @@ def expo_sphere(k0, nk_max, pos):
     # We pick up the smallest k0 to compute the integer grid
     # This leaves many unused vectors in the other directions, which
     # could be dropped using different nkmax for x, y, z
-    # TODO: this recreates _koffset!
-    # nk_max = 1 + int(kmax / min(k0))
     # The shape of expo is nframes, N, ndim, 2*nk+1
     expo = numpy.ndarray((len(pos), ) + pos[0].shape + (2*nk_max+1, ), numpy.complex)
     expo[..., nk_max] = numpy.complex(1.0, 0.0)
@@ -46,7 +44,7 @@ def expo_sphere(k0, nk_max, pos):
             expo[..., j, nk_max+i] = expo[..., j, nk_max+i-1] * expo[..., j, nk_max+1]
     # Then take complex conj for negative ones
     for i in range(2, nk_max+1):
-        # TODO: is this line necessary?
+        # TODO: why is this line necessary?
         expo[..., nk_max+i] = expo[..., nk_max+i-1] * expo[..., nk_max+1]
         expo[..., nk_max-i] = expo[..., nk_max+i].conjugate()
 
@@ -139,14 +137,7 @@ class FourierSpaceCorrelation(Correlation):
 
         3. kvectors is not None or set after construction: 
 
-        If kvectors is a dict, it means we provide groups of kvectors
-        and we override the keys with the averages, which are also
-        used to set kgrid.
-
-        If kvectors is a list, then we expect to compute the
-        correlation functions separately for each kvector and store
-        the results accordingly. Thus, kgrid /should/ be a list of
-        lists/arrays.
+        kvectors must be a list of lists of kvectors in natural units
 
         Internal variables:
 
@@ -178,7 +169,6 @@ class FourierSpaceCorrelation(Correlation):
                                                       grid, norigins=norigins, fix_cm=fix_cm)
         # Some additional variables. k0 = smallest wave vectors
         # compatible with the boundary conditions
-        # TODO: document the additional data structures used to store k vectors
         self.normalize = normalize
         self.nk = nk
         self.dk = dk
