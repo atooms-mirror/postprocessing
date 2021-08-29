@@ -153,7 +153,7 @@ class FourierSpaceCorrelation(Correlation):
         - k0 : norm of the smallest kvector allowed by cell,
           determined internally at compute time.
 
-        - kvector: dict containing a list of ndim arrays, grouped by
+        - kvector: list of lists of ndim arrays, grouped by
           the averaged norm, whose indices are (ix, iy, iz), which
           identify the kvectors according to the following
           formulas. We write kvectors as
@@ -162,7 +162,8 @@ class FourierSpaceCorrelation(Correlation):
 
           where jx, jy, jz are relative numbers. We tabulate
           exponentials over a grid and the indices (ix, iy, iz) of the
-          tabulated array obey Fortran indexing. We symmetrize the j indices like this
+          tabulated array obey Fortran indexing. We symmetrize the j
+          indices like this
           
           ix = jx + max_j + 1, iy = jy + max_j + 1, iz = jz + max_j + 1
         
@@ -170,27 +171,21 @@ class FourierSpaceCorrelation(Correlation):
           whole set of (jx, jy, jz). This way we are sure that indices
           start from 1. This is necessary with numpy arrays, for which
           negative indices have a different meaning.
-
-        - selection (selected_kvectors): list of lists of indices
-          corresponding to kvectors actually used in the
-          calculation. This is useful to map selected kvectors to the
         """
         super(FourierSpaceCorrelation, self).__init__(trajectory,
                                                       grid, norigins=norigins, fix_cm=fix_cm)
         # Some additional variables. k0 = smallest wave vectors
         # compatible with the boundary conditions
         # TODO: document the additional data structures used to store k vectors
-        # TODO: streamline k vectors data structures
         self.normalize = normalize
         self.nk = nk
         self.dk = dk
         self.kmin = kmin
         self.kmax = kmax
         self.ksamples = ksamples
-        self.kgrid = []
+        self.kgrid = None
         self.k0 = []
-        self.kvector = {}
-        self.selection = []
+        self.kvector = []
         self._kbin_max = 0
 
     def compute(self):
@@ -200,6 +195,12 @@ class FourierSpaceCorrelation(Correlation):
         super(FourierSpaceCorrelation, self).compute()
 
     def _setup(self, sample=0):
+        # We skip setup if the kgrid is already set up and we are not
+        # asking to rebuild it (for a sample != 0).
+        # This allows to copy over the kvectors and kgrid
+        if sample == 0 and self.kgrid is not None:
+            return
+        
         # We subclass compute to define k grid at compute time
         # Find k-norms grid and store it a self.kgrid (the norms are sorted)
         variables = self.short_name.split('(')[1][:-1]
@@ -301,22 +302,44 @@ class FourierSpaceCorrelation(Correlation):
 
     @property
     def kvectors(self):
-        """
-        Dictionary of actual kvectors used to compute the correlation
-        function
-
-        The keys of the dictionary are the kgrid values, i.e. the
-        average k values in each wave-vector shell. The values are
-        lists of wavevectors.
-        """
-        db = defaultdict(list)
+        # Return actual kvectors
+        kvectors = []
         for k, klist in enumerate(self.kvector):
-            knorm = self.kgrid[k]
+            kvectors.append([])
             for kvec in klist:
                 actual_vec = self.k0 * (numpy.array(kvec) - self._kbin_max)
-                db[knorm].append(list(actual_vec))
-        return db
+                kvectors[-1].append(list(actual_vec))
+        return kvectors
 
+    @kvectors.setter
+    def kvectors(self, kvectors):
+        # Smallest kvector
+        sample = 0
+        self.k0 = 2*math.pi/self.trajectory[sample].cell.side
+
+        # Collect kvectors and compute shift
+        self.kvector = []
+        shift = 0
+        for klist in kvectors:
+            self.kvector.append([])
+            for kvec in klist:
+                rounded = numpy.rint(kvec / self.k0)
+                self.kvector[-1].append(numpy.array(rounded, dtype=int))
+                # Update shift
+                shift = min(shift, int(min(rounded)))
+
+        # Shift to make all array indices start from 0
+        self._kbin_max = int(abs(shift)) + 1
+        for klist in self.kvector:
+            for i in range(len(klist)):
+                klist[i] = tuple(klist[i] + self._kbin_max)
+    
+        # Define kgrid
+        self.kgrid = []
+        for klist in self.kvector:
+            knorm = numpy.mean([_k_norm(kvec, self.k0, self._kbin_max) for kvec in klist])
+            self.kgrid.append(knorm)
+            
     def report(self, verbose=False):
         """
         Return a formatted report of the wave-vector grid used to compute
@@ -326,24 +349,23 @@ class FourierSpaceCorrelation(Correlation):
         wavectors (also accessible via the `kvectors` property).
         """
         txt = '# k-point, average, std, vectors in shell\n'
-        db = self.kvectors
-        for knorm in db:
+        for i, klist in enumerate(self.kvectors):
             knorms = []
-            for kvec in db[knorm]:
+            for kvec in klist:
                 k_sq = numpy.dot(kvec, kvec)
                 knorms.append(math.sqrt(k_sq))
             knorms = numpy.array(knorms)
-            txt += "{} {:f} {:f} {}\n".format(knorm, knorms.mean(),
+            txt += "{} {:f} {:f} {}\n".format(self.kgrid[i], knorms.mean(),
                                               knorms.std(),
-                                              len(db[knorm]))
+                                              len(klist))
         if verbose:
             txt += '\n# k-point, k-vector\n'
-            for knorm in db:
-                for kvec in db[knorm]:
+            for i, klist in enumerate(self.kvectors):
+                for kvec in klist:
                     # Reformat numpy array
                     as_str = str(kvec)
                     as_str = as_str.replace(',', '')
                     as_str = as_str.replace('[', '')
                     as_str = as_str.replace(']', '')
-                    txt += '{} {}\n'.format(knorm, as_str)
+                    txt += '{} {}\n'.format(self.kgrid[i], as_str)
         return txt

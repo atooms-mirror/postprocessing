@@ -213,6 +213,21 @@ class TestFourierSpace(unittest.TestCase):
         self.assertLess(deviation(p.value, ref_value), 0.08)
         t.close()
 
+    def test_kvectors(self):
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        t = trajectory.TrajectoryXYZ(f)
+        p = postprocessing.StructureFactor(t, [4, 7.3, 10], nk=10)
+        p.compute()
+        q = postprocessing.StructureFactor(t)
+        q.kvectors = p.kvectors
+        self.assertEqual(q.kvectors, p.kvectors)
+        self.assertEqual(q._kbin_max, p._kbin_max)
+        self.assertEqual(q.kgrid, p.kgrid)
+        q.compute()
+        self.assertEqual(q.grid, p.grid)
+        self.assertEqual(q.value, p.value)
+        t.close()
+        
     def test_sk_variable_cell(self):
         # TODO: this test has no assertion
         def deformation(s, scale=0.01):
