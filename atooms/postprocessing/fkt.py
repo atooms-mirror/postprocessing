@@ -126,40 +126,35 @@ class SelfIntermediateScatteringLegacy(IntermediateScatteringBase):
         block = int(pos[0].shape[0] / float(number_of_blocks))
         block = max(20, block)
         block = min(200, block)
-        if len(self.kvector.keys()) == 0:
-            raise ValueError('could not find any wave-vectors, try increasing dk')
 
-        # TODO: This should be computed in base to make sure it is compatible with tabulation
-        # kmax = max(self.kvector.keys()) + self.dk
         acf = [defaultdict(float) for _ in self.kgrid]
         cnt = [defaultdict(float) for _ in self.kgrid]
         origins = range(0, pos.shape[1], block)
         for j in progress(origins):
             # Tabulate exponentials
-            x = expo_sphere(self.k0, self._kbin_kmax, pos[:, j:j + block, :])
-            # TODO: _kvector
-            for k_group, k_list in enumerate(self.kvector):
-                for k_vec in k_list:
+            x = expo_sphere(self.k0, self._kbin_max, pos[:, j:j + block, :])
+            for ik, klist in enumerate(self.kvector):
+                for kvec in klist:
                     for off, i in self._discrete_tgrid:
                         for i0 in range(off, x.shape[0]-i, skip):
                             # Get the actual time difference. steps must be accessed efficiently (cached!)
                             dt = self.trajectory.steps[i0+i] - self.trajectory.steps[i0]
                             # Dimensional switch
                             if ndims == 3:
-                                acf[k_group][dt] += numpy.sum(x[i0+i, :, 0, k_vec[0]]*x[i0, :, 0, k_vec[0]].conjugate() *
-                                                              x[i0+i, :, 1, k_vec[1]]*x[i0, :, 1, k_vec[1]].conjugate() *
-                                                              x[i0+i, :, 2, k_vec[2]]*x[i0, :, 2, k_vec[2]].conjugate()).real
+                                acf[ik][dt] += numpy.sum(x[i0+i, :, 0, kvec[0]]*x[i0, :, 0, kvec[0]].conjugate() *
+                                                         x[i0+i, :, 1, kvec[1]]*x[i0, :, 1, kvec[1]].conjugate() *
+                                                         x[i0+i, :, 2, kvec[2]]*x[i0, :, 2, kvec[2]].conjugate()).real
                             elif ndims == 2:
-                                acf[k_group][dt] += numpy.sum(x[i0+i, :, 0, k_vec[0]]*x[i0, :, 0, k_vec[0]].conjugate() *
-                                                              x[i0+i, :, 1, k_vec[1]]*x[i0, :, 1, k_vec[1]].conjugate()).real
+                                acf[ik][dt] += numpy.sum(x[i0+i, :, 0, kvec[0]]*x[i0, :, 0, kvec[0]].conjugate() *
+                                                         x[i0+i, :, 1, kvec[1]]*x[i0, :, 1, kvec[1]].conjugate()).real
 
                             else:
                                 # Arbitrary dimension (a bit slower)
-                                tmp = x[i0+i, :, 0, k_vec[0]]*x[i0, :, 0, k_vec[0]].conjugate()
-                                for idim in range(1, len(k_vec)):
-                                    tmp *= x[i0+i, :, idim, k_vec[idim]]*x[i0, :, idim, k_vec[idim]].conjugate()
-                                acf[k_group][dt] += numpy.sum(tmp).real
-                            cnt[k_group][dt] += x.shape[1]
+                                tmp = x[i0+i, :, 0, kvec[0]]*x[i0, :, 0, kvec[0]].conjugate()
+                                for idim in range(1, len(kvec)):
+                                    tmp *= x[i0+i, :, idim, kvec[idim]]*x[i0, :, idim, kvec[idim]].conjugate()
+                                acf[ik][dt] += numpy.sum(tmp).real
+                            cnt[ik][dt] += x.shape[1]
 
         # Define grids
         tgrid = sorted(acf[0].keys())
@@ -193,9 +188,6 @@ class SelfIntermediateScatteringFast(SelfIntermediateScatteringLegacy):
     def _compute(self):
         from atooms.postprocessing.fourierspace_wrap import fourierspace_module
 
-        # TODO: shouldnt we test this earlier?
-        assert len(self.kvector.keys()) > 0, 'could not find any wave-vectors, try increasing dk'
-
         # Shortcuts
         pos = numpy.array(self._pos)
         ndims = len(self.k0)
@@ -214,11 +206,10 @@ class SelfIntermediateScatteringFast(SelfIntermediateScatteringLegacy):
         # exponentials over time. This is more memory consuming but we
         # can optimize the inner loop. The esitmated amuount of
         # allocated memory in Mb for the expo array is
-        # self.lookup_mb. Note that the actual memory need scales
+        # self.lookup_mb. Note that the actual memory used scales
         # with number of k vectors, system size and number of frames.
-        # TODO: This should be computed in base to make sure it is compatible with tabulation
-        kmax = max(self.kvector.keys()) + self.dk
-        kvec_size = 2*(1 + int(kmax / min(self.k0))) + 1
+        # TODO: why 2?
+        kvec_size = 2*self._kbin_max + 1
         pos_size = numpy.product(pos.shape)
         target_size = self.lookup_mb * 1e6 / 16.  # 16 bytes for a (double) complex
         number_of_blocks = int(pos_size * kvec_size / target_size)
@@ -233,20 +224,19 @@ class SelfIntermediateScatteringFast(SelfIntermediateScatteringLegacy):
         origins = range(0, pos.shape[1], block)
         for j in progress(origins):
             # Tabulate exponentials
-            # x = expo_sphere(self.k0, kmax, pos[:, j:j + block, :])
-            print(self._kbin_kmax, '///////////')
-            x = expo_sphere(self.k0, self._kbin_kmax, pos[:, j:j + block, :])
+            x = expo_sphere(self.k0, self._kbin_max, pos[:, j:j + block, :])
             xf = numpy.asfortranarray(x)
-            for k_group, k_list in enumerate(self.kvector):
-                for k_vec in k_list:
+            for ik, klist in enumerate(self.kvector):
+                for kvec in klist:
+                    kvec = numpy.array(kvec, dtype=numpy.int32)
                     for off, i in self._discrete_tgrid:
                         for i0 in range(off, x.shape[0]-i, skip):
                             # Get the actual time difference. steps must be accessed efficiently (cached!)
                             dt = self.trajectory.steps[i0+i] - self.trajectory.steps[i0]
                             # Call f90 kernel
-                            res = fskt_kernel(xf, i0+1, i0+1+i, numpy.array(k_vec, dtype=numpy.int32)+1)
-                            acf[k_group][dt] += res.real
-                            cnt[k_group][dt] += x.shape[1]
+                            res = fskt_kernel(xf, i0+1, i0+1+i, kvec+1)
+                            acf[ik][dt] += res.real
+                            cnt[ik][dt] += x.shape[1]
 
         # Define grids
         tgrid = sorted(acf[0].keys())
@@ -296,10 +286,8 @@ class IntermediateScattering(IntermediateScatteringBase):
         ndims = len(self.k0)
 
         # Setup k vectors and tabulate densities rho_0, rho_1
-        # TODO: refactor
-        # kmax = max(self.kvector.keys()) + self.dk
-        rho_0 = [defaultdict(complex) for it in range(nsteps)]
-        rho_1 = [defaultdict(complex) for it in range(nsteps)]
+        rho_0 = [defaultdict(complex) for _ in range(nsteps)]
+        rho_1 = [defaultdict(complex) for _ in range(nsteps)]
         for it in range(nsteps):
             # Tabulate exponentials
             expo_0 = expo_sphere(self.k0, self._kbin_max, self._pos_0[it])
@@ -312,9 +300,8 @@ class IntermediateScattering(IntermediateScatteringBase):
                 expo_1 = expo_sphere(self.k0, self._kbin_max, self._pos_1[it])
 
             # Tabulate densities rho_0, rho_1
-            print(self.kvector)
-            for key in self.kvector:
-                for kvec in self.kvector[key]:
+            for klist in self.kvector:
+                for kvec in klist:
                     if ndims == 3:
                         rho_0[it][kvec] = numpy.sum(expo_0[..., 0, kvec[0]] *
                                                     expo_0[..., 1, kvec[1]] *
@@ -352,18 +339,15 @@ class IntermediateScattering(IntermediateScatteringBase):
         # Compute correlation function
         acf = [defaultdict(float) for _ in self.kgrid]
         cnt = [defaultdict(float) for _ in self.kgrid]
-        # for k_group, k_list in enumerate(progress(self.kvector)):
-        #     for k_vec in k_list:
-        # TODO: much better iterating over list... whats the point of the dict
-        for ikey, key in enumerate(progress(self.kvector)):
-            for kvec in self.kvector[key]:
+        for ik, klist in enumerate(progress(self.kvector)):
+            for kvec in klist:
                 for off, i in self._discrete_tgrid:
                     for i0 in range(off, len(rho_0)-i, self.skip):
                         # Get the actual time difference
                         # TODO: It looks like the order of i0 and ik lopps should be swapped
                         dt = self.trajectory.steps[i0+i] - self.trajectory.steps[i0]
-                        acf[ikey][dt] += (rho_0[i0+i][kvec] * rho_1[i0][kvec].conjugate()).real #/ self._pos[i0].shape[0]
-                        cnt[ikey][dt] += 1
+                        acf[ik][dt] += (rho_0[i0+i][kvec] * rho_1[i0][kvec].conjugate()).real #/ self._pos[i0].shape[0]
+                        cnt[ik][dt] += 1
 
         # Normalization
         times = sorted(acf[0].keys())

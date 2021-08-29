@@ -229,49 +229,40 @@ class FourierSpaceCorrelation(Correlation):
         # Setup the grid of wave-vectors
         self.kvector, self._kbin_max = self._setup_grid_sphere(len(self.kgrid) * [self.dk],
                                                                self.kgrid, self.k0)
-        assert len(self.kvector) > 0, 'could not find any wave-vectors, try increasing dk'
 
         # Decimate
+        # Setting the seed here once so as to get the same set
+        # independent of filters.
+        random.seed(1)
         # Pick up a random, unique set of nk vectors out ot the avilable ones
         # without exceeding maximum number of vectors in shell nkmax
         # self.kgrid, self.selection = self._decimate_k()
-        random.seed(1)
-        for group in self.kvector:
-            nk = min(self.nk, len(self.kvector[group])) 
-            self.kvector[group] = random.sample(self.kvector[group], nk)
+        for i, klist in enumerate(self.kvector):
+            nk = min(self.nk, len(klist))
+            self.kvector[i] = random.sample(klist, nk)
         
-        # We redefine the grid because of slight differences on the
+        # Define the grid using the actual kvectors
         # average k norms appear after decimation.
-        self.kgrid = self._actual_k_grid()
-
-        # TODO: why was this necessary at all
-        # We must fix the keys: just pop them to the their new positions
-        # We sort both of them (better check len's)
-        # for k, kv in zip(sorted(self.kgrid), sorted(self.kvector)):
-        #     self.kvector[k] = self.kvector.pop(kv)
-
-
-        # TODO: improve
-        # TODO: why is dk not a vector
-        # What is the difference wrt
-        
-        # kmax = self.kgrid[-1] + self.dk   #[-1]
-        # self._kbin_max = 1 + int(kmax / min(self.k0))
+        # self.kgrid = self._actual_k_grid()
+        for i, klist in enumerate(self.kvector):
+            self.kgrid[i] = numpy.mean([_k_norm(kvec, self.k0, self._kbin_max) for kvec in klist])
 
         # TODO: drop this
-        self.kmax = max(self.kvector.keys()) + self.dk
+        # self.kmax = max(self.kvector.keys()) + self.dk
         
         
     @staticmethod
     def _setup_grid_sphere(dk, kgrid, k0):
         """
         Setup wave vector grid with spherical average (no symmetry),
-        picking up vectors that fit into shells of width dk centered around
-        the values specified in the input list kgrid.
-        Returns a dictonary of lists of wavevectors, one entry for each element in the grid.
+        picking up vectors that fit into shells of width `dk` centered around
+        the values specified in the input list `kgrid`.
+
+        Returns a list of lists of kvectors, one entry for each element in the grid.
         """
         _log.info('setting up the wave-vector grid')
-        kvec = defaultdict(list)
+        kvec = [[] for _ in range(len(kgrid))] #defaultdict(list)
+        
         # With elongated box, we choose the smallest k0 component to
         # setup the integer grid. This must be consistent with
         # expo_grid() otherwise it wont find the vectors
@@ -288,6 +279,7 @@ class FourierSpaceCorrelation(Correlation):
         else:
             raise ValueError('unsupported dimension {}'.format(ndims))
 
+        # Fill kvec array with kvectors matching the input kgrid within dk
         for ik in _iterator(kbin_max):
             ksq = numpy.dot(k0*ik, k0*ik)
             if ksq > kmax_sq:
@@ -298,34 +290,19 @@ class FourierSpaceCorrelation(Correlation):
             # This expression is general and allows arbitrary k grids
             # However, searching for the shell like this is not fast
             # (it costs about as much as the above)
-            for ki, dki in zip(kgrid, dk):
-                if abs(knorm - ki) < dki:
-                    kvec[ki].append(tuple(ik + kbin_max))
+            for i in range(len((kgrid))):
+                # for ki, dki in zip(kgrid, dk):
+                if abs(knorm - kgrid[i]) < dk[i]:
+                    kvec[i].append(tuple(ik + kbin_max))
                     break
 
-        if len(kvec.keys()) != len(kgrid):
-            _log.warning('some entries in the kgrid had no matching k-vector')
+        # Check
+        for i in range(len(kvec)):
+            if len(kvec[i]) == 0:
+                _log.warning('some entries in the kgrid had no matching k-vector')
+                break
 
         return kvec, kbin_max
-
-    def _decimate_k(self):
-        """
-        Pick up a random, unique set of nk vectors out ot the avilable
-        ones without exceeding maximum number of vectors in shell
-        nkmax.
-
-        Return: the new list of k-norms and a list of random samples
-        of k-vector indices.
-        """
-        # Setting the seed here once so as to get the same set
-        # independent of filters.
-        random.seed(1)
-        kgrid = sorted(self.kvector.keys())
-        selection = []
-        for knorm in kgrid:
-            nkmax = len(self.kvector[knorm])
-            selection.append(random.sample(list(range(nkmax)), min(self.nk, nkmax)))
-        return kgrid, selection
 
     @property
     def kvectors(self):
@@ -374,22 +351,3 @@ class FourierSpaceCorrelation(Correlation):
                     as_str = as_str.replace(']', '')
                     txt += '{} {}\n'.format(knorm, as_str)
         return txt
-
-    def _actual_k_grid(self):
-        """
-        Return exactly the average wave vectors from the selected ones
-
-        Used to redefine the k grid.
-        """
-        k_grid = []
-        # for kk, knorm in enumerate(self.kgrid):
-        #     av = 0.0
-        #     for i in self.selection[kk]:
-        #         av += _k_norm(self.kvector[knorm][i], self.k0, self._kbin_max)
-        #     k_grid.append(av / len(self.selection[kk]))
-        for group in self.kvector:
-            av = 0.0
-            for kvec in self.kvector[group]:
-                av += _k_norm(kvec, self.k0, self._kbin_max)
-            k_grid.append(av / len(self.kvector[group]))
-        return k_grid

@@ -343,16 +343,17 @@ class TestFourierSpace(unittest.TestCase):
     def test_fskt_partial(self):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         t = trajectory.TrajectoryXYZ(f)
-        p = postprocessing.SelfIntermediateScatteringLegacy(t, [4, 7.3, 10], nk=40, norigins=0.2)
-        p.add_filter(filter_species, 'A')
-        p.compute()
-        p.analyze()
-        tau = []
-        for key in sorted(p.analysis['relaxation times tau']):
-            tau.append(p.analysis['relaxation times tau'][key])
-        self.assertLess(abs(tau[0] - 14.081572329287619), 0.04)
-        self.assertLess(abs(tau[1] - 3.1034088042905967), 0.04)
-        self.assertLess(abs(tau[2] - 0.97005294966138289), 0.04)
+        for cls in [postprocessing.SelfIntermediateScatteringLegacy, postprocessing.SelfIntermediateScatteringFast]:
+            p = cls(t, [4, 7.3, 10], nk=40, norigins=0.2)
+            p.add_filter(filter_species, 'A')
+            p.compute()
+            p.analyze()
+            tau = []
+            for key in sorted(p.analysis['relaxation times tau']):
+                tau.append(p.analysis['relaxation times tau'][key])
+            self.assertLess(abs(tau[0] - 14.081572329287619), 0.04)
+            self.assertLess(abs(tau[1] - 3.1034088042905967), 0.04)
+            self.assertLess(abs(tau[2] - 0.97005294966138289), 0.04)
         t.close()
 
     def test_chi4_overlap(self):
