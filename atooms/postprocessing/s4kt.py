@@ -42,18 +42,16 @@ class S4ktOverlap(FourierSpaceCorrelation):
         Tabulate W
         """
         side = self.trajectory[0].cell.side
-        kmax = max(self.kvector.keys()) + self.dk
         nt = range(t_off, len(self._pos)-t, skip)
         W = {}
         for i_0, t_0 in enumerate(nt):
-            expo = expo_sphere(self.k0, kmax, self._pos[t_0])
-            for kk, knorm in enumerate(kgrid):
-                for i in selection[kk]:
-                    ik = self.kvector[knorm][i]
-                    if ik not in W:
-                        W[ik] = numpy.ndarray(len(nt), dtype=complex)
-                    W[ik][i_0] = numpy.sum(self_overlap(self._pos_unf[t_0], self._pos_unf[t_0+t], side, self.a_square) *
-                                           expo[..., 0, ik[0]] * expo[..., 1, ik[1]] * expo[..., 2, ik[2]])
+            expo = expo_sphere(self.k0, self._kbin_max, self._pos[t_0])
+            for k, klist in self.kvector:
+                for kvec in klist:
+                    if kvec not in W:
+                        W[kvec] = numpy.ndarray(len(nt), dtype=complex)
+                    W[kvec][i_0] = numpy.sum(self_overlap(self._pos_unf[t_0], self._pos_unf[t_0+t], side, self.a_square) *
+                                             expo[..., 0, kvec[0]] * expo[..., 1, kvec[1]] * expo[..., 2, kvec[2]])
         return W
 
     def _compute(self):
@@ -66,19 +64,18 @@ class S4ktOverlap(FourierSpaceCorrelation):
             # As for fkt
             W = self._tabulate_W(self.kgrid, self.selection, off, i, self.skip)
 
-            # Compute vriance of W
+            # Compute variance of W
             w_av = [complex(0., 0.) for _ in self.kgrid]
             w2_av = [complex(0., 0.) for _ in self.kgrid]
-            for kk, knorm in enumerate(self.kgrid):
-                for j in self.selection[kk]:
-                    ik = self.kvector[knorm][j]
+            for k, klist in self.kvector:
+                for kvec in klist:
                     # Comupte |<W>|^2  and <W W^*>
-                    w_av[kk] = numpy.average(W[ik])
-                    w2_av[kk] = numpy.average(W[ik] * W[ik].conjugate())
+                    w_av[kk] = numpy.average(W[kvec])
+                    w2_av[kk] = numpy.average(W[kvec] * W[kvec].conjugate())
 
             # Normalization
             npart = self._pos[0].shape[0]
             dt.append(self.trajectory.timestep * (self.trajectory.steps[off+i] - self.trajectory.steps[off]))
-            self.value.append([float(w2_av[kk] - (w_av[kk]*w_av[kk].conjugate())) / npart for kk in range(len(self.grid[1]))])
+            self.value.append([float(w2_av[k] - (w_av[k]*w_av[k].conjugate())) / npart for k in range(len(self.grid[1]))])
         self.grid[1] = self.kgrid
         self.grid[0] = dt

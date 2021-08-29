@@ -286,16 +286,16 @@ class FourierSpaceCorrelation(Correlation):
             # However, searching for the shell like this is not fast
             # (it costs about as much as the above)
             for i in range(len((kgrid))):
-                # for ki, dki in zip(kgrid, dk):
                 if abs(knorm - kgrid[i]) < dk[i]:
                     kvec[i].append(tuple(ik + kbin_max))
                     break
 
         # Check
         for i in range(len(kvec)):
-            if len(kvec[i]) == 0:
-                _log.warning('some entries in the kgrid had no matching k-vector')
-                break
+            assert len(kvec[i]) > 0, 'could not find kvectors for {}'.format(kgrid[i])
+            # if len(kvec[i]) == 0:
+            #     _log.warning('some entries in the kgrid had no matching k-vector')
+            #     break
 
         return kvec, kbin_max
 

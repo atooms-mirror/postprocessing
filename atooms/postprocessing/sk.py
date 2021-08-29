@@ -240,7 +240,7 @@ class StructureFactorFast(StructureFactorLegacy):
         self.value, self.value_nonorm = [], []
         for k in range(len(self.grid)):
             norm = float(npart_0 * npart_1)**0.5
-            value = (rho2_av[k] / cnt[k] - rho_av[kk]*rho_av[k].conjugate() / cnt[k]**2).real
+            value = (rho2_av[k] / cnt[k] - rho_av[k]*rho_av[k].conjugate() / cnt[k]**2).real
             self.value.append(value / norm)
             self.value_nonorm.append(value)
 

@@ -225,11 +225,11 @@ class TestFourierSpace(unittest.TestCase):
             return s
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         with trajectory.TrajectoryXYZ(f) as t:
-            p = postprocessing.StructureFactor(t, list(range(1, 10)))
+            p = postprocessing.StructureFactor(t, [4, 7.3, 10])
             p.compute()
         with trajectory.TrajectoryXYZ(f) as t:
             t.add_callback(deformation, 1e-3)
-            p = postprocessing.StructureFactor(t, list(range(1, 10)))
+            p = postprocessing.StructureFactor(t, [4, 7.3, 10])
             p.compute()
 
     def test_sk_partial(self):
@@ -284,7 +284,6 @@ class TestFourierSpace(unittest.TestCase):
         """
         Test that weight works with partial correlation
         """
-        # TODO: this test fails with python 3 because of a weird issue with xyz trajectory in atooms (_fallback)
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         ff = os.path.join(self.reference_path, 'kalj-small-field.xyz')
         th = trajectory.TrajectoryXYZ(f)
@@ -296,7 +295,7 @@ class TestFourierSpace(unittest.TestCase):
         from atooms.system.particle import composition
         ref_value = numpy.array([0.86716496871363735, 0.86986885176760842, 0.98112175463699136])
         zeros = numpy.zeros(3)
-        self.assertLess(deviation(p.partial[('B', 'B')].value, ref_value), 2e-2)
+        self.assertLess(deviation(p.partial[('B', 'B')].value, ref_value), 2.3e-2)
         self.assertLess(deviation(p.partial[('A', 'A')].value, zeros), 2e-2)
         th.close()
 
