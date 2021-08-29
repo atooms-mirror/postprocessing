@@ -18,7 +18,7 @@ __all__ = ['expo_sphere', 'expo_sphere_safe', 'FourierSpaceCorrelation']
 _log = logging.getLogger(__name__)
 
 
-def expo_sphere(k0, kmax, pos):
+def expo_sphere(k0, nk_max, pos):
     """Returns the exponentials of the input positions for each k."""
 
     # Technical note: we use ellipsis, so that we can pass either a
@@ -33,7 +33,8 @@ def expo_sphere(k0, kmax, pos):
     # We pick up the smallest k0 to compute the integer grid
     # This leaves many unused vectors in the other directions, which
     # could be dropped using different nkmax for x, y, z
-    nk_max = 1 + int(kmax / min(k0))
+    # TODO: this recreates _kbin_max!
+    # nk_max = 1 + int(kmax / min(k0))
     # The shape of expo is nframes, N, ndim, 2*nk+1
     expo = numpy.ndarray((len(pos), ) + pos[0].shape + (2*nk_max+1, ), numpy.complex)
     expo[..., nk_max] = numpy.complex(1.0, 0.0)
@@ -45,6 +46,7 @@ def expo_sphere(k0, kmax, pos):
             expo[..., j, nk_max+i] = expo[..., j, nk_max+i-1] * expo[..., j, nk_max+1]
     # Then take complex conj for negative ones
     for i in range(2, nk_max+1):
+        # TODO: is this line necessary?
         expo[..., nk_max+i] = expo[..., nk_max+i-1] * expo[..., nk_max+1]
         expo[..., nk_max-i] = expo[..., nk_max+i].conjugate()
 
@@ -120,6 +122,59 @@ class FourierSpaceCorrelation(Correlation):
 
     def __init__(self, trajectory, grid, norigins=None, nk=8, dk=0.1,
                  kmin=-1, kmax=10, ksamples=20, fix_cm=False, normalize=True):
+        """
+        Possible inputs:
+
+        1. kgrid is None:
+
+        the k grid is determined internally from kmin, kmax, ksamples
+        and the kvectors are sampled using nk and dk parameters
+
+        2. kgrid is not None, via grid or setting the variable after
+        construction:
+
+        kvectors are sampled using nk and dk and the kgrid is
+        eventually redefined so that its values correspond exactly to
+        the norms of the kvectors in each group
+
+        3. kvectors is not None or set after construction: 
+
+        If kvectors is a dict, it means we provide groups of kvectors
+        and we override the keys with the averages, which are also
+        used to set kgrid.
+
+        If kvectors is a list, then we expect to compute the
+        correlation functions separately for each kvector and store
+        the results accordingly. Thus, kgrid /should/ be a list of
+        lists/arrays.
+
+        Internal variables:
+
+        - k0 : norm of the smallest kvector allowed by cell,
+          determined internally at compute time.
+
+        - kvector: dict containing a list of ndim arrays, grouped by
+          the averaged norm, whose indices are (ix, iy, iz), which
+          identify the kvectors according to the following
+          formulas. We write kvectors as
+
+          k = k0 * (jx, jy, jz)
+
+          where jx, jy, jz are relative numbers. We tabulate
+          exponentials over a grid and the indices (ix, iy, iz) of the
+          tabulated array obey Fortran indexing. We symmetrize the j indices like this
+          
+          ix = jx + max_j + 1, iy = jy + max_j + 1, iz = jz + max_j + 1
+        
+          where max_j is the absolute value of the minimum of the
+          whole set of (jx, jy, jz). This way we are sure that indices
+          start from 1. This is necessary with numpy arrays, for which
+          negative indices have a different meaning.
+
+        - selection (selected_kvectors): list of lists of indices
+          corresponding to kvectors actually used in the
+          calculation. This is useful to map selected kvectors to the
+        """
         super(FourierSpaceCorrelation, self).__init__(trajectory,
                                                       grid, norigins=norigins, fix_cm=fix_cm)
         # Some additional variables. k0 = smallest wave vectors
@@ -139,6 +194,12 @@ class FourierSpaceCorrelation(Correlation):
         self._kbin_max = 0
 
     def compute(self):
+        # Setup grid once. If cell changes we'll call it again
+        self._setup()
+        # Now compute
+        super(FourierSpaceCorrelation, self).compute()
+
+    def _setup(self, sample=0):
         # We subclass compute to define k grid at compute time
         # Find k-norms grid and store it a self.kgrid (the norms are sorted)
         variables = self.short_name.split('(')[1][:-1]
@@ -148,24 +209,7 @@ class FourierSpaceCorrelation(Correlation):
         else:
             self.kgrid = self.grid
 
-        # Setup grid once. If cell changes we'll call it again
-        self._setup()
-
-        # Pick up a random, unique set of nk vectors out ot the avilable ones
-        # without exceeding maximum number of vectors in shell nkmax
-        self.kgrid, self.selection = self._decimate_k()
-        # We redefine the grid because of slight differences on the
-        # average k norms appear after decimation.
-        self.kgrid = self._actual_k_grid()
-        # We must fix the keys: just pop them to the their new positions
-        # We sort both of them (better check len's)
-        for k, kv in zip(sorted(self.kgrid), sorted(self.kvector)):
-            self.kvector[k] = self.kvector.pop(kv)
-
-        # Now compute
-        super(FourierSpaceCorrelation, self).compute()
-
-    def _setup(self, sample=0):
+        # Smallest kvector
         self.k0 = 2*math.pi/self.trajectory[sample].cell.side
         # If grid is not provided, setup a linear grid from kmin,kmax,ksamples data
         # TODO: This shouldnt be allowed with fluctuating cells
@@ -185,7 +229,39 @@ class FourierSpaceCorrelation(Correlation):
         # Setup the grid of wave-vectors
         self.kvector, self._kbin_max = self._setup_grid_sphere(len(self.kgrid) * [self.dk],
                                                                self.kgrid, self.k0)
+        assert len(self.kvector) > 0, 'could not find any wave-vectors, try increasing dk'
 
+        # Decimate
+        # Pick up a random, unique set of nk vectors out ot the avilable ones
+        # without exceeding maximum number of vectors in shell nkmax
+        # self.kgrid, self.selection = self._decimate_k()
+        random.seed(1)
+        for group in self.kvector:
+            nk = min(self.nk, len(self.kvector[group])) 
+            self.kvector[group] = random.sample(self.kvector[group], nk)
+        
+        # We redefine the grid because of slight differences on the
+        # average k norms appear after decimation.
+        self.kgrid = self._actual_k_grid()
+
+        # TODO: why was this necessary at all
+        # We must fix the keys: just pop them to the their new positions
+        # We sort both of them (better check len's)
+        # for k, kv in zip(sorted(self.kgrid), sorted(self.kvector)):
+        #     self.kvector[k] = self.kvector.pop(kv)
+
+
+        # TODO: improve
+        # TODO: why is dk not a vector
+        # What is the difference wrt
+        
+        # kmax = self.kgrid[-1] + self.dk   #[-1]
+        # self._kbin_max = 1 + int(kmax / min(self.k0))
+
+        # TODO: drop this
+        self.kmax = max(self.kvector.keys()) + self.dk
+        
+        
     @staticmethod
     def _setup_grid_sphere(dk, kgrid, k0):
         """
@@ -306,9 +382,14 @@ class FourierSpaceCorrelation(Correlation):
         Used to redefine the k grid.
         """
         k_grid = []
-        for kk, knorm in enumerate(self.kgrid):
+        # for kk, knorm in enumerate(self.kgrid):
+        #     av = 0.0
+        #     for i in self.selection[kk]:
+        #         av += _k_norm(self.kvector[knorm][i], self.k0, self._kbin_max)
+        #     k_grid.append(av / len(self.selection[kk]))
+        for group in self.kvector:
             av = 0.0
-            for i in self.selection[kk]:
-                av += _k_norm(self.kvector[knorm][i], self.k0, self._kbin_max)
-            k_grid.append(av / len(self.selection[kk]))
+            for kvec in self.kvector[group]:
+                av += _k_norm(kvec, self.k0, self._kbin_max)
+            k_grid.append(av / len(self.kvector[group]))
         return k_grid
