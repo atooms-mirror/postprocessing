@@ -221,7 +221,6 @@ class TestFourierSpace(unittest.TestCase):
         q = postprocessing.StructureFactor(t)
         q.kvectors = p.kvectors
         self.assertEqual(q.kvectors, p.kvectors)
-        self.assertEqual(q._kbin_max, p._kbin_max)
         self.assertEqual(q.kgrid, p.kgrid)
         q.compute()
         self.assertEqual(q.grid, p.grid)

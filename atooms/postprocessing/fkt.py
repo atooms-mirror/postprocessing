@@ -132,8 +132,8 @@ class SelfIntermediateScatteringLegacy(IntermediateScatteringBase):
         origins = range(0, pos.shape[1], block)
         for j in progress(origins):
             # Tabulate exponentials
-            x = expo_sphere(self.k0, self._kbin_max, pos[:, j:j + block, :])
-            for ik, klist in enumerate(self.kvector):
+            x = expo_sphere(self.k0, self._koffset, pos[:, j:j + block, :])
+            for ik, klist in enumerate(self._kvectors):
                 for kvec in klist:
                     for off, i in self._discrete_tgrid:
                         for i0 in range(off, x.shape[0]-i, skip):
@@ -209,7 +209,7 @@ class SelfIntermediateScatteringFast(SelfIntermediateScatteringLegacy):
         # self.lookup_mb. Note that the actual memory used scales
         # with number of k vectors, system size and number of frames.
         # TODO: why 2?
-        kvec_size = 2*self._kbin_max + 1
+        kvec_size = 2*self._koffset + 1
         pos_size = numpy.product(pos.shape)
         target_size = self.lookup_mb * 1e6 / 16.  # 16 bytes for a (double) complex
         number_of_blocks = int(pos_size * kvec_size / target_size)
@@ -224,9 +224,9 @@ class SelfIntermediateScatteringFast(SelfIntermediateScatteringLegacy):
         origins = range(0, pos.shape[1], block)
         for j in progress(origins):
             # Tabulate exponentials
-            x = expo_sphere(self.k0, self._kbin_max, pos[:, j:j + block, :])
+            x = expo_sphere(self.k0, self._koffset, pos[:, j:j + block, :])
             xf = numpy.asfortranarray(x)
-            for ik, klist in enumerate(self.kvector):
+            for ik, klist in enumerate(self._kvectors):
                 for kvec in klist:
                     kvec = numpy.array(kvec, dtype=numpy.int32)
                     for off, i in self._discrete_tgrid:
@@ -290,17 +290,17 @@ class IntermediateScattering(IntermediateScatteringBase):
         rho_1 = [defaultdict(complex) for _ in range(nsteps)]
         for it in range(nsteps):
             # Tabulate exponentials
-            expo_0 = expo_sphere(self.k0, self._kbin_max, self._pos_0[it])
+            expo_0 = expo_sphere(self.k0, self._koffset, self._pos_0[it])
             
             # Optimize a bit here: if there is only one filter (alpha-alpha or total calculation)
             # expo_2 will be just a reference to expo_1
             if self._pos_1 is self._pos_0:
                 expo_1 = expo_0
             else:
-                expo_1 = expo_sphere(self.k0, self._kbin_max, self._pos_1[it])
+                expo_1 = expo_sphere(self.k0, self._koffset, self._pos_1[it])
 
             # Tabulate densities rho_0, rho_1
-            for klist in self.kvector:
+            for klist in self._kvectors:
                 for kvec in klist:
                     if ndims == 3:
                         rho_0[it][kvec] = numpy.sum(expo_0[..., 0, kvec[0]] *
@@ -339,7 +339,7 @@ class IntermediateScattering(IntermediateScatteringBase):
         # Compute correlation function
         acf = [defaultdict(float) for _ in self.kgrid]
         cnt = [defaultdict(float) for _ in self.kgrid]
-        for ik, klist in enumerate(progress(self.kvector)):
+        for ik, klist in enumerate(progress(self._kvectors)):
             for kvec in klist:
                 for off, i in self._discrete_tgrid:
                     for i0 in range(off, len(rho_0)-i, self.skip):

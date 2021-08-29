@@ -45,8 +45,8 @@ class S4ktOverlap(FourierSpaceCorrelation):
         nt = range(t_off, len(self._pos)-t, skip)
         W = {}
         for i_0, t_0 in enumerate(nt):
-            expo = expo_sphere(self.k0, self._kbin_max, self._pos[t_0])
-            for k, klist in self.kvector:
+            expo = expo_sphere(self.k0, self._koffset, self._pos[t_0])
+            for k, klist in self._kvectors:
                 for kvec in klist:
                     if kvec not in W:
                         W[kvec] = numpy.ndarray(len(nt), dtype=complex)
@@ -67,7 +67,7 @@ class S4ktOverlap(FourierSpaceCorrelation):
             # Compute variance of W
             w_av = [complex(0., 0.) for _ in self.kgrid]
             w2_av = [complex(0., 0.) for _ in self.kgrid]
-            for k, klist in self.kvector:
+            for k, klist in self._kvectors:
                 for kvec in klist:
                     # Comupte |<W>|^2  and <W W^*>
                     w_av[kk] = numpy.average(W[kvec])

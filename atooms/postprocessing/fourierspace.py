@@ -33,7 +33,7 @@ def expo_sphere(k0, nk_max, pos):
     # We pick up the smallest k0 to compute the integer grid
     # This leaves many unused vectors in the other directions, which
     # could be dropped using different nkmax for x, y, z
-    # TODO: this recreates _kbin_max!
+    # TODO: this recreates _koffset!
     # nk_max = 1 + int(kmax / min(k0))
     # The shape of expo is nframes, N, ndim, 2*nk+1
     expo = numpy.ndarray((len(pos), ) + pos[0].shape + (2*nk_max+1, ), numpy.complex)
@@ -153,7 +153,7 @@ class FourierSpaceCorrelation(Correlation):
         - k0 : norm of the smallest kvector allowed by cell,
           determined internally at compute time.
 
-        - kvector: list of lists of ndim arrays, grouped by
+        - _kvectors: list of lists of ndim arrays, grouped by
           the averaged norm, whose indices are (ix, iy, iz), which
           identify the kvectors according to the following
           formulas. We write kvectors as
@@ -165,12 +165,14 @@ class FourierSpaceCorrelation(Correlation):
           tabulated array obey Fortran indexing. We symmetrize the j
           indices like this
           
-          ix = jx + max_j + 1, iy = jy + max_j + 1, iz = jz + max_j + 1
+          ix = jx + offset_j + 1, iy = jy + offset_j + 1, iz = jz + offset_j + 1
         
-          where max_j is the absolute value of the minimum of the
+          where offset_j is the absolute value of the minimum of the
           whole set of (jx, jy, jz). This way we are sure that indices
           start from 1. This is necessary with numpy arrays, for which
           negative indices have a different meaning.
+
+        - _koffset: value of offset_j defined above
         """
         super(FourierSpaceCorrelation, self).__init__(trajectory,
                                                       grid, norigins=norigins, fix_cm=fix_cm)
@@ -185,8 +187,8 @@ class FourierSpaceCorrelation(Correlation):
         self.ksamples = ksamples
         self.kgrid = None
         self.k0 = []
-        self.kvector = []
-        self._kbin_max = 0
+        self._kvectors = []
+        self._koffset = 0
 
     def compute(self):
         # Setup grid once. If cell changes we'll call it again
@@ -228,7 +230,7 @@ class FourierSpaceCorrelation(Correlation):
                 self.kgrid[0] = min(self.k0)
 
         # Setup the grid of wave-vectors
-        self.kvector, self._kbin_max = self._setup_grid_sphere(len(self.kgrid) * [self.dk],
+        self._kvectors, self._koffset = self._setup_grid_sphere(len(self.kgrid) * [self.dk],
                                                                self.kgrid, self.k0)
 
         # Decimate
@@ -238,14 +240,14 @@ class FourierSpaceCorrelation(Correlation):
         # Pick up a random, unique set of nk vectors out ot the avilable ones
         # without exceeding maximum number of vectors in shell nkmax
         # self.kgrid, self.selection = self._decimate_k()
-        for i, klist in enumerate(self.kvector):
+        for i, klist in enumerate(self._kvectors):
             nk = min(self.nk, len(klist))
-            self.kvector[i] = random.sample(klist, nk)
+            self._kvectors[i] = random.sample(klist, nk)
         
         # Define the grid using the actual kvectors
         # average k norms appear after decimation.
-        for i, klist in enumerate(self.kvector):
-            self.kgrid[i] = numpy.mean([_k_norm(kvec, self.k0, self._kbin_max) for kvec in klist])
+        for i, klist in enumerate(self._kvectors):
+            self.kgrid[i] = numpy.mean([_k_norm(kvec, self.k0, self._koffset) for kvec in klist])
         
     @staticmethod
     def _setup_grid_sphere(dk, kgrid, k0):
@@ -293,10 +295,8 @@ class FourierSpaceCorrelation(Correlation):
 
         # Check
         for i in range(len(kvec)):
+            # TODO: this should be relaxed
             assert len(kvec[i]) > 0, 'could not find kvectors for {}'.format(kgrid[i])
-            # if len(kvec[i]) == 0:
-            #     _log.warning('some entries in the kgrid had no matching k-vector')
-            #     break
 
         return kvec, kbin_max
 
@@ -304,10 +304,10 @@ class FourierSpaceCorrelation(Correlation):
     def kvectors(self):
         # Return actual kvectors
         kvectors = []
-        for k, klist in enumerate(self.kvector):
+        for k, klist in enumerate(self._kvectors):
             kvectors.append([])
             for kvec in klist:
-                actual_vec = self.k0 * (numpy.array(kvec) - self._kbin_max)
+                actual_vec = self.k0 * (numpy.array(kvec) - self._koffset)
                 kvectors[-1].append(list(actual_vec))
         return kvectors
 
@@ -318,26 +318,26 @@ class FourierSpaceCorrelation(Correlation):
         self.k0 = 2*math.pi/self.trajectory[sample].cell.side
 
         # Collect kvectors and compute shift
-        self.kvector = []
+        self._kvectors = []
         shift = 0
         for klist in kvectors:
-            self.kvector.append([])
+            self._kvectors.append([])
             for kvec in klist:
                 rounded = numpy.rint(kvec / self.k0)
-                self.kvector[-1].append(numpy.array(rounded, dtype=int))
+                self._kvectors[-1].append(numpy.array(rounded, dtype=int))
                 # Update shift
                 shift = min(shift, int(min(rounded)))
 
         # Shift to make all array indices start from 0
-        self._kbin_max = int(abs(shift)) + 1
-        for klist in self.kvector:
+        self._koffset = int(abs(shift)) + 1
+        for klist in self._kvectors:
             for i in range(len(klist)):
-                klist[i] = tuple(klist[i] + self._kbin_max)
+                klist[i] = tuple(klist[i] + self._koffset)
     
         # Define kgrid
         self.kgrid = []
-        for klist in self.kvector:
-            knorm = numpy.mean([_k_norm(kvec, self.k0, self._kbin_max) for kvec in klist])
+        for klist in self._kvectors:
+            knorm = numpy.mean([_k_norm(kvec, self.k0, self._koffset) for kvec in klist])
             self.kgrid.append(knorm)
             
     def report(self, verbose=False):

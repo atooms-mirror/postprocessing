@@ -61,15 +61,13 @@ class StructureFactorLegacy(FourierSpaceCorrelation):
         nsteps = len(self._pos_0)
         ndims = len(self.k0)
         kgrid = self.kgrid
-        # # Setup k vectors and tabulate rho
-        # kgrid, selection = self.kgrid, self.selection
-        # kmax = max(self.kvector.keys()) + self.dk
+        
+        # Setup k vectors and tabulate rho
         cnt = [0 for k in kgrid]
         rho_0_av = [complex(0., 0.) for k in kgrid]
         rho_1_av = [complex(0., 0.) for k in kgrid]
         rho2_av = [complex(0., 0.) for k in kgrid]
         variable_cell = is_cell_variable(self.trajectory)
-
         for i in progress(range(0, nsteps, self.skip), total=nsteps // self.skip):
             # If cell changes we have to update the wave vectors
             if variable_cell:
@@ -79,12 +77,12 @@ class StructureFactorLegacy(FourierSpaceCorrelation):
             # Note: tabulating and computing takes about the same time
             if self._pos_0[i] is self._pos_1[i]:
                 # Identical species
-                expo_0 = expo_sphere(self.k0, self._kbin_max, self._pos_0[i])
+                expo_0 = expo_sphere(self.k0, self._koffset, self._pos_0[i])
                 expo_1 = expo_0
             else:
                 # Cross correlation
-                expo_0 = expo_sphere(self.k0, self._kbin_max, self._pos_0[i])
-                expo_1 = expo_sphere(self.k0, self._kbin_max, self._pos_1[i])
+                expo_0 = expo_sphere(self.k0, self._koffset, self._pos_0[i])
+                expo_1 = expo_sphere(self.k0, self._koffset, self._pos_1[i])
 
             # Define weights
             if self._weight is None:
@@ -93,7 +91,7 @@ class StructureFactorLegacy(FourierSpaceCorrelation):
                 weight_0, weight_1 = self._weight_0[i], self._weight_1[i]
 
             # Nice spaghetti here
-            for k, klist in enumerate(self.kvector):
+            for k, klist in enumerate(self._kvectors):
                 for kvec in klist:
                     if expo_0 is expo_1:
                         # Identical species
@@ -190,9 +188,6 @@ class StructureFactorFast(StructureFactorLegacy):
         kgrid = self.kgrid
 
         # Setup k vectors and tabulate rho
-        # kgrid, selection = self.kgrid, self.selection
-        # kmax = max(self.kvector.keys()) + self.dk
-
         cnt = [0 for k in kgrid]
         rho_av = [complex(0., 0.) for k in kgrid]
         rho2_av = [complex(0., 0.) for k in kgrid]
@@ -206,13 +201,13 @@ class StructureFactorFast(StructureFactorLegacy):
             # Note: tabulating and computing takes about the same time
             if self._pos_0[i] is self._pos_1[i]:
                 # Identical species
-                expo_0 = expo_sphere(self.k0, self._kbin_max, self._pos_0[i])
+                expo_0 = expo_sphere(self.k0, self._koffset, self._pos_0[i])
                 expo_1 = expo_0
             else:
                 # Cross correlation
                 # TODO: cross correlation wont work
-                expo_0 = expo_sphere(self.k0, self._kbin_max, self._pos_0[i])
-                expo_1 = expo_sphere(self.k0, self._kbin_max, self._pos_1[i])
+                expo_0 = expo_sphere(self.k0, self._koffset, self._pos_0[i])
+                expo_1 = expo_sphere(self.k0, self._koffset, self._pos_1[i])
 
             # for kk, knorm in enumerate(kgrid):
             #     ikvec = numpy.ndarray((3, len(selection[kk])), order='F', dtype=numpy.int32)
@@ -220,7 +215,7 @@ class StructureFactorFast(StructureFactorLegacy):
             #     for k in selection[kk]:
             #         ikvec[:, i] = self.kvector[knorm][k]
             #         i += 1
-            for k, klist in enumerate(self.kvector):
+            for k, klist in enumerate(self._kvectors):
                 # TODO: do it by transpose()
                 # Fill array of kvectors in this bin
                 ikvec = numpy.ndarray((3, len(klist)), order='F', dtype=numpy.int32)
