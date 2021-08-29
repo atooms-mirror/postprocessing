@@ -243,13 +243,8 @@ class FourierSpaceCorrelation(Correlation):
         
         # Define the grid using the actual kvectors
         # average k norms appear after decimation.
-        # self.kgrid = self._actual_k_grid()
         for i, klist in enumerate(self.kvector):
             self.kgrid[i] = numpy.mean([_k_norm(kvec, self.k0, self._kbin_max) for kvec in klist])
-
-        # TODO: drop this
-        # self.kmax = max(self.kvector.keys()) + self.dk
-        
         
     @staticmethod
     def _setup_grid_sphere(dk, kgrid, k0):
@@ -315,10 +310,11 @@ class FourierSpaceCorrelation(Correlation):
         lists of wavevectors.
         """
         db = defaultdict(list)
-        for ik, knorm in enumerate(self.kgrid):
-            for isel in self.selection[ik]:
-                center_vec = numpy.array(self.kvector[knorm][isel]) - self._kbin_max
-                db[knorm].append(list(self.k0 * center_vec))
+        for k, klist in enumerate(self.kvector):
+            knorm = self.kgrid[k]
+            for kvec in klist:
+                actual_vec = self.k0 * (numpy.array(kvec) - self._kbin_max)
+                db[knorm].append(list(actual_vec))
         return db
 
     def report(self, verbose=False):

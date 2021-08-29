@@ -60,9 +60,10 @@ class StructureFactorLegacy(FourierSpaceCorrelation):
     def _compute(self):
         nsteps = len(self._pos_0)
         ndims = len(self.k0)
-        # Setup k vectors and tabulate rho
-        kgrid, selection = self.kgrid, self.selection
-        kmax = max(self.kvector.keys()) + self.dk
+        kgrid = self.kgrid
+        # # Setup k vectors and tabulate rho
+        # kgrid, selection = self.kgrid, self.selection
+        # kmax = max(self.kvector.keys()) + self.dk
         cnt = [0 for k in kgrid]
         rho_0_av = [complex(0., 0.) for k in kgrid]
         rho_1_av = [complex(0., 0.) for k in kgrid]
@@ -73,19 +74,17 @@ class StructureFactorLegacy(FourierSpaceCorrelation):
             # If cell changes we have to update the wave vectors
             if variable_cell:
                 self._setup(i)
-                kgrid, selection = self._decimate_k()
-                kmax = max(self.kvector.keys()) + self.dk
 
             # Tabulate exponentials
             # Note: tabulating and computing takes about the same time
             if self._pos_0[i] is self._pos_1[i]:
                 # Identical species
-                expo_0 = expo_sphere(self.k0, kmax, self._pos_0[i])
+                expo_0 = expo_sphere(self.k0, self._kbin_max, self._pos_0[i])
                 expo_1 = expo_0
             else:
                 # Cross correlation
-                expo_0 = expo_sphere(self.k0, kmax, self._pos_0[i])
-                expo_1 = expo_sphere(self.k0, kmax, self._pos_1[i])
+                expo_0 = expo_sphere(self.k0, self._kbin_max, self._pos_0[i])
+                expo_1 = expo_sphere(self.k0, self._kbin_max, self._pos_1[i])
 
             # Define weights
             if self._weight is None:
@@ -94,24 +93,23 @@ class StructureFactorLegacy(FourierSpaceCorrelation):
                 weight_0, weight_1 = self._weight_0[i], self._weight_1[i]
 
             # Nice spaghetti here
-            for kk, knorm in enumerate(kgrid):
-                for k in selection[kk]:
-                    ik = self.kvector[knorm][k]
+            for k, klist in enumerate(self.kvector):
+                for kvec in klist:
                     if expo_0 is expo_1:
                         # Identical species
                         if ndims == 3:
                             rho_0 = numpy.sum(weight_0 *
-                                              expo_0[..., 0, ik[0]] *
-                                              expo_0[..., 1, ik[1]] *
-                                              expo_0[..., 2, ik[2]])
+                                              expo_0[..., 0, kvec[0]] *
+                                              expo_0[..., 1, kvec[1]] *
+                                              expo_0[..., 2, kvec[2]])
                         elif ndims == 2:
                             rho_0 = numpy.sum(weight_0 *
-                                              expo_0[..., 0, ik[0]] *
-                                              expo_0[..., 1, ik[1]])
+                                              expo_0[..., 0, kvec[0]] *
+                                              expo_0[..., 1, kvec[1]])
                         else:
-                            tmp = weight_0 * expo_0[..., 0, ik[0]]
+                            tmp = weight_0 * expo_0[..., 0, kvec[0]]
                             for idim in range(1, ndims):
-                                tmp *= expo_0[..., idim, ik[idim]]
+                                tmp *= expo_0[..., idim, kvec[idim]]
                             rho_0 = numpy.sum(tmp)
 
                         rho_1 = rho_0
@@ -119,35 +117,35 @@ class StructureFactorLegacy(FourierSpaceCorrelation):
                         # Cross correlation
                         if ndims == 3:
                             rho_0 = numpy.sum(weight_0 *
-                                              expo_0[..., 0, ik[0]] *
-                                              expo_0[..., 1, ik[1]] *
-                                              expo_0[..., 2, ik[2]])
+                                              expo_0[..., 0, kvec[0]] *
+                                              expo_0[..., 1, kvec[1]] *
+                                              expo_0[..., 2, kvec[2]])
                             rho_1 = numpy.sum(weight_1 *
-                                              expo_1[..., 0, ik[0]] *
-                                              expo_1[..., 1, ik[1]] *
-                                              expo_1[..., 2, ik[2]])
+                                              expo_1[..., 0, kvec[0]] *
+                                              expo_1[..., 1, kvec[1]] *
+                                              expo_1[..., 2, kvec[2]])
                         elif ndims == 2:
                             rho_0 = numpy.sum(weight_0 *
-                                              expo_0[..., 0, ik[0]] *
-                                              expo_0[..., 1, ik[1]])
+                                              expo_0[..., 0, kvec[0]] *
+                                              expo_0[..., 1, kvec[1]])
                             rho_1 = numpy.sum(weight_1 *
-                                              expo_1[..., 0, ik[0]] *
-                                              expo_1[..., 1, ik[1]])
+                                              expo_1[..., 0, kvec[0]] *
+                                              expo_1[..., 1, kvec[1]])
                         else:
-                            tmp = weight_0 * expo_0[..., 0, ik[0]]
+                            tmp = weight_0 * expo_0[..., 0, kvec[0]]
                             for idim in range(ndims):
-                                tmp *= expo_0[..., idim, ik[idim]]
+                                tmp *= expo_0[..., idim, kvec[idim]]
                             rho_0 = numpy.sum(tmp)
-                            tmp = weight_0 * expo_1[..., 0, ik[0]]
+                            tmp = weight_0 * expo_1[..., 0, kvec[0]]
                             for idim in range(ndims):
-                                tmp *= expo_1[..., idim, ik[idim]]
+                                tmp *= expo_1[..., idim, kvec[idim]]
                             rho_1 = numpy.sum(tmp)
 
                     # Cumulate averages
-                    rho_0_av[kk] += rho_0
-                    rho_1_av[kk] += rho_1
-                    rho2_av[kk] += (rho_0 * rho_1.conjugate())
-                    cnt[kk] += 1
+                    rho_0_av[k] += rho_0
+                    rho_1_av[k] += rho_1
+                    rho2_av[k] += (rho_0 * rho_1.conjugate())
+                    cnt[k] += 1
 
         # In the absence of a microscopic field, the average density is zero.
         # We get rid of the average and compute <rho(k)rho*(k)>.
@@ -160,9 +158,9 @@ class StructureFactorLegacy(FourierSpaceCorrelation):
         npart_1 = sum([p.shape[0] for p in self._pos_1]) / float(len(self._pos_1))
         self.grid = kgrid
         self.value, self.value_nonorm = [], []
-        for kk in range(len(self.grid)):
+        for k in range(len(self.grid)):
             norm = float(npart_0 * npart_1)**0.5
-            value = (rho2_av[kk] / cnt[kk] - rho_0_av[kk]*rho_1_av[kk].conjugate() / cnt[kk]**2).real
+            value = (rho2_av[k] / cnt[k] - rho_0_av[k] * rho_1_av[k].conjugate() / cnt[k]**2).real
             self.value.append(value / norm)
             self.value_nonorm.append(value)
 
@@ -189,9 +187,12 @@ class StructureFactorFast(StructureFactorLegacy):
             raise
 
         nsteps = len(self._pos_0)
+        kgrid = self.kgrid
+
         # Setup k vectors and tabulate rho
-        kgrid, selection = self.kgrid, self.selection
-        kmax = max(self.kvector.keys()) + self.dk
+        # kgrid, selection = self.kgrid, self.selection
+        # kmax = max(self.kvector.keys()) + self.dk
+
         cnt = [0 for k in kgrid]
         rho_av = [complex(0., 0.) for k in kgrid]
         rho2_av = [complex(0., 0.) for k in kgrid]
@@ -200,42 +201,46 @@ class StructureFactorFast(StructureFactorLegacy):
             # If cell changes we have to update the wave vectors
             if variable_cell:
                 self._setup(i)
-                kgrid, selection = self._decimate_k()
-                kmax = max(self.kvector.keys()) + self.dk
 
             # Tabulate exponentials
             # Note: tabulating and computing takes about the same time
             if self._pos_0[i] is self._pos_1[i]:
                 # Identical species
-                expo_0 = expo_sphere(self.k0, kmax, self._pos_0[i])
+                expo_0 = expo_sphere(self.k0, self._kbin_max, self._pos_0[i])
                 expo_1 = expo_0
             else:
                 # Cross correlation
                 # TODO: cross correlation wont work
-                expo_0 = expo_sphere(self.k0, kmax, self._pos_0[i])
-                expo_1 = expo_sphere(self.k0, kmax, self._pos_1[i])
+                expo_0 = expo_sphere(self.k0, self._kbin_max, self._pos_0[i])
+                expo_1 = expo_sphere(self.k0, self._kbin_max, self._pos_1[i])
 
-            for kk, knorm in enumerate(kgrid):
-                ikvec = numpy.ndarray((3, len(selection[kk])), order='F', dtype=numpy.int32)
-                i = 0
-                for k in selection[kk]:
-                    ikvec[:, i] = self.kvector[knorm][k]
-                    i += 1
+            # for kk, knorm in enumerate(kgrid):
+            #     ikvec = numpy.ndarray((3, len(selection[kk])), order='F', dtype=numpy.int32)
+            #     i = 0
+            #     for k in selection[kk]:
+            #         ikvec[:, i] = self.kvector[knorm][k]
+            #         i += 1
+            for k, klist in enumerate(self.kvector):
+                # TODO: do it by transpose()
+                # Fill array of kvectors in this bin
+                ikvec = numpy.ndarray((3, len(klist)), order='F', dtype=numpy.int32)
+                for i, kvec in enumerate(klist):
+                    ikvec[:, i] = kvec
                 rho = numpy.zeros(ikvec.shape[1], dtype=numpy.complex128)
                 fourierspace_module.sk_bare(expo_0, ikvec, rho)
                 rho_0 = rho
                 rho_1 = rho
-                rho2_av[kk] += numpy.sum(rho_0 * rho_1.conjugate())
-                cnt[kk] += rho.shape[0]
+                rho2_av[k] += numpy.sum(rho_0 * rho_1.conjugate())
+                cnt[k] += rho.shape[0]
 
         # Normalization.
         npart_0 = sum([p.shape[0] for p in self._pos_0]) / float(len(self._pos_0))
         npart_1 = sum([p.shape[0] for p in self._pos_1]) / float(len(self._pos_1))
         self.grid = kgrid
         self.value, self.value_nonorm = [], []
-        for kk in range(len(self.grid)):
+        for k in range(len(self.grid)):
             norm = float(npart_0 * npart_1)**0.5
-            value = (rho2_av[kk] / cnt[kk] - rho_av[kk]*rho_av[kk].conjugate() / cnt[kk]**2).real
+            value = (rho2_av[k] / cnt[k] - rho_av[kk]*rho_av[k].conjugate() / cnt[k]**2).real
             self.value.append(value / norm)
             self.value_nonorm.append(value)
 
