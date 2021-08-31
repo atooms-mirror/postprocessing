@@ -334,7 +334,7 @@ class Correlation(object):
         # Dump unfolded positions if requested
         if 'pos-unf' in self.phasespace:
             if hasattr(self.trajectory[0].particle[0], 'position_unfolded'):
-                for s in progress(self._unfolded):
+                for s in progress(self.trajectory):
                     # Apply filter if there is one
                     if len(self._cbk) > 0:
                         s = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
