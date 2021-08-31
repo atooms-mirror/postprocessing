@@ -334,12 +334,26 @@ class Correlation(object):
         # Dump unfolded positions if requested
         if 'pos-unf' in self.phasespace:
             if hasattr(self.trajectory[0].particle[0], 'position_unfolded'):
+                # Unfolded positions are present in the trajectory
                 for s in progress(self.trajectory):
                     # Apply filter if there is one
                     if len(self._cbk) > 0:
                         s = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
+                    # Fix CM if requested
+                    if self._fix_cm:
+                        # Compute CM using unfolded positions, which is safe
+                        cm = numpy.zeros_like(s.particle[0].position_unfolded)
+                        mtot = 0.0
+                        for p in s.particle:
+                            cm += p.position_unfolded * p.mass
+                            mtot += p.mass
+                        cm /= mtot
+                        # Subtract it 
+                        for p in s.particle:
+                            p.position_unfolded -= cm
                     self._pos_unf.append(s.dump('particle.position_unfolded'))
             else:
+                # We unfold the positions, caching the results
                 if self._unfolded is None:
                     self._unfolded = Unfolded(self.trajectory, fixed_cm=self._fix_cm)
                 for s in progress(self._unfolded):
