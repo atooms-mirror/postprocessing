@@ -333,13 +333,20 @@ class Correlation(object):
                     
         # Dump unfolded positions if requested
         if 'pos-unf' in self.phasespace:
-            if self._unfolded is None:
-                self._unfolded = Unfolded(self.trajectory, fixed_cm=self._fix_cm)
-            for s in progress(self._unfolded):
-                # Apply filter if there is one
-                if len(self._cbk) > 0:
-                    s = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
-                self._pos_unf.append(s.dump('pos'))
+            if hasattr(self.trajectory[0].particle[0], 'position_unfolded'):
+                for s in progress(self._unfolded):
+                    # Apply filter if there is one
+                    if len(self._cbk) > 0:
+                        s = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
+                    self._pos_unf.append(s.dump('particle.position_unfolded'))
+            else:
+                if self._unfolded is None:
+                    self._unfolded = Unfolded(self.trajectory, fixed_cm=self._fix_cm)
+                for s in progress(self._unfolded):
+                    # Apply filter if there is one
+                    if len(self._cbk) > 0:
+                        s = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
+                    self._pos_unf.append(s.dump('pos'))
                 
     def _setup_weight_onebody(self):
         """
