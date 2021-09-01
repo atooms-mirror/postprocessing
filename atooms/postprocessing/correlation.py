@@ -351,7 +351,7 @@ class Correlation(object):
 
         # Read unfolded positions if requested
         if 'pos-unf' in self.phasespace:
-            if hasattr(th.particle[0], 'position_unfolded'):
+            if hasattr(th[0].particle[0], 'position_unfolded'):
                 # Unfolded positions are present in the trajectory
                 for s in progress(th):
                     # Apply filter if there is one
