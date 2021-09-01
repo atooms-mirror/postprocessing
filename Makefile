@@ -10,7 +10,7 @@ all: user
 dist: version
 	python setup.py sdist
 
-test:	version
+test:
 	coverage run --source atooms -m unittest discover -s tests
 	coverage report
 
