@@ -9,7 +9,7 @@ from collections import defaultdict
 
 import numpy
 from atooms.trajectory import Trajectory
-from atooms.trajectory.decorators import Unfolded
+from atooms.trajectory.decorators import Unfolded, fold
 from atooms.trajectory.decorators import change_species
 from atooms.system.particle import distinct_species
 from atooms.core.utils import Timer
@@ -219,7 +219,7 @@ class Correlation(object):
         self._weight_0, self._weight_1 = None, None
         self._weight_field = None
         self._weight_fluctuations = False
-        
+
     def __str__(self):
         return '{} at <{}>'.format(self.long_name, id(self))
 
@@ -229,7 +229,7 @@ class Correlation(object):
 
         If `trajectory` is `None`, `self.trajectory` will be used and
         `field` must be a particle property.
-        
+
         If `field` is `None`, `trajectory` is assumed to be a path an
         xyz trajectory and we use the data in last column as a weight.
 
@@ -256,7 +256,7 @@ class Correlation(object):
         if trajectory is None:
             self._weight_trajectory = self.trajectory
         else:
-            self._weight_trajectory = trajectory           
+            self._weight_trajectory = trajectory
             # Copy over the field
             from .helpers import copy_field
             self.trajectory.add_callback(copy_field, self._weight_field, self._weight_trajectory)
@@ -264,14 +264,14 @@ class Correlation(object):
         # Make sure the steps are consistent
         if self._weight_trajectory.steps != self.trajectory.steps:
             raise ValueError('inconsistency between weight trajectory and trajectory')
-        
+
         # Modify tag
         fluct = 'fluctuations' if self._weight_fluctuations else ''
         self.tag_description += ' with {} {} field'.format(self._weight_field.replace('_', ' '), fluct)
         self.tag_description = self.tag_description.replace('  ', ' ')
         self.tag += '.{}_{}'.format(self._weight_field, fluct)
         self.tag.strip('_.')
-        
+
     def add_filter(self, cbk, *args, **kwargs):
         """Add filter callback `cbk` along with positional and keyword arguments"""
         if len(self._cbk) > self.nbodies:
@@ -301,7 +301,7 @@ class Correlation(object):
            not isinstance(self.phasespace, tuple):
             self.phasespace = [self.phasespace]
 
-        # Setup arrays        
+        # Setup arrays
         if self.nbodies == 1:
             self._setup_arrays_onebody()
             self._setup_weight_onebody()
@@ -312,13 +312,31 @@ class Correlation(object):
     def _setup_arrays_onebody(self):
         """
         Setup list of numpy arrays for one-body correlations.
-        
+
         We also take care of dumping the weight if needed, see
         `add_weight()`.
         """
+        # Local shortcut
+        th = self.trajectory
+
+        # We unfold the trajectory if phasespace requests it and
+        # unfolded positions are not available in the trajectory, or
+        # if we request folded positions with fixed center of mass
+        if ('pos-unf' in self.phasespace and not hasattr(th[0].particle[0], 'position_unfolded')) or \
+           ('pos' in self.phasespace and self._fix_cm):
+            # We unfold the positions, caching the trajectory
+            if self._unfolded is None:
+                self._unfolded = Unfolded(self.trajectory, fixed_cm=self._fix_cm)
+                # We must fold positions back in this case
+                if 'pos' in self.phasespace:
+                    self._unfolded.add_callback(fold)
+            # Change the local shortcut to the unfolded trajectory
+            th = self._unfolded
+
+        # Read everything except unfolded trajectories
         if 'pos' in self.phasespace or 'vel' in self.phasespace or 'ids' in self.phasespace:
-            ids = distinct_species(self.trajectory[0].particle)
-            for s in progress(self.trajectory):
+            ids = distinct_species(th[0].particle)
+            for s in progress(th):
                 # Apply filter if there is one
                 if len(self._cbk) > 0:
                     s = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
@@ -330,16 +348,18 @@ class Correlation(object):
                     _ids = s.dump('species')
                     _ids = numpy.array([ids.index(_) for _ in _ids], dtype=numpy.int32)
                     self._ids.append(_ids)
-                    
-        # Dump unfolded positions if requested
+
+        # Read unfolded positions if requested
         if 'pos-unf' in self.phasespace:
-            if hasattr(self.trajectory[0].particle[0], 'position_unfolded'):
+            if hasattr(th.particle[0], 'position_unfolded'):
                 # Unfolded positions are present in the trajectory
-                for s in progress(self.trajectory):
+                for s in progress(th):
                     # Apply filter if there is one
                     if len(self._cbk) > 0:
                         s = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
-                    # Fix CM if requested
+                    # Fixing the CM must be done explicitly using
+                    # particle.position_unfolded because atooms.system
+                    # methods work with particle.position
                     if self._fix_cm:
                         # Compute CM using unfolded positions, which is safe
                         cm = numpy.zeros_like(s.particle[0].position_unfolded)
@@ -348,20 +368,17 @@ class Correlation(object):
                             cm += p.position_unfolded * p.mass
                             mtot += p.mass
                         cm /= mtot
-                        # Subtract it 
+                        # Subtract it
                         for p in s.particle:
                             p.position_unfolded -= cm
                     self._pos_unf.append(s.dump('particle.position_unfolded'))
             else:
-                # We unfold the positions, caching the results
-                if self._unfolded is None:
-                    self._unfolded = Unfolded(self.trajectory, fixed_cm=self._fix_cm)
-                for s in progress(self._unfolded):
+                for s in progress(th):
                     # Apply filter if there is one
                     if len(self._cbk) > 0:
                         s = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
                     self._pos_unf.append(s.dump('pos'))
-                
+
     def _setup_weight_onebody(self):
         """
         Setup list of numpy arrays for the weight, see `add_weight()`
@@ -376,14 +393,14 @@ class Correlation(object):
             # It should be possible to link the weight trajectory to the trajectory
             # and return the trajectory particles with the weight
             if len(self._cbk) > 0:
-                s = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])                
+                s = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
             current_weight = s.dump('particle.%s' % self._weight_field)
             self._weight.append(current_weight)
 
         # Subtract global mean
         if self._weight_fluctuations:
             _subtract_mean(self._weight)
-            
+
     def _setup_weight_twobody(self):
         """
         Setup list of numpy arrays for the weight, see `add_weight()`
@@ -415,7 +432,7 @@ class Correlation(object):
         if self._weight_fluctuations:
             _subtract_mean(self._weight_0)
             _subtract_mean(self._weight_1)
-        
+
     def _setup_arrays_twobody(self):
         """Setup list of numpy arrays for two-body correlations."""
         if len(self._cbk) <= 1:
@@ -446,7 +463,7 @@ class Correlation(object):
                     _ids_1 = numpy.array([ids.index(_) for _ in _ids_1], dtype=numpy.int32)
                     self._ids_0.append(_ids_0)
                     self._ids_1.append(_ids_1)
-                    
+
         # Dump unfolded positions if requested
         if 'pos-unf' in self.phasespace:
             for s in progress(Unfolded(self.trajectory)):
