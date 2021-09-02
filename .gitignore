@@ -13,4 +13,4 @@ MANIFEST
 *.so
 data/*.pp.*
 .tox/
-
+.coverage
