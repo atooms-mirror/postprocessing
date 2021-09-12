@@ -8,7 +8,6 @@ import numpy
 import atooms.postprocessing.api as api
 
 
-
 def deviation(x, y):
     return (numpy.sum((x-y)**2)/len(x))**0.5
 
@@ -46,5 +45,3 @@ class TestApi(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
-

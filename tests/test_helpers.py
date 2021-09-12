@@ -15,7 +15,7 @@ class Test(unittest.TestCase):
 
     def setUp(self):
         pass
-        
+
     def test_ifabsmm(self):
         x = numpy.array(numpy.linspace(0.0, 1.0, 20))
         f = (x-0.75)**2
@@ -29,8 +29,6 @@ class Test(unittest.TestCase):
         results = helpers.ifabsmm(x, f)
         xmin, fmin = results[0]
         self.assertAlmostEqual(xmin, 1.0)
-        
+
 if __name__ == '__main__':
     unittest.main()
-
-

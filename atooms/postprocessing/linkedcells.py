@@ -30,10 +30,10 @@ class LinkedCells(object):
                 for iy in range(self.n_cell[1]):
                     for iz in range(self.n_cell[2]):
                         self._neigh_cell[(ix, iy, iz)] = \
-                            [(ix+1, iy, iz  ), (ix+1, iy+1, iz  ), (ix  , iy+1, iz  ), (ix-1, iy+1, iz  ),
-                             (ix+1, iy, iz-1), (ix+1, iy+1, iz-1), (ix  , iy+1, iz-1), (ix-1, iy+1, iz-1),
-                             (ix+1, iy, iz+1), (ix+1, iy+1, iz+1), (ix  , iy+1, iz+1), (ix-1, iy+1, iz+1),
-                             (ix  , iy, iz+1)]
+                            [(ix+1, iy, iz), (ix+1, iy+1, iz), (ix, iy+1, iz), (ix-1, iy+1, iz),
+                             (ix+1, iy, iz-1), (ix+1, iy+1, iz-1), (ix, iy+1, iz-1), (ix-1, iy+1, iz-1),
+                             (ix+1, iy, iz+1), (ix+1, iy+1, iz+1), (ix, iy+1, iz+1), (ix-1, iy+1, iz+1),
+                             (ix, iy, iz+1)]
         else:
             for ix in range(self.n_cell[0]):
                 for iy in range(self.n_cell[1]):
@@ -45,8 +45,8 @@ class LinkedCells(object):
                                     if deltax == deltay == deltaz == 0:
                                         continue
                                     self._neigh_cell[(ix, iy, iz)].append((ix+deltax, iy+deltay, iz+deltaz))
-                        
-        # Apply PBC to neighboring "ghost" cells 
+
+        # Apply PBC to neighboring "ghost" cells
         for i in self._neigh_cell:
             for j in range(len(self._neigh_cell[i])):
                 # if numpy.any(numpy.array(self._neigh_cell[i][j]) < 0) or \
@@ -103,7 +103,7 @@ class LinkedCells(object):
             neighbors = []
             # Start with particles in the cell of particle ipart
             if other is None:
-                neighbors += [_ for _ in particle_in_cell[icell] if _ > ipart ]
+                neighbors += [_ for _ in particle_in_cell[icell] if _ > ipart]
             else:
                 neighbors += particle_in_cell[icell]
                 # try:
@@ -115,7 +115,7 @@ class LinkedCells(object):
                 neighbors += particle_in_cell[jcell]
             self.neighbors.append(neighbors)
             self.number_of_neighbors.append(len(neighbors))
-            
+
         if as_array:
             npart = len(self.neighbors)
             number_of_neighbors = numpy.array(self.number_of_neighbors)
@@ -125,9 +125,9 @@ class LinkedCells(object):
             self.neighbors = neighbors_array
             self.number_of_neighbors = number_of_neighbors
             return self.neighbors, number_of_neighbors
-        else:            
+        else:
             return self.neighbors
-    
+
 # import sys
 # from atooms.system import Particle
 # import atooms.trajectory as trj
@@ -179,7 +179,6 @@ class LinkedCells(object):
 # #     print()
 
 
-
 # # js = []
 # # for j in range(pos.shape[0]):
 # #     dr = system.particle[0].distance(system.particle[j], system.cell)
@@ -189,7 +188,7 @@ class LinkedCells(object):
 # # # print(len(sorted(lc.neighbors[0])))
 # # # print(len(sorted(neighbors[0][0:number_of_neighbors[0]])))
 # # # print(len(sorted(js)))
-# # # print('----')    
+# # # print('----')
 
 # # # for nnn in [sorted(lc.neighbors[0]),
 # # #             sorted(neighbors[0][0:number_of_neighbors[0]])]:

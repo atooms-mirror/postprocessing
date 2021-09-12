@@ -155,7 +155,7 @@ class SelfIntermediateScatteringLegacy(IntermediateScatteringBase):
                                 tmp = x[i0+i, :, 0, ik[0]]*x[i0, :, 0, ik[0]].conjugate()
                                 for idim in range(1, len(ik)):
                                     tmp *= x[i0+i, :, idim, ik[idim]]*x[i0, :, idim, ik[idim]].conjugate()
-                                acf[kk][dt] += numpy.sum(tmp).real                            
+                                acf[kk][dt] += numpy.sum(tmp).real
                             cnt[kk][dt] += x.shape[1]
 
         tgrid = sorted(acf[0].keys())
@@ -182,10 +182,11 @@ class SelfIntermediateScatteringLegacy(IntermediateScatteringBase):
 class SelfIntermediateScatteringFast(SelfIntermediateScatteringLegacy):
     """
     Self part of the intermediate scattering function (fast version)
-    
+
     See the documentation of the `FourierSpaceCorrelation` base class
     for information on the instance variables.
-    """        
+    """
+
     def _compute(self):
         from atooms.postprocessing.fourierspace_wrap import fourierspace_module
 
@@ -200,7 +201,7 @@ class SelfIntermediateScatteringFast(SelfIntermediateScatteringLegacy):
             fskt_kernel = fourierspace_module.fskt_kernel_2d
         else:
             fskt_kernel = fourierspace_module.fskt_kernel_nd
-            
+
         # To optimize without wasting too much memory (we have
         # troubles here) we group particles in blocks and tabulate the
         # exponentials over time. This is more memory consuming but we
@@ -211,7 +212,7 @@ class SelfIntermediateScatteringFast(SelfIntermediateScatteringLegacy):
         kmax = max(self.kvector.keys()) + self.dk
         kvec_size = 2*(1 + int(kmax / min(self.k0))) + 1
         pos_size = numpy.product(pos.shape)
-        target_size = self.lookup_mb * 1e6 / 16.  # 16 bytes for a (double) complex        
+        target_size = self.lookup_mb * 1e6 / 16.  # 16 bytes for a (double) complex
         number_of_blocks = int(pos_size * kvec_size / target_size)
         number_of_blocks = max(1, number_of_blocks)
         block = int(pos[0].shape[0] / float(number_of_blocks))
@@ -224,7 +225,7 @@ class SelfIntermediateScatteringFast(SelfIntermediateScatteringLegacy):
         skip = self.skip
         origins = range(0, pos.shape[1], block)
         for j in progress(origins):
-            x = expo_sphere(self.k0, kmax, pos[:, j:j + block, :])            
+            x = expo_sphere(self.k0, kmax, pos[:, j:j + block, :])
             xf = numpy.asfortranarray(x)
             for kk, knorm in enumerate(self.kgrid):
                 for kkk in self.selection[kk]:
@@ -237,7 +238,7 @@ class SelfIntermediateScatteringFast(SelfIntermediateScatteringLegacy):
                             res = fskt_kernel(xf, i0+1, i0+1+i, numpy.array(ik, dtype=numpy.int32)+1)
                             acf[kk][dt] += res.real
                             cnt[kk][dt] += x.shape[1]
-                            
+
         tgrid = sorted(acf[0].keys())
         self.grid[0] = self.kgrid
         self.grid[1] = [ti*self.trajectory.timestep for ti in tgrid]
@@ -274,9 +275,9 @@ class IntermediateScattering(IntermediateScatteringBase):
     def __init__(self, trajectory, kgrid=None, tgrid=None, nk=100, dk=0.1, tsamples=60,
                  kmin=1.0, kmax=10.0, ksamples=10, norigins=-1, fix_cm=False, normalize=True):
         super(IntermediateScattering, self).__init__(trajectory, kgrid=kgrid, tgrid=tgrid,
-                             nk=nk, tsamples=tsamples, dk=dk, kmin=kmin,
-                             kmax=kmax, ksamples=ksamples, norigins=norigins,
-                             fix_cm=fix_cm, normalize=normalize)
+                                                     nk=nk, tsamples=tsamples, dk=dk, kmin=kmin,
+                                                     kmax=kmax, ksamples=ksamples, norigins=norigins,
+                                                     fix_cm=fix_cm, normalize=normalize)
 
     def _tabulate_rho(self, kgrid, selection):
         """
@@ -311,8 +312,8 @@ class IntermediateScattering(IntermediateScatteringBase):
                         tmp = expo_0[..., 0, ik[0]]
                         for idim in range(1, len(ik)):
                             tmp *= expo_0[..., idim, ik[idim]]
-                        rho_0[it][ik] += numpy.sum(tmp).real                            
-                        
+                        rho_0[it][ik] += numpy.sum(tmp).real
+
                     # Same optimization as above: only calculate rho_1 if needed
                     if self._pos_1 is not self._pos_0:
                         if ndims == 3:
@@ -324,7 +325,7 @@ class IntermediateScattering(IntermediateScatteringBase):
                             tmp = expo_1[..., 0, ik[0]]
                             for idim in range(1, len(ik)):
                                 tmp *= expo_1[..., idim, ik[idim]]
-                            rho_1[it][ik] += numpy.sum(tmp).real                            
+                            rho_1[it][ik] += numpy.sum(tmp).real
 
             # Optimization
             if self._pos_1 is self._pos_0:
@@ -334,7 +335,7 @@ class IntermediateScattering(IntermediateScatteringBase):
 
     def _compute(self):
         # Setup k vectors and tabulate densities
-        kgrid, selection =  self.kgrid, self.selection
+        kgrid, selection = self.kgrid, self.selection
         rho_0, rho_1 = self._tabulate_rho(kgrid, selection)
 
         # Compute correlation function
@@ -349,7 +350,7 @@ class IntermediateScattering(IntermediateScatteringBase):
                         # Get the actual time difference
                         # TODO: It looks like the order of i0 and ik lopps should be swapped
                         dt = self.trajectory.steps[i0+i] - self.trajectory.steps[i0]
-                        acf[kk][dt] += (rho_0[i0+i][ik] * rho_1[i0][ik].conjugate()).real #/ self._pos[i0].shape[0]
+                        acf[kk][dt] += (rho_0[i0+i][ik] * rho_1[i0][ik].conjugate()).real  # / self._pos[i0].shape[0]
                         cnt[kk][dt] += 1
 
         # Normalization

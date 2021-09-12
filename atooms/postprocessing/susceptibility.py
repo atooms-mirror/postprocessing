@@ -25,12 +25,12 @@ class Susceptibility(Correlation):
         self._kwargs['norigins'] = '1'
         self.skip = adjust_skip(self.trajectory, norigins)
 
-    def compute(self):        
+    def compute(self):
         y_all, x_all = [], []
         db = defaultdict(list)
         N = len(self.trajectory[0].particle)
         frac = self._kwargs['tgrid'][-1] / self.trajectory.total_time
-        for i in range(0, int(len(self.trajectory.steps) * frac) - self.skip, self.skip):            
+        for i in range(0, int(len(self.trajectory.steps) * frac) - self.skip, self.skip):
             ths = Sliced(self.trajectory, slice(i, len(self.trajectory.steps), 1))
             corr = self._corr_cls(ths, *self._args, **self._kwargs)
             corr.compute()
@@ -44,9 +44,8 @@ class Susceptibility(Correlation):
             yi = numpy.array(db[xi])
             self.grid.append(xi)
             self.value.append(yi.var() / N)
-    
+
 if __name__ == '__main__':
 
     import argh
     argh.dispatch_command(main)
-    

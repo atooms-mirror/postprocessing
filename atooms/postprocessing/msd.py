@@ -49,8 +49,8 @@ class MeanSquareDisplacement(Correlation):
         # Offsets in time grid are only relevant with periodic blocks
         # Use the no_offset parameter to disable them
         self._no_offset = no_offset
-        Correlation.__init__(self, trajectory, tgrid, norigins=norigins, fix_cm=fix_cm)        
-        
+        Correlation.__init__(self, trajectory, tgrid, norigins=norigins, fix_cm=fix_cm)
+
     def _compute(self):
         # We postpone time grid definition to compute to avoid
         # unfolding the trajectory twice when targeting the rmsd

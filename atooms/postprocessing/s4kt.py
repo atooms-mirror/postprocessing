@@ -53,7 +53,7 @@ class S4ktOverlap(FourierSpaceCorrelation):
                     if ik not in W:
                         W[ik] = numpy.ndarray(len(nt), dtype=complex)
                     W[ik][i_0] = numpy.sum(self_overlap(self._pos_unf[t_0], self._pos_unf[t_0+t], side, self.a_square) *
-                                          expo[..., 0, ik[0]] * expo[..., 1, ik[1]] * expo[..., 2, ik[2]])
+                                           expo[..., 0, ik[0]] * expo[..., 1, ik[1]] * expo[..., 2, ik[2]])
         return W
 
     def _compute(self):

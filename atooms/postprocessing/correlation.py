@@ -598,7 +598,7 @@ class Correlation(object):
         # Extract variables from parenthesis in symbol
         variables = self.short_name.split('(')[1][:-1]
         variables = variables.split(',')
-        columns = variables + [self.short_name]  #[self.symbol]
+        columns = variables + [self.short_name]  # [self.symbol]
         if len(self.tag_description) > 0:
             conj = 'of'
         else:

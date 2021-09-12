@@ -88,9 +88,9 @@ class TestRealSpace(unittest.TestCase):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         ts = trajectory.TrajectoryXYZ(f)
         ref = {}
-        ref[('A', 'A')] = numpy.array([ 0.,          0.00675382,  0.27087136,  1.51486318])
-        ref[('B', 'B')] = numpy.array([ 0.31065645,  0.51329066,  0.67485665,  0.78039485])
-        ref[('A', 'B')] = numpy.array([ 4.25950671,  3.86572027,  2.70020052,  1.78935426])
+        ref[('A', 'A')] = numpy.array([0., 0.00675382, 0.27087136, 1.51486318])
+        ref[('B', 'B')] = numpy.array([0.31065645, 0.51329066, 0.67485665, 0.78039485])
+        ref[('A', 'B')] = numpy.array([4.25950671, 3.86572027, 2.70020052, 1.78935426])
         for i in ['A', 'B']:
             p = cls(ts)
             p.add_filter(filter_species, i)
@@ -115,9 +115,9 @@ class TestRealSpace(unittest.TestCase):
         from atooms.postprocessing.partial import Partial
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         ref = {}
-        ref[('A', 'A')] = numpy.array([ 0.,          0.00675382,  0.27087136,  1.51486318])
-        ref[('B', 'B')] = numpy.array([ 0.31065645,  0.51329066,  0.67485665,  0.78039485])
-        ref[('A', 'B')] = numpy.array([ 4.25950671,  3.86572027,  2.70020052,  1.78935426])
+        ref[('A', 'A')] = numpy.array([0., 0.00675382, 0.27087136, 1.51486318])
+        ref[('B', 'B')] = numpy.array([0.31065645, 0.51329066, 0.67485665, 0.78039485])
+        ref[('A', 'B')] = numpy.array([4.25950671, 3.86572027, 2.70020052, 1.78935426])
         with trajectory.TrajectoryXYZ(f) as ts:
             gr = Partial(postprocessing.RadialDistributionFunction, ['A', 'B'], ts)
             gr.compute()
@@ -129,9 +129,9 @@ class TestRealSpace(unittest.TestCase):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         ts = trajectory.TrajectoryXYZ(f)
         ref = {}
-        ref[('A', 'A')] = numpy.array([ 0.,          0.00675382,  0.27087136,  1.51486318])
-        ref[('B', 'B')] = numpy.array([ 0.31065645,  0.51329066,  0.67485665,  0.78039485])
-        ref[('A', 'B')] = numpy.array([ 4.25950671,  3.86572027,  2.70020052,  1.78935426])
+        ref[('A', 'A')] = numpy.array([0., 0.00675382, 0.27087136, 1.51486318])
+        ref[('B', 'B')] = numpy.array([0.31065645, 0.51329066, 0.67485665, 0.78039485])
+        ref[('A', 'B')] = numpy.array([4.25950671, 3.86572027, 2.70020052, 1.78935426])
 
         gr = Filter(postprocessing.RadialDistributionFunction(ts), 'species == "A", species == "A"')
         gr.compute()
@@ -225,11 +225,11 @@ class TestFourierSpace(unittest.TestCase):
             return s
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         with trajectory.TrajectoryXYZ(f) as t:
-            p = postprocessing.StructureFactor(t, list(range(1,10)))
+            p = postprocessing.StructureFactor(t, list(range(1, 10)))
             p.compute()
         with trajectory.TrajectoryXYZ(f) as t:
             t.add_callback(deformation, 1e-3)
-            p = postprocessing.StructureFactor(t, list(range(1,10)))
+            p = postprocessing.StructureFactor(t, list(range(1, 10)))
             p.compute()
 
     def test_sk_partial(self):
@@ -355,7 +355,6 @@ class TestFourierSpace(unittest.TestCase):
         self.assertLess(abs(tau[2] - 0.97005294966138289), 0.04)
         t.close()
 
-
     def test_chi4_overlap(self):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         with trajectory.TrajectoryXYZ(f) as th:
@@ -420,7 +419,7 @@ class TestFourierSpace(unittest.TestCase):
         t.add_callback(filter_2d)
         p = postprocessing.StructureFactorLegacy(t, kmin=-1, kmax=4, ksamples=3, dk=0.2)
         p.compute()
-        ref_value = numpy.array([ [0.06899986228704291, 0.0629709003150001, 0.07397620251792263]])
+        ref_value = numpy.array([[0.06899986228704291, 0.0629709003150001, 0.07397620251792263]])
         self.assertLess(deviation(p.value, ref_value), 0.04)
         t.close()
 
@@ -449,7 +448,7 @@ class TestFourierSpace(unittest.TestCase):
         q.compute()
         self.assertLess(deviation(p.value, q.value), 0.001)
         t.close()
-        
+
     @unittest.skip('Broken test')
     def test_gr_crop(self):
         # TODO: fix this test
@@ -497,7 +496,6 @@ class TestFourierSpace(unittest.TestCase):
         gr = pp.RadialDistributionFunction(th, dr=1.0, rmax=rmax)
         gr.compute()
         self.assertLess(abs(gr.value[-1] - 1.0), 0.1)
-
 
 
 if __name__ == '__main__':

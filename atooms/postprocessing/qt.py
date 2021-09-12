@@ -54,6 +54,7 @@ class CollectiveOverlap(Correlation):
 
     def _compute(self):
         side = self.trajectory.read(0).cell.side
+
         def f(x, y):
             return collective_overlap(x, y, side, self.a_square).sum() / float(x.shape[0])
         self.grid, self.value = gcf_offset(f, self._discrete_tgrid,
@@ -80,6 +81,7 @@ class SelfOverlap(Correlation):
 
     def _compute(self):
         side = self.trajectory.read(0).cell.side
+
         def f(x, y):
             return self_overlap(x, y, side, self.a_square).sum() / float(x.shape[0])
         self.grid, self.value = gcf_offset(f, self._discrete_tgrid,

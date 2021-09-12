@@ -42,7 +42,7 @@ def _default_rcut(th):
                     if delta >= 0:
                         rcut[(isp, jsp)] = gr.partial[(isp, jsp)].grid[i]
                         break
-    
+
     return rcut
 
 class BondAngleDistribution(Correlation):
@@ -73,7 +73,7 @@ class BondAngleDistribution(Correlation):
 
         # Setup array of cutoff distances based on g(r) calculated for
         # the whole trajectory.
-        # We store the cutoffs into a (nsp, nsp) array 
+        # We store the cutoffs into a (nsp, nsp) array
         # where the index follows the alphabetic order of species names
         ids = distinct_species(self.trajectory[0].particle)
         if self.rcut is None:
@@ -91,7 +91,7 @@ class BondAngleDistribution(Correlation):
         for i in progress(origins):
             system = self.trajectory[i]
             side = system.cell.side  # this should not be affected by filters
-            #system = change_species(system, 'F')  # species are in fortran style
+            # system = change_species(system, 'F')  # species are in fortran style
             #ids = numpy.array(system.dump('spe'), dtype=numpy.int32)
             nn = numpy.array(0, dtype=numpy.int32)
             neighbors = numpy.ndarray(50, dtype=numpy.int32)
@@ -102,7 +102,7 @@ class BondAngleDistribution(Correlation):
                                   self._ids_1[i],
                                   self.rcut[isp, :],
                                   nn, neighbors)
-                #print idx, self._pos_1[i].shape, neighbors[0: nn], set(self._ids_1[i])
+                # print idx, self._pos_1[i].shape, neighbors[0: nn], set(self._ids_1[i])
                 compute.bond_angle(self._pos_0[i][idx, :],
                                    self._pos_1[i].transpose(),
                                    neighbors[0: nn], side, dtheta,
