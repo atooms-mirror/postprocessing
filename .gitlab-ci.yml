@@ -24,28 +24,6 @@ before_script:
   - source env/bin/activate
   - pip install -r requirements.txt
 
-.test:
-  script:
-    - pip install coverage
-    - coverage run --source atooms -m unittest discover -s tests
-    - coverage report -m
-  artifacts:
-    paths:
-      - .coverage
-  coverage: '/^TOTAL.+?(\d+\%)$/'
-
-# test:2.7:
-#   image: python:2.7
-#   extends: .test
-
-# test:3.6:
-#   image: python:3.6
-#   extends: .test
-
-# test:latest:
-#   image: python:latest
-#   extends: .test
-
 test:f90:
   image: python:latest
   coverage: '/^TOTAL.+?(\d+\%)$/'
@@ -60,35 +38,15 @@ test:f90:
   - virtualenv env
   - source env/bin/activate
   - pip install -r requirements.txt
-  - cd atooms/postprocessing
-  - f2py -c -m realspace_wrap realspace.f90
-  - f2py -c -m fourierspace_wrap fourierspace.f90
-  - cd ../../
   - pip install coverage
-  - coverage run --source atooms -m unittest discover -s tests
-  - coverage report -m
-
-# .run:
-#   script:
-#     - python setup.py bdist_wheel
-#     # an alternative approach is to install and run:
-#     - pip install dist/*
-#     # run the command here
-#   artifacts:
-#     paths:
-#       - dist/*.whl
-
-# run:2.7:
-#   image: python:2.7
-#   extends: .run
-
-# run:3.6:
-#   image: python:3.6
-#   extends: .run
-
-# run:latest:
-#   image: python:latest
-#   extends: .run
+  - pip install .
+  # - cd atooms/postprocessing
+  # - f2py -c -m realspace_wrap realspace.f90
+  # - f2py -c -m fourierspace_wrap fourierspace.f90
+  # - cd ../../
+  - make coverage
+  # - coverage run --source atooms -m unittest discover -s tests
+  # - coverage report -m
 
 # pages:
 #   script:
