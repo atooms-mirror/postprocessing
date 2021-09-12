@@ -60,7 +60,7 @@ class IntermediateScatteringBase(FourierSpaceCorrelation):
         try:
             check_block_size(self.trajectory.steps, self.trajectory.block_size)
         except IndexError as e:
-            _log.warn('issue with trajectory blocks, the time grid may not correspond to the requested one (%s)', e.message)
+            _log.warn('issue with trajectory blocks, the time grid may not correspond to the requested one ({})', e)
 
         # Setup time grid
         if self.grid[1] is None:

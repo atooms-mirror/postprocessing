@@ -277,7 +277,7 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
             # domain, we must crop particles close to the surface
             # self_term = 0
             if hasattr(system.cell, 'periodic') and not numpy.any(system.cell.periodic):
-                #mask = numpy.ndarray(pos_0.shape[1], dtype=numpy.bool)
+                # mask = numpy.ndarray(pos_0.shape[1], dtype=numpy.bool)
                 # TODO: bool does not work
                 mask = compute.on_surface(pos_0, side, self.rmax)
                 mask = mask == 1
@@ -342,6 +342,7 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
             where = self.grid <= min(side) / 2
         self.grid = self.grid[where]
         self.value = self.value[where]
+
 
 # Defaults to fast
 try:

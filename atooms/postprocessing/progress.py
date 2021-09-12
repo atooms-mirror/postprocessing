@@ -43,8 +43,8 @@ class NoProgressBar(object):
         self.close()
         return False
 
-try:
 
+try:
     from tqdm import tqdm
 
     class CustomProgressBar(tqdm):

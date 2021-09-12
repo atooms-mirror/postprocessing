@@ -92,7 +92,7 @@ class BondAngleDistribution(Correlation):
             system = self.trajectory[i]
             side = system.cell.side  # this should not be affected by filters
             # system = change_species(system, 'F')  # species are in fortran style
-            #ids = numpy.array(system.dump('spe'), dtype=numpy.int32)
+            # ids = numpy.array(system.dump('spe'), dtype=numpy.int32)
             nn = numpy.array(0, dtype=numpy.int32)
             neighbors = numpy.ndarray(50, dtype=numpy.int32)
             for idx in range(len(self._pos_0[i])):

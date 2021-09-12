@@ -86,6 +86,6 @@ class Partial(object):
                 partial.analyze()
             except ImportError as e:
                 _log.warn('Could not analyze due to missing modules, continuing...')
-                _log.warn(e.message)
+                _log.warn(e)
 
             partial.write()

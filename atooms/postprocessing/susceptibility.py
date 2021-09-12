@@ -10,6 +10,7 @@ from atooms.trajectory import Sliced
 from .correlation import Correlation
 from .helpers import adjust_skip
 
+
 class Susceptibility(Correlation):
 
     def __init__(self, corr_cls, trajectory, norigins=-1, *args, **kwargs):
@@ -44,8 +45,3 @@ class Susceptibility(Correlation):
             yi = numpy.array(db[xi])
             self.grid.append(xi)
             self.value.append(yi.var() / N)
-
-if __name__ == '__main__':
-
-    import argh
-    argh.dispatch_command(main)

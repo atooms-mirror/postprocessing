@@ -32,13 +32,13 @@ class StressAutocorrelation(Correlation):
         self._stress = []
         for i in self.trajectory.samples:
             s = self.trajectory.read(i).interaction.stress
-            slk = numpy.zeros(ndims)
-            l = 0
+            smk = numpy.zeros(ndims)
+            m = 0
             for j in range(ndims):
                 for k in range(j+1, ndims):
-                    slk[l] = s[j, k] + numpy.sum(mass[:] * self._vel[i][:, j] * self._vel[i][:, k])
-                    l += 1
-            self._stress.append(slk)
+                    smk[m] = s[j, k] + numpy.sum(mass[:] * self._vel[i][:, j] * self._vel[i][:, k])
+                    m += 1
+            self._stress.append(smk)
 
     def _compute(self):
         def f(x, y):

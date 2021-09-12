@@ -1,7 +1,7 @@
 PROJECT=atooms/postprocessing
 PACKAGE=atooms.postprocessing
 
-.PHONY: all version test coverage autopep8 flake8 install debug clean
+.PHONY: all version test install docs coverage pep8 debug clean
 
 all: install
 
@@ -14,7 +14,14 @@ version:
 	@echo __commit__ = \'$(COMMIT_DIRTY)\' > ${PROJECT}/_commit.py
 	@echo __date__ = \'$(DATE)\' >> ${PROJECT}/_commit.py
 
-# Tests with fortran extension
+install: version
+	python setup.py config_fc --quiet --opt '-O3 -funroll-loops' install
+
+debug: version
+	python setup.py config_fc --quiet --opt '-O3 -funroll-loops -fbounds-check' install
+
+docs:
+
 test:
 	mv $(PROJECT) $(PROJECT).tmp
 	python -m unittest discover -s tests; mv $(PROJECT).tmp $(PROJECT)
@@ -23,23 +30,12 @@ coverage: install
 	mv $(PROJECT) $(PROJECT).tmp
 	coverage run --source $(PACKAGE) -m unittest discover -s tests; coverage report; mv $(PROJECT).tmp $(PROJECT)
 
-# PEP8
-autopep8:
+pep8:
 	autopep8 -r -i $(PROJECT)
 	autopep8 -r -i tests
-
-flake8:
 	flake8 $(PROJECT)
-
-# Install with fortran extension
-install: version
-	python setup.py config_fc --quiet --opt '-O3 -funroll-loops' install
-
-debug: version
-	python setup.py config_fc --quiet --opt '-O3 -funroll-loops -fbounds-check' install
 
 clean:
 	find $(PROJECT) tests -name '*.pyc' -name '*.so' -exec rm '{}' +
 	find $(PROJECT) tests -name -name '__pycache__' -exec rm -r '{}' +
 	rm -rf build/ dist/
-

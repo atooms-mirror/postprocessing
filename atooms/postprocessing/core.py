@@ -45,8 +45,8 @@ class CustomHelpFormatter(argparse.RawDescriptionHelpFormatter):
         import textwrap as _textwrap
         textRows = text.splitlines()
         for idx, line in enumerate(textRows):
-            search = re.search('\s*[0-9\-]{0,}\.?\s*', line)
-            if line.strip() is "":
+            search = re.search(r'\s*[0-9\-]{0,}\.?\s*', line)
+            if line.strip() == "":
                 textRows[idx] = " "
             elif search:
                 lWSpace = search.end()
