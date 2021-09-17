@@ -10,10 +10,12 @@ It uses filters internally.
 import logging
 
 from .helpers import filter_species
+from . import core
 
 _log = logging.getLogger(__name__)
 
 
+# TODO: add output_path to all interfaces
 class Partial(object):
 
     def __init__(self, corr_cls, species, *args, **kwargs):
@@ -23,6 +25,7 @@ class Partial(object):
         self.partial = {}
         self.nbodies = corr_cls.nbodies
         self.species = species
+        self._output_path = core.pp_output_path
 
         if self.nbodies == 1:
             for i in range(len(self.species)):
@@ -45,6 +48,16 @@ class Partial(object):
                     self.partial[(isp, jsp)].tag = '%s-%s' % (isp, jsp)
                     self.partial[(isp, jsp)].tag_description = 'species pair %s-%s' % (isp, jsp)
 
+    @property
+    def output_path(self):
+        return self._output_path
+        
+    @property.setter
+    def output_path(self, path):
+        self._output_path = path
+        for key in self.partial:
+            self.partial[key].output_path = path
+                    
     def add_weight(self, trajectory=None, field=None, fluctuations=False):
         for key in self.partial:
             self.partial[key].add_weight(trajectory, field, fluctuations)
@@ -75,6 +88,10 @@ class Partial(object):
                         self.partial[(isp, jsp)].grid = self.partial[(jsp, isp)].grid
                         self.partial[(isp, jsp)].value = self.partial[(jsp, isp)].value
 
+    def write(self):
+        for partial in self.partial.values():
+            partial.write()
+                        
     def do(self, update=False):
         if update and not self.need_update():
             return
