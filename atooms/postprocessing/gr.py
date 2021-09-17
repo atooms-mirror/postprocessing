@@ -120,13 +120,13 @@ class RadialDistributionFunctionLegacy(Correlation):
 
         # Internal max distance (/= user provided rmax)
         self._rmax = self.grid[-1]
-        
+
     def _compute(self):
         ncfg = len(self.trajectory)
         system = self.trajectory.read(0)
         ndims = system.number_of_dimensions
         self._setup_grid(system)
-        
+
         # Reconstruct bounds of grid for numpy histogram
         grid = []
         for i in range(len(self.grid)):
@@ -174,7 +174,7 @@ class RadialDistributionFunctionLegacy(Correlation):
         gr = numpy.average(gr_all, axis=0)
         self.grid = (r[:-1] + r[1:]) / 2.0
         self.value = gr / norm
-        # Restrict distances to L/2 (in last frame) or rmax 
+        # Restrict distances to L/2 (in last frame) or rmax
         if self.rmax > 0:
             where = self.grid <= self.rmax
         else:
@@ -219,7 +219,7 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
         dr = self.grid[1] - self.grid[0]
         gr = numpy.zeros(len(self.grid), dtype=int)
         bins = numpy.array(self.grid)
-        
+
         # Use linked cells only if it is advantageous
         # - more than 3 cells along each side
         # - memory footprint is < ~1Gb
@@ -277,7 +277,7 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
             # domain, we must crop particles close to the surface
             # self_term = 0
             if hasattr(system.cell, 'periodic') and not numpy.any(system.cell.periodic):
-                #mask = numpy.ndarray(pos_0.shape[1], dtype=numpy.bool)
+                # mask = numpy.ndarray(pos_0.shape[1], dtype=numpy.bool)
                 # TODO: bool does not work
                 mask = compute.on_surface(pos_0, side, self.rmax)
                 mask = mask == 1
@@ -334,7 +334,7 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
         self.grid = bins[:-1]
         self.value = gr[:-1] / norm
 
-        # Restrict distances to L/2 (in last frame) or rmax 
+        # Restrict distances to L/2 (in last frame) or rmax
         if self.rmax > 0:
             where = self.grid <= self.rmax
         else:
@@ -342,6 +342,7 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
             where = self.grid <= min(side) / 2
         self.grid = self.grid[where]
         self.value = self.value[where]
+
 
 # Defaults to fast
 try:

@@ -169,9 +169,9 @@ def adjust_skip(trajectory, n_origins=None):
             block = 40000
             # Ignore cache here
             # This destroys the connection between decorated unfolded trajectory and folded trajectory
-            #_cache, trajectory.cache = trajectory.cache, False
+            # _cache, trajectory.cache = trajectory.cache, False
             skip = int(len(trajectory.steps) * len(trajectory[0].particle) / block)
-            #trajectory.cache = _cache
+            # trajectory.cache = _cache
         else:
             # We stick to the block size
             skip = trajectory.block_size

@@ -19,7 +19,6 @@ _log = logging.getLogger(__name__)
 
 
 def expo_sphere(k0, kmax, pos):
-
     """Returns the exponentials of the input positions for each k."""
 
     # Technical note: we use ellipsis, so that we can pass either a
@@ -90,7 +89,7 @@ def _sphere(kmax):
                 ikvec[1] = iy
                 ikvec[2] = iz
                 yield ikvec
-                
+
 def _disk(kmax):
     ikvec = numpy.ndarray(2, dtype=int)
     for ix in range(-kmax, kmax+1):
@@ -98,7 +97,7 @@ def _disk(kmax):
             ikvec[0] = ix
             ikvec[1] = iy
             yield ikvec
-                        
+
 
 class FourierSpaceCorrelation(Correlation):
 
@@ -186,7 +185,7 @@ class FourierSpaceCorrelation(Correlation):
         # Setup the grid of wave-vectors
         self.kvector, self._kbin_max = self._setup_grid_sphere(len(self.kgrid) * [self.dk],
                                                                self.kgrid, self.k0)
-        
+
     @staticmethod
     def _setup_grid_sphere(dk, kgrid, k0):
         """
@@ -212,7 +211,7 @@ class FourierSpaceCorrelation(Correlation):
             _iterator = _disk
         else:
             raise ValueError('unsupported dimension {}'.format(ndims))
-            
+
         for ik in _iterator(kbin_max):
             ksq = numpy.dot(k0*ik, k0*ik)
             if ksq > kmax_sq:
@@ -268,7 +267,7 @@ class FourierSpaceCorrelation(Correlation):
                 center_vec = numpy.array(self.kvector[knorm][isel]) - self._kbin_max
                 db[knorm].append(list(self.k0 * center_vec))
         return db
-    
+
     def report(self, verbose=False):
         """
         Return a formatted report of the wave-vector grid used to compute

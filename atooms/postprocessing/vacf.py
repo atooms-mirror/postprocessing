@@ -6,7 +6,7 @@
 import numpy
 
 from .correlation import Correlation, gcf_offset
-from .helpers import setup_t_grid
+from .helpers import setup_t_grid, linear_grid
 
 __all__ = ['VelocityAutocorrelation']
 
@@ -20,7 +20,7 @@ class VelocityAutocorrelation(Correlation):
     long_name = 'velocity autocorrelation'
     phasespace = ['vel']
 
-    def __init__(self, trajectory, tgrid=None, norigins=None):
+    def __init__(self, trajectory, tgrid=None, tsamples=30, norigins=None):
         Correlation.__init__(self, trajectory, tgrid, norigins=norigins)
         if self.grid is None:
             self.grid = linear_grid(0.0, trajectory.total_time * 0.10, tsamples)

@@ -73,7 +73,7 @@ def gr(input_file, dr=0.04, grandcanonical=False, ndim=-1, rmax=-1.0, *input_fil
         backend = pp.RadialDistributionFunctionLegacy
     else:
         backend = pp.RadialDistributionFunction
-        
+
     for th in _get_trajectories([input_file] + list(input_files), global_args):
         th._grandcanonical = grandcanonical
         cf = backend(th, dr=dr, rmax=rmax,
@@ -126,7 +126,7 @@ def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
                           field=weight,
                           fluctuations=weight_fluctuations)
             cf.do(update=global_args['update'])
-            
+
 def ik(input_file, trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0,
        kmax=15.0, kgrid=None, ksamples=30, *input_files,
        **global_args):
@@ -205,8 +205,8 @@ def fkt(input_file, tmax=-1.0, tmax_fraction=0.75,
         ids = distinct_species(th[0].particle)
         if total or len(ids) == 1:
             pp.IntermediateScattering(th, k_grid, t_grid,
-                    norigins=global_args['norigins'],
-                    nk=nk, dk=dk, fix_cm=fix_cm).do(update=global_args['update'])
+                                      norigins=global_args['norigins'],
+                                      nk=nk, dk=dk, fix_cm=fix_cm).do(update=global_args['update'])
         if len(ids) > 1:
             Partial(pp.IntermediateScattering, ids, th, k_grid, t_grid,
                     norigins=global_args['norigins'],

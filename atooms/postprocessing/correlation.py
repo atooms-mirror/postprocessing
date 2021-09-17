@@ -25,8 +25,6 @@ from .progress import progress
 __all__ = ['acf', 'gcf', 'gcf_offset', 'Correlation']
 
 _log = logging.getLogger(__name__)
-#pp_output_path = '{trajectory.filename}.pp.{symbol}.{tag}'
-#pp_trajectory_format = None
 
 
 def acf(grid, skip, t, x):
@@ -598,7 +596,7 @@ class Correlation(object):
         # Extract variables from parenthesis in symbol
         variables = self.short_name.split('(')[1][:-1]
         variables = variables.split(',')
-        columns = variables + [self.short_name]  #[self.symbol]
+        columns = variables + [self.short_name]  # [self.symbol]
         if len(self.tag_description) > 0:
             conj = 'of'
         else:
@@ -645,7 +643,7 @@ class Correlation(object):
             self.analyze()
         except ImportError as e:
             _log.warn('Could not analyze due to missing modules, continuing...')
-            _log.warn(e.message)
+            _log.warn(e)
 
         self.write()
 

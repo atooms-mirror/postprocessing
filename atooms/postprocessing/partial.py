@@ -61,7 +61,7 @@ class Partial(object):
     def add_weight(self, trajectory=None, field=None, fluctuations=False):
         for key in self.partial:
             self.partial[key].add_weight(trajectory, field, fluctuations)
-            
+
     def need_update(self):
         need = False
         for partial in self.partial.values():
@@ -103,6 +103,6 @@ class Partial(object):
                 partial.analyze()
             except ImportError as e:
                 _log.warn('Could not analyze due to missing modules, continuing...')
-                _log.warn(e.message)
+                _log.warn(e)
 
             partial.write()

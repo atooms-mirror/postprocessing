@@ -142,7 +142,7 @@ class StructureFactorLegacy(FourierSpaceCorrelation):
                             for idim in range(ndims):
                                 tmp *= expo_1[..., idim, ik[idim]]
                             rho_1 = numpy.sum(tmp)
-                            
+
                     # Cumulate averages
                     rho_0_av[kk] += rho_0
                     rho_1_av[kk] += rho_1

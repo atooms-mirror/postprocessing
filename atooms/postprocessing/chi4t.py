@@ -53,7 +53,7 @@ class Chi4SelfOverlap(Correlation):
     def _compute(self):
         def f(x, y):
             return self_overlap(x, y, side, self.a_square).sum()
-        
+
         side = self.trajectory.read(0).cell.side
         self.grid = []
         # At this stage, we can copy the tags

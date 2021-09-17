@@ -72,3 +72,11 @@ cd postprocessing
 make user
 ```
 The commands above will install `pp.py` under `~/.local/bin`. Make sure this folder is in your `$PATH`. To install system-wide, `sudo make install`.
+
+Contributing
+------------
+Contributions to the project are welcome. If you wish to contribute, check out [these guidelines](https://framagit.org/atooms/atooms/-/blob/master/CONTRIBUTING.md).
+
+Authors
+-------
+Daniele Coslovich: http://www-dft.ts.infn.it/~coslovich/
