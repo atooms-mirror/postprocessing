@@ -52,7 +52,7 @@ class Partial(object):
     def output_path(self):
         return self._output_path
         
-    @property.setter
+    @output_path.setter
     def output_path(self, path):
         self._output_path = path
         for key in self.partial:
