@@ -7,6 +7,7 @@ import numpy
 from atooms.trajectory import Trajectory
 from atooms.trajectory.utils import is_cell_variable
 
+from .progress import progress
 from .fourierspace import FourierSpaceCorrelation, expo_sphere
 
 __all__ = ['SpectralDensity']
@@ -40,33 +41,34 @@ class SpectralDensity(FourierSpaceCorrelation):
     def _compute(self):
         nsteps = len(self._pos)
         # Setup k vectors and tabulate rho
-        kgrid, selection = self.kgrid, self.selection
-        kmax = max(self.kvector.keys()) + self.dk
-        cnt = [0 for k in kgrid]
+        cnt = [0 for k in self.kgrid]
         # Note: actually rho_av is not calculated because it is negligible
-        rho_av = [complex(0., 0.) for k in kgrid]
-        rho2_av = [complex(0., 0.) for k in kgrid]
+        rho_av = [complex(0., 0.) for k in self.kgrid]
+        rho2_av = [complex(0., 0.) for k in self.kgrid]
         cell_variable = is_cell_variable(self.trajectory)
-        for i in range(0, nsteps, self.skip):
+        for i in progress(range(0, nsteps, self.skip), total=nsteps // self.skip):
             # If cell changes we have to update
             if cell_variable:
                 self._setup(i)
-                kgrid, selection = self._decimate_k()
-                kmax = max(self.kvector.keys()) + self.dk
-
-            expo = expo_sphere(self.k0, kmax, self._pos[i])
-            for kk, knorm in enumerate(kgrid):
-                for k in selection[kk]:
-                    ik = self.kvector[knorm][k]
+                
+            expo = expo_sphere(self.k0, self._koffset, self._pos[i])
+            for k, klist in enumerate(self._kvectors):
+                for kvec in klist:
+                    knorm = numpy.dot(kvec, kvec)**0.5
                     Ri = self._radius[i]
-                    mk = 4 * numpy.pi / knorm**3 * (numpy.sin(knorm*Ri) - (knorm*Ri) * numpy.cos(knorm*Ri))
-                    rho = numpy.sum(mk * expo[..., 0, ik[0]] * expo[..., 1, ik[1]] * expo[..., 2, ik[2]])
-                    rho2_av[kk] += (rho * rho.conjugate())
-                    cnt[kk] += 1
+                    # TODO: fix ik
+                    mk = 4 * numpy.pi / knorm**3 * \
+                        (numpy.sin(knorm*Ri) - (knorm*Ri) * numpy.cos(knorm*Ri))
+                    rho = numpy.sum(mk *
+                                    expo[..., 0, kvec[0]] *
+                                    expo[..., 1, kvec[1]] *
+                                    expo[..., 2, kvec[2]])
+                    rho2_av[k] += (rho * rho.conjugate())
+                    cnt[k] += 1
 
         # Normalization.
         volume = numpy.average([s.cell.volume for s in self.trajectory])
-        self.grid = kgrid
+        self.grid = self.kgrid
         self.value = [(rho2_av[kk] / cnt[kk] - rho_av[kk]*rho_av[kk].conjugate() / cnt[kk]**2).real / volume
                       for kk in range(len(self.grid))]
         self.value_nonorm = [rho2_av[kk].real / cnt[kk]
