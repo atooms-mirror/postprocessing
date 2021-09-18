@@ -56,7 +56,6 @@ class SpectralDensity(FourierSpaceCorrelation):
                 for kvec in klist:
                     knorm = numpy.dot(kvec, kvec)**0.5
                     Ri = self._radius[i]
-                    # TODO: fix ik
                     mk = 4 * numpy.pi / knorm**3 * \
                         (numpy.sin(knorm*Ri) - (knorm*Ri) * numpy.cos(knorm*Ri))
                     rho = numpy.sum(mk *
