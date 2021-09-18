@@ -284,11 +284,16 @@ class FourierSpaceCorrelation(Correlation):
                     break
 
         # Check
+        all_good = True
         for i in range(len(kvec)):
-            # TODO: this should be relaxed
-            assert len(kvec[i]) > 0, 'could not find kvectors for {}'.format(kgrid[i])
-
-        return kvec, kbin_max
+            if len(kvec[i]) == 0:
+                dk[i] *= 1.2
+                _log.info('increasing kbin {} to {}'.format(i, dk[i]))
+                all_good = False
+        if not all_good:
+            return FourierSpaceCorrelation._setup_grid_sphere(dk, kgrid, k0)
+        else:
+            return kvec, kbin_max
 
     @property
     def kvectors(self):
@@ -301,7 +306,7 @@ class FourierSpaceCorrelation(Correlation):
                 kvectors[-1].append(list(actual_vec))
         return kvectors
 
-    @kvectors.setter
+    @kvectors.setter    
     def kvectors(self, kvectors):
         # Smallest kvector
         sample = 0
