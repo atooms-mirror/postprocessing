@@ -207,7 +207,7 @@ def fkt(input_file, tmax=-1.0, tmax_fraction=0.75,
             pp.IntermediateScattering(th, k_grid, t_grid,
                                       norigins=global_args['norigins'],
                                       nk=nk, dk=dk, fix_cm=fix_cm).do(update=global_args['update'])
-        if len(ids) > 1:
+        if len(ids) > 1 and not global_args['no_partial']:
             Partial(pp.IntermediateScattering, ids, th, k_grid, t_grid,
                     norigins=global_args['norigins'],
                     nk=nk, dk=dk, fix_cm=fix_cm).do(update=global_args['update'])
