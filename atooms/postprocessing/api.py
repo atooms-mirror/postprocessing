@@ -161,7 +161,7 @@ def msd(input_file, tmax=-1.0, tmax_fraction=0.75, tsamples=30,
                                   norigins=global_args['norigins'],
                                   sigma=sigma, rmax=rmsd_max, no_offset=no_offset,
                                   fix_cm=fix_cm).do(update=global_args['update'])
-        if len(ids) > 1:
+        if len(ids) > 1 and not global_args['no_partial']:
             Partial(pp.MeanSquareDisplacement, ids, th, tgrid=t_grid,
                     norigins=global_args['norigins'], sigma=sigma,
                     rmax=rmsd_max, no_offset=no_offset).do(update=global_args['update'])
@@ -180,7 +180,7 @@ def vacf(input_file, tmax=-1.0, tmax_fraction=0.10,
             t_grid = None
         pp.VelocityAutocorrelation(th, t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
         ids = distinct_species(th[0].particle)
-        if len(ids) > 1:
+        if len(ids) > 1 and not global_args['no_partial']:
             Partial(pp.VelocityAutocorrelation, ids, th,
                     t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
 
@@ -283,7 +283,7 @@ def alpha2(input_file, tmax=-1.0, tmax_fraction=0.75,
             t_grid = None
         pp.NonGaussianParameter(th, t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
         ids = distinct_species(th[0].particle)
-        if len(ids) > 1:
+        if len(ids) > 1 and not global_args['no_partial']:
             Partial(pp.NonGaussianParameter, ids, th, t_grid,
                     norigins=global_args['norigins']).do(update=global_args['update'])
 
@@ -301,7 +301,7 @@ def qst(input_file, tmax=-1.0, tmax_fraction=0.75,
             t_grid = None
         pp.SelfOverlap(th, t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
         ids = distinct_species(th[0].particle)
-        if len(ids) > 1:
+        if len(ids) > 1 and not global_args['no_partial']:
             Partial(pp.SelfOverlap, ids, th, t_grid,
                     norigins=global_args['norigins']).do(update=global_args['update'])
 
@@ -319,7 +319,7 @@ def qt(input_file, tmax=-1.0, tmax_fraction=0.75,
             t_grid = None
         pp.CollectiveOverlap(th, t_grid, norigins=global_args['norigins']).do(update=global_args['update'])
         ids = distinct_species(th[0].particle)
-        if len(ids) > 1:
+        if len(ids) > 1 and not global_args['no_partial']:
             Partial(pp.CollectiveOverlap, ids, th, t_grid,
                     norigins=global_args['norigins']).do(update=global_args['update'])
 
