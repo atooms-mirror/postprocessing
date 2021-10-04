@@ -3,8 +3,8 @@ Postprocessing
 [![pypi](https://img.shields.io/pypi/v/atooms-pp.svg)](https://pypi.python.org/pypi/atooms-pp/)
 [![version](https://img.shields.io/pypi/pyversions/atooms-pp.svg)](https://pypi.python.org/pypi/atooms-pp/)
 [![license](https://img.shields.io/pypi/l/atooms-pp.svg)](https://en.wikipedia.org/wiki/GNU_General_Public_License)
-[![pipeline](https://framagit.org/atooms/postprocessing/badges/develop/pipeline.svg)](https://framagit.org/atooms/postprocessing/badges/develop/pipeline.svg)
-[![coverage report](https://framagit.org/atooms/postprocessing/badges/develop/coverage.svg?job=test:f90)](https://framagit.org/atooms/postprocessing/-/commits/develop)
+[![pipeline](https://framagit.org/atooms/postprocessing/badges/master/pipeline.svg)](https://framagit.org/atooms/postprocessing/badges/master/pipeline.svg)
+[![coverage report](https://framagit.org/atooms/postprocessing/badges/master/coverage.svg?job=test:f90)](https://framagit.org/atooms/postprocessing/-/commits/master)
 
 Post-processing tools to compute static and dynamic correlation functions from simulations of interacting particles, such as molecular dynamics or Monte Carlo simulations.
 
@@ -30,7 +30,7 @@ should work fine.
 As an example, we compute the structure factor S(k) for the trajectory
 file `trajectory.xyz` contained in the `data/` directory.
 
-![https://www-dft.ts.infn.it/~coslovich/anim.gif](https://framagit.org/atooms/postprocessing/raw/develop/docs/anim.gif)
+![https://www-dft.ts.infn.it/~coslovich/anim.gif](https://framagit.org/atooms/postprocessing/raw/master/docs/anim.gif)
 
 In the example above, we used 20% of the available time frames to compute the averages using the `--norigins` flag. Without it, atooms-pp applies an heuristics to determine the number of time frames required to achieve a reasonable data quality.
 
@@ -49,7 +49,7 @@ with Trajectory('data/trajectory.xyz') as t:
      p.do()
 ```
 
-Checkout the [tutorial](https://www-dft.ts.infn.it/~coslovich/pp_notebook/) and [notebook](https://framagit.org/atooms/postprocessing/raw/develop/docs/tutorial.ipynb) for more details.
+Checkout the [tutorial](https://www-dft.ts.infn.it/~coslovich/pp_notebook/) and [notebook](https://framagit.org/atooms/postprocessing/raw/master/docs/tutorial.ipynb) for more details.
 
 Requirements
 ------------
