@@ -48,13 +48,15 @@ test:f90:
   # - coverage run --source atooms -m unittest discover -s tests
   # - coverage report -m
 
-# pages:
-#   script:
-#     - pip install sphinx sphinx-rtd-theme
-#     - cd doc ; make html
-#     - mv build/html/ ../public/
-#   artifacts:
-#     paths:
-#       - public
-#   only:
-#     - master
+pages:
+  image: python:3.8
+  script:
+    - pip install pdoc3
+    - make docs
+    - mkdir -p public
+    - mv docs/api public/api
+  artifacts:
+    paths:
+      - public
+  only:
+    - master
