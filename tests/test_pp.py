@@ -213,6 +213,20 @@ class TestFourierSpace(unittest.TestCase):
         self.assertLess(deviation(p.value, ref_value), 0.08)
         t.close()
 
+    def test_kvectors(self):
+        f = os.path.join(self.reference_path, 'kalj-small.xyz')
+        t = trajectory.TrajectoryXYZ(f)
+        p = postprocessing.StructureFactor(t, [4, 7.3, 10], nk=10)
+        p.compute()
+        q = postprocessing.StructureFactor(t)
+        q.kvectors = p.kvectors
+        self.assertEqual(q.kvectors, p.kvectors)
+        self.assertEqual(q.kgrid, p.kgrid)
+        q.compute()
+        self.assertEqual(q.grid, p.grid)
+        self.assertEqual(q.value, p.value)
+        t.close()
+        
     def test_sk_variable_cell(self):
         # TODO: this test has no assertion
         def deformation(s, scale=0.01):
@@ -225,11 +239,11 @@ class TestFourierSpace(unittest.TestCase):
             return s
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         with trajectory.TrajectoryXYZ(f) as t:
-            p = postprocessing.StructureFactor(t, list(range(1, 10)))
+            p = postprocessing.StructureFactor(t, [4, 7.3, 10])
             p.compute()
         with trajectory.TrajectoryXYZ(f) as t:
             t.add_callback(deformation, 1e-3)
-            p = postprocessing.StructureFactor(t, list(range(1, 10)))
+            p = postprocessing.StructureFactor(t, [4, 7.3, 10])
             p.compute()
 
     def test_sk_partial(self):
@@ -284,7 +298,6 @@ class TestFourierSpace(unittest.TestCase):
         """
         Test that weight works with partial correlation
         """
-        # TODO: this test fails with python 3 because of a weird issue with xyz trajectory in atooms (_fallback)
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         ff = os.path.join(self.reference_path, 'kalj-small-field.xyz')
         th = trajectory.TrajectoryXYZ(f)
@@ -296,7 +309,7 @@ class TestFourierSpace(unittest.TestCase):
         from atooms.system.particle import composition
         ref_value = numpy.array([0.86716496871363735, 0.86986885176760842, 0.98112175463699136])
         zeros = numpy.zeros(3)
-        self.assertLess(deviation(p.partial[('B', 'B')].value, ref_value), 2e-2)
+        self.assertLess(deviation(p.partial[('B', 'B')].value, ref_value), 2.3e-2)
         self.assertLess(deviation(p.partial[('A', 'A')].value, zeros), 2e-2)
         th.close()
 
@@ -343,16 +356,17 @@ class TestFourierSpace(unittest.TestCase):
     def test_fskt_partial(self):
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         t = trajectory.TrajectoryXYZ(f)
-        p = postprocessing.SelfIntermediateScatteringLegacy(t, [4, 7.3, 10], nk=40, norigins=0.2)
-        p.add_filter(filter_species, 'A')
-        p.compute()
-        p.analyze()
-        tau = []
-        for key in sorted(p.analysis['relaxation times tau']):
-            tau.append(p.analysis['relaxation times tau'][key])
-        self.assertLess(abs(tau[0] - 14.081572329287619), 0.04)
-        self.assertLess(abs(tau[1] - 3.1034088042905967), 0.04)
-        self.assertLess(abs(tau[2] - 0.97005294966138289), 0.04)
+        for cls in [postprocessing.SelfIntermediateScatteringLegacy, postprocessing.SelfIntermediateScatteringFast]:
+            p = cls(t, [4, 7.3, 10], nk=40, norigins=0.2)
+            p.add_filter(filter_species, 'A')
+            p.compute()
+            p.analyze()
+            tau = []
+            for key in sorted(p.analysis['relaxation times tau']):
+                tau.append(p.analysis['relaxation times tau'][key])
+            self.assertLess(abs(tau[0] - 14.081572329287619), 0.04)
+            self.assertLess(abs(tau[1] - 3.1034088042905967), 0.04)
+            self.assertLess(abs(tau[2] - 0.97005294966138289), 0.04)
         t.close()
 
     def test_chi4_overlap(self):

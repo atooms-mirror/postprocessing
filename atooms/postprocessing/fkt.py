@@ -63,6 +63,7 @@ class IntermediateScatteringBase(FourierSpaceCorrelation):
             _log.warn('issue with trajectory blocks, the time grid may not correspond to the requested one ({})', e)
 
         # Setup time grid
+        # The default time grid is the same for F_s(k,t) and F(k,t)
         if self.grid[1] is None:
             self.grid[1] = logx_grid(0.0, self.trajectory.total_time * 0.75, tsamples)
         else:
@@ -96,13 +97,6 @@ class SelfIntermediateScatteringLegacy(IntermediateScatteringBase):
                  tsamples=60, dk=0.1, kmin=1.0, kmax=10.0,
                  ksamples=10, norigins=-1, fix_cm=False,
                  lookup_mb=64.0, normalize=True):
-        # TODO: remove this backward compatible tgrid fix in a major release
-        # The default time grid should be the same for F_s(k,t) and F(k,t)
-        if isinstance(trajectory, str):
-            trajectory = Trajectory(trajectory, mode='r', fmt=core.pp_trajectory_format)
-        if tgrid is None:
-            tgrid = [0.0] + logx_grid(trajectory.timestep,
-                                      trajectory.total_time * 0.75, tsamples)
         super(SelfIntermediateScatteringLegacy,
               self).__init__(trajectory, kgrid=kgrid, tgrid=tgrid,
                              nk=nk, tsamples=tsamples, dk=dk, kmin=kmin,
@@ -112,9 +106,10 @@ class SelfIntermediateScatteringLegacy(IntermediateScatteringBase):
         """Memory in Mb allocated for exponentials tabulation"""
 
     def _compute(self):
-        # Throw everything into a big numpy array (nframes, npos, ndim)
+        # Shortcuts
         pos = numpy.array(self._pos)
         ndims = len(self.k0)
+        skip = self.skip
         # To optimize without wasting too much memory (we have
         # troubles here) we group particles in blocks and tabulate the
         # exponentials over time. This is more memory consuming but we
@@ -125,45 +120,43 @@ class SelfIntermediateScatteringLegacy(IntermediateScatteringBase):
         block = int(pos[0].shape[0] / float(number_of_blocks))
         block = max(20, block)
         block = min(200, block)
-        if len(self.kvector.keys()) == 0:
-            raise ValueError('could not find any wave-vectors, try increasing dk')
-        kmax = max(self.kvector.keys()) + self.dk
+
         acf = [defaultdict(float) for _ in self.kgrid]
         cnt = [defaultdict(float) for _ in self.kgrid]
-        skip = self.skip
         origins = range(0, pos.shape[1], block)
         for j in progress(origins):
-            x = expo_sphere(self.k0, kmax, pos[:, j:j + block, :])
-            for kk, knorm in enumerate(self.kgrid):
-                for kkk in self.selection[kk]:
-                    ik = self.kvector[knorm][kkk]
+            # Tabulate exponentials
+            x = expo_sphere(self.k0, self._koffset, pos[:, j:j + block, :])
+            for ik, klist in enumerate(self._kvectors):
+                for kvec in klist:
                     for off, i in self._discrete_tgrid:
                         for i0 in range(off, x.shape[0]-i, skip):
                             # Get the actual time difference. steps must be accessed efficiently (cached!)
                             dt = self.trajectory.steps[i0+i] - self.trajectory.steps[i0]
                             # Dimensional switch
                             if ndims == 3:
-                                acf[kk][dt] += numpy.sum(x[i0+i, :, 0, ik[0]]*x[i0, :, 0, ik[0]].conjugate() *
-                                                         x[i0+i, :, 1, ik[1]]*x[i0, :, 1, ik[1]].conjugate() *
-                                                         x[i0+i, :, 2, ik[2]]*x[i0, :, 2, ik[2]].conjugate()).real
+                                acf[ik][dt] += numpy.sum(x[i0+i, :, 0, kvec[0]]*x[i0, :, 0, kvec[0]].conjugate() *
+                                                         x[i0+i, :, 1, kvec[1]]*x[i0, :, 1, kvec[1]].conjugate() *
+                                                         x[i0+i, :, 2, kvec[2]]*x[i0, :, 2, kvec[2]].conjugate()).real
                             elif ndims == 2:
-                                acf[kk][dt] += numpy.sum(x[i0+i, :, 0, ik[0]]*x[i0, :, 0, ik[0]].conjugate() *
-                                                         x[i0+i, :, 1, ik[1]]*x[i0, :, 1, ik[1]].conjugate()).real
+                                acf[ik][dt] += numpy.sum(x[i0+i, :, 0, kvec[0]]*x[i0, :, 0, kvec[0]].conjugate() *
+                                                         x[i0+i, :, 1, kvec[1]]*x[i0, :, 1, kvec[1]].conjugate()).real
 
                             else:
                                 # Arbitrary dimension (a bit slower)
-                                tmp = x[i0+i, :, 0, ik[0]]*x[i0, :, 0, ik[0]].conjugate()
-                                for idim in range(1, len(ik)):
-                                    tmp *= x[i0+i, :, idim, ik[idim]]*x[i0, :, idim, ik[idim]].conjugate()
-                                acf[kk][dt] += numpy.sum(tmp).real
-                            cnt[kk][dt] += x.shape[1]
+                                tmp = x[i0+i, :, 0, kvec[0]]*x[i0, :, 0, kvec[0]].conjugate()
+                                for idim in range(1, len(kvec)):
+                                    tmp *= x[i0+i, :, idim, kvec[idim]]*x[i0, :, idim, kvec[idim]].conjugate()
+                                acf[ik][dt] += numpy.sum(tmp).real
+                            cnt[ik][dt] += x.shape[1]
 
+        # Define grids
         tgrid = sorted(acf[0].keys())
         self.grid[0] = self.kgrid
         self.grid[1] = [ti*self.trajectory.timestep for ti in tgrid]
-        self.value = [[acf[kk][ti] / cnt[kk][ti] for ti in tgrid] for kk in range(len(self.grid[0]))]
+        self.value = [[acf[k][t] / cnt[k][t] for t in tgrid] for k in range(len(acf))]
 
-        # Normalize
+        # Normalization
         if self.normalize:
             for k in range(len(self.grid[0])):
                 for i in range(len(self.value[k])):
@@ -186,15 +179,15 @@ class SelfIntermediateScatteringFast(SelfIntermediateScatteringLegacy):
     See the documentation of the `FourierSpaceCorrelation` base class
     for information on the instance variables.
     """
-
     def _compute(self):
         from atooms.postprocessing.fourierspace_wrap import fourierspace_module
 
-        # Throw everything into a big numpy array (nframes, npos, ndim)
+        # Shortcuts
         pos = numpy.array(self._pos)
+        ndims = len(self.k0)
+        skip = self.skip
 
         # Select the f90 kernel
-        ndims = len(self.k0)
         if ndims == 3:
             fskt_kernel = fourierspace_module.fskt_kernel_3d
         elif ndims == 2:
@@ -207,10 +200,10 @@ class SelfIntermediateScatteringFast(SelfIntermediateScatteringLegacy):
         # exponentials over time. This is more memory consuming but we
         # can optimize the inner loop. The esitmated amuount of
         # allocated memory in Mb for the expo array is
-        # self.lookup_mb. Note that the actual memory need scales
+        # self.lookup_mb. Note that the actual memory used scales
         # with number of k vectors, system size and number of frames.
-        kmax = max(self.kvector.keys()) + self.dk
-        kvec_size = 2*(1 + int(kmax / min(self.k0))) + 1
+        # TODO: why 2?
+        kvec_size = 2*self._koffset + 1
         pos_size = numpy.product(pos.shape)
         target_size = self.lookup_mb * 1e6 / 16.  # 16 bytes for a (double) complex
         number_of_blocks = int(pos_size * kvec_size / target_size)
@@ -218,32 +211,34 @@ class SelfIntermediateScatteringFast(SelfIntermediateScatteringLegacy):
         block = int(pos[0].shape[0] / float(number_of_blocks))
         block = max(1, block)
         block = min(pos.shape[1], block)
-        if len(self.kvector.keys()) == 0:
-            raise ValueError('could not find any wave-vectors, try increasing dk')
+
+        # Compute ACF
         acf = [defaultdict(float) for _ in self.kgrid]
         cnt = [defaultdict(float) for _ in self.kgrid]
-        skip = self.skip
         origins = range(0, pos.shape[1], block)
         for j in progress(origins):
-            x = expo_sphere(self.k0, kmax, pos[:, j:j + block, :])
+            # Tabulate exponentials
+            x = expo_sphere(self.k0, self._koffset, pos[:, j:j + block, :])
             xf = numpy.asfortranarray(x)
-            for kk, knorm in enumerate(self.kgrid):
-                for kkk in self.selection[kk]:
-                    ik = self.kvector[knorm][kkk]
+            for ik, klist in enumerate(self._kvectors):
+                for kvec in klist:
+                    kvec = numpy.array(kvec, dtype=numpy.int32)
                     for off, i in self._discrete_tgrid:
                         for i0 in range(off, x.shape[0]-i, skip):
                             # Get the actual time difference. steps must be accessed efficiently (cached!)
                             dt = self.trajectory.steps[i0+i] - self.trajectory.steps[i0]
                             # Call f90 kernel
-                            res = fskt_kernel(xf, i0+1, i0+1+i, numpy.array(ik, dtype=numpy.int32)+1)
-                            acf[kk][dt] += res.real
-                            cnt[kk][dt] += x.shape[1]
+                            res = fskt_kernel(xf, i0+1, i0+1+i, kvec+1)
+                            acf[ik][dt] += res.real
+                            cnt[ik][dt] += x.shape[1]
 
+        # Define grids
         tgrid = sorted(acf[0].keys())
         self.grid[0] = self.kgrid
         self.grid[1] = [ti*self.trajectory.timestep for ti in tgrid]
-        self.value = [[acf[kk][ti] / cnt[kk][ti] for ti in tgrid] for kk in range(len(self.grid[0]))]
-        # Normalize
+        self.value = [[acf[k][t] / cnt[k][t] for t in tgrid] for k in range(len(acf))]
+
+        # Normalization
         if self.normalize:
             for k in range(len(self.grid[0])):
                 for i in range(len(self.value[k])):
@@ -279,83 +274,78 @@ class IntermediateScattering(IntermediateScatteringBase):
                                                      kmax=kmax, ksamples=ksamples, norigins=norigins,
                                                      fix_cm=fix_cm, normalize=normalize)
 
-    def _tabulate_rho(self, kgrid, selection):
-        """
-        Tabulate densities
-        """
+    def _compute(self):
+        # Shortcuts
         nsteps = len(self._pos_0)
         ndims = len(self.k0)
-        if len(self.kvector.keys()) == 0:
-            raise ValueError('could not find any wave-vectors, try increasing dk')
-        kmax = max(self.kvector.keys()) + self.dk
-        rho_0 = [defaultdict(complex) for it in range(nsteps)]
-        rho_1 = [defaultdict(complex) for it in range(nsteps)]
+
+        # Setup k vectors and tabulate densities rho_0, rho_1
+        rho_0 = [defaultdict(complex) for _ in range(nsteps)]
+        rho_1 = [defaultdict(complex) for _ in range(nsteps)]
         for it in range(nsteps):
-            expo_0 = expo_sphere(self.k0, kmax, self._pos_0[it])
+            # Tabulate exponentials
+            expo_0 = expo_sphere(self.k0, self._koffset, self._pos_0[it])
+            
             # Optimize a bit here: if there is only one filter (alpha-alpha or total calculation)
             # expo_2 will be just a reference to expo_1
             if self._pos_1 is self._pos_0:
                 expo_1 = expo_0
             else:
-                expo_1 = expo_sphere(self.k0, kmax, self._pos_1[it])
+                expo_1 = expo_sphere(self.k0, self._koffset, self._pos_1[it])
 
             # Tabulate densities rho_0, rho_1
-            for kk, knorm in enumerate(kgrid):
-                for i in selection[kk]:
-                    ik = self.kvector[knorm][i]
+            for klist in self._kvectors:
+                for kvec in klist:
                     if ndims == 3:
-                        rho_0[it][ik] = numpy.sum(expo_0[..., 0, ik[0]] * expo_0[..., 1, ik[1]] * expo_0[..., 2, ik[2]])
+                        rho_0[it][kvec] = numpy.sum(expo_0[..., 0, kvec[0]] *
+                                                    expo_0[..., 1, kvec[1]] *
+                                                    expo_0[..., 2, kvec[2]])
                     elif ndims == 2:
-                        rho_0[it][ik] = numpy.sum(expo_0[..., 0, ik[0]] * expo_0[..., 1, ik[1]])
+                        rho_0[it][kvec] = numpy.sum(expo_0[..., 0, kvec[0]] *
+                                                    expo_0[..., 1, kvec[1]])
                     else:
                         # Arbitrary dimension (a bit slower)
-                        tmp = expo_0[..., 0, ik[0]]
-                        for idim in range(1, len(ik)):
-                            tmp *= expo_0[..., idim, ik[idim]]
-                        rho_0[it][ik] += numpy.sum(tmp).real
+                        tmp = expo_0[..., 0, kvec[0]]
+                        for idim in range(1, len(kvec)):
+                            tmp *= expo_0[..., idim, kvec[idim]]
+                        rho_0[it][kvec] += numpy.sum(tmp).real
 
                     # Same optimization as above: only calculate rho_1 if needed
                     if self._pos_1 is not self._pos_0:
                         if ndims == 3:
-                            rho_1[it][ik] = numpy.sum(expo_1[..., 0, ik[0]] * expo_1[..., 1, ik[1]] * expo_1[..., 2, ik[2]])
+                            rho_1[it][kvec] = numpy.sum(expo_1[..., 0, kvec[0]] *
+                                                        expo_1[..., 1, kvec[1]] *
+                                                        expo_1[..., 2, kvec[2]])
                         elif ndims == 2:
-                            rho_1[it][ik] = numpy.sum(expo_1[..., 0, ik[0]] * expo_1[..., 1, ik[1]])
+                            rho_1[it][kvec] = numpy.sum(expo_1[..., 0, kvec[0]] *
+                                                        expo_1[..., 1, kvec[1]])
                         else:
                             # Arbitrary dimension (a bit slower)
-                            tmp = expo_1[..., 0, ik[0]]
-                            for idim in range(1, len(ik)):
-                                tmp *= expo_1[..., idim, ik[idim]]
-                            rho_1[it][ik] += numpy.sum(tmp).real
+                            tmp = expo_1[..., 0, kvec[0]]
+                            for idim in range(1, len(kvec)):
+                                tmp *= expo_1[..., idim, kvec[idim]]
+                            rho_1[it][kvec] += numpy.sum(tmp).real
 
             # Optimization
             if self._pos_1 is self._pos_0:
                 rho_1 = rho_0
 
-        return rho_0, rho_1
-
-    def _compute(self):
-        # Setup k vectors and tabulate densities
-        kgrid, selection = self.kgrid, self.selection
-        rho_0, rho_1 = self._tabulate_rho(kgrid, selection)
-
         # Compute correlation function
-        acf = [defaultdict(float) for _ in kgrid]
-        cnt = [defaultdict(float) for _ in kgrid]
-        skip = self.skip
-        for kk, knorm in enumerate(progress(kgrid)):
-            for j in selection[kk]:
-                ik = self.kvector[knorm][j]
+        acf = [defaultdict(float) for _ in self.kgrid]
+        cnt = [defaultdict(float) for _ in self.kgrid]
+        for ik, klist in enumerate(progress(self._kvectors)):
+            for kvec in klist:
                 for off, i in self._discrete_tgrid:
-                    for i0 in range(off, len(rho_0)-i, skip):
+                    for i0 in range(off, len(rho_0)-i, self.skip):
                         # Get the actual time difference
                         # TODO: It looks like the order of i0 and ik lopps should be swapped
                         dt = self.trajectory.steps[i0+i] - self.trajectory.steps[i0]
-                        acf[kk][dt] += (rho_0[i0+i][ik] * rho_1[i0][ik].conjugate()).real  # / self._pos[i0].shape[0]
-                        cnt[kk][dt] += 1
+                        acf[ik][dt] += (rho_0[i0+i][kvec] * rho_1[i0][kvec].conjugate()).real #/ self._pos[i0].shape[0]
+                        cnt[ik][dt] += 1
 
         # Normalization
         times = sorted(acf[0].keys())
-        self.grid[0] = kgrid
+        self.grid[0] = self.kgrid
         self.grid[1] = [ti*self.trajectory.timestep for ti in times]
         # TODO: check normalization when not GC, does not give exactly the short time behavior as pp.x
         # This switch is not used
@@ -366,11 +356,11 @@ class IntermediateScattering(IntermediateScatteringBase):
         #     nav_1 = sum([p.shape[0] for p in self._pos_1]) / len(self._pos_1)
         # First normalize by cnt (time counts), then by value at t=0
         # We do not need to normalize by the average number of particles
-        self.value_nonorm = [[acf[kk][ti] / (cnt[kk][ti]) for ti in times] for kk in range(len(self.grid[0]))]
+        self.value_nonorm = [[acf[k][t] / (cnt[k][t]) for t in times] for k in range(len(acf))]
 
         # Normalize
         if self.normalize:
-            self.value = [[v / self.value_nonorm[kk][0] for v in self.value_nonorm[kk]] for kk in range(len(self.grid[0]))]
+            self.value = [[v / self.value_nonorm[k][0] for v in self.value_nonorm[k]] for k in range(len(acf))]
         else:
             self.value = self.value_nonorm
 
