@@ -56,7 +56,7 @@ pages:
   artifacts:
     paths:
       - public
-  scripts:
+  script:
     echo
   only:
     - master
