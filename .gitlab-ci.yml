@@ -17,16 +17,20 @@ cache:
     - .cache/pip
     - env/
 
-before_script:
-  - python -V  # Print out python version for debugging
-  - pip install virtualenv
-  - virtualenv env
-  - source env/bin/activate
+# before_script:
+#   - python -V  # Print out python version for debugging
+#   - pip install virtualenv
+#   - virtualenv env
+#   - source env/bin/activate
 
 test:f90:
   image: python:latest
   coverage: '/^TOTAL.+?(\d+\%)$/'
   script:
+  - python -V  # Print out python version for debugging
+  - pip install virtualenv
+  - virtualenv env
+  - source env/bin/activate
   - pip install -r requirements.txt
   - apt-get update
   - apt-get -q -q -y install g++ gfortran
@@ -49,14 +53,8 @@ test:f90:
   # - coverage report -m
 
 pages:
-  image: python:3.8
-  script:
-    - pip install pdoc3
-    - make docs
-    - mkdir -p public
-    - mv docs/api public/api
   artifacts:
     paths:
       - public
   only:
-    - tags
+    - master

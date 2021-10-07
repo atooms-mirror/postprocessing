@@ -1,0 +1,811 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>postprocessing.api API documentation</title>
+<meta name="description" content="Post processing API." />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>postprocessing.api</code></h1>
+</header>
+<section id="section-intro">
+<p>Post processing API.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;Post processing API.&#34;&#34;&#34;
+
+import atooms.postprocessing as pp
+from atooms.postprocessing.partial import Partial
+from atooms.trajectory import Trajectory
+from atooms.trajectory.decorators import change_species, center
+from atooms.system.particle import distinct_species
+
+from .helpers import linear_grid, logx_grid
+
+_func_db = {&#39;linear_grid&#39;: linear_grid,
+            &#39;linear&#39;: linear_grid,
+            &#39;logx_grid&#39;: logx_grid,
+            &#39;logx&#39;: logx_grid}
+
+def _get_trajectories(input_files, args):
+    from atooms.trajectory import Sliced
+    from atooms.core.utils import fractional_slice
+    for input_file in input_files:
+        with Trajectory(input_file, fmt=args[&#39;fmt&#39;]) as th:
+            if args[&#39;center&#39;]:
+                th.add_callback(center)
+            # Caching is useful for systems with multiple species but
+            # it will increase the memory footprint. Use --no-cache to
+            # disable it
+            if not args[&#39;no_cache&#39;]:
+                th.cache = True
+            if args[&#39;species_layout&#39;] is not None:
+                th.register_callback(change_species, args[&#39;species_layout&#39;])
+            sl = fractional_slice(args[&#39;first&#39;], args[&#39;last&#39;], args[&#39;skip&#39;], len(th))
+            if th.block_size &gt; 1:
+                sl_start = (sl.start // th.block_size) * th.block_size if sl.start is not None else sl.start
+                sl_stop = (sl.stop // th.block_size) * th.block_size if sl.stop is not None else sl.stop
+                sl = slice(sl_start, sl_stop, sl.step)
+            if sl != slice(None, None, 1):
+                ts = Sliced(th, sl)
+            else:
+                ts = th
+            yield ts
+
+def _compat(args):
+    &#34;&#34;&#34;Set default values of global arguments in `args` dictionary&#34;&#34;&#34;
+
+    defaults = {
+        &#39;first&#39;: None,
+        &#39;last&#39;: None,
+        &#39;skip&#39;: None,
+        &#39;fmt&#39;: None,
+        &#39;center&#39;: False,
+        &#39;species_layout&#39;: None,
+        &#39;norigins&#39;: None,
+        &#39;fast&#39;: False,
+        &#39;legacy&#39;: False,
+        &#39;no_cache&#39;: False,
+        &#39;update&#39;: False,
+        &#39;filter&#39;: None,
+        &#39;no_partial&#39;: False,
+    }
+    for key in defaults:
+        if key not in args:
+            args[key] = defaults[key]
+
+    # Implicit option rules
+    if args[&#39;filter&#39;] is not None:
+        args[&#39;no_partial&#39;] = True
+
+    return args
+
+def gr(input_file, dr=0.04, grandcanonical=False, ndim=-1, rmax=-1.0, *input_files, **global_args):
+    &#34;&#34;&#34;Radial distribution function&#34;&#34;&#34;
+    global_args = _compat(global_args)
+    if global_args[&#39;legacy&#39;]:
+        backend = pp.RadialDistributionFunctionLegacy
+    else:
+        backend = pp.RadialDistributionFunction
+
+    for th in _get_trajectories([input_file] + list(input_files), global_args):
+        th._grandcanonical = grandcanonical
+        cf = backend(th, dr=dr, rmax=rmax,
+                     norigins=global_args[&#39;norigins&#39;],
+                     ndim=ndim)
+        if global_args[&#39;filter&#39;] is not None:
+            cf = pp.Filter(cf, global_args[&#39;filter&#39;])
+        cf.do(update=global_args[&#39;update&#39;])
+
+        ids = distinct_species(th[0].particle)
+        if len(ids) &gt; 1 and not global_args[&#39;no_partial&#39;]:
+            cf = Partial(backend, ids, th,
+                         dr=dr, rmax=rmax, norigins=global_args[&#39;norigins&#39;], ndim=ndim)
+            cf.do(update=global_args[&#39;update&#39;])
+
+def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
+       kgrid=None, weight=None, weight_trajectory=None,
+       weight_fluctuations=False, *input_files, **global_args):
+    &#34;&#34;&#34;
+    Structure factor
+    &#34;&#34;&#34;
+    from atooms.trajectory import TrajectoryXYZ
+    global_args = _compat(global_args)
+    if global_args[&#39;fast&#39;]:
+        backend = pp.StructureFactorFast
+    else:
+        backend = pp.StructureFactorLegacy
+    if kgrid is not None:
+        kgrid = [float(_) for _ in kgrid.split(&#39;,&#39;)]
+    for th in _get_trajectories([input_file] + list(input_files), global_args):
+        cf = backend(th, kgrid=kgrid,
+                     norigins=global_args[&#39;norigins&#39;], kmin=kmin,
+                     kmax=kmax, nk=nk, dk=dk, ksamples=ksamples)
+        if global_args[&#39;filter&#39;] is not None:
+            cf = pp.Filter(cf, global_args[&#39;filter&#39;])
+        if weight_trajectory is not None:
+            weight_trajectory = TrajectoryXYZ(weight_trajectory)
+        cf.add_weight(trajectory=weight_trajectory,
+                      field=weight,
+                      fluctuations=weight_fluctuations)
+        cf.do(update=global_args[&#39;update&#39;])
+
+        ids = distinct_species(th[0].particle)
+        if len(ids) &gt; 1 and not global_args[&#39;no_partial&#39;]:
+            cf = Partial(backend, ids, th, kgrid=kgrid,
+                         norigins=global_args[&#39;norigins&#39;],
+                         kmin=kmin, kmax=kmax, nk=nk, dk=dk,
+                         ksamples=ksamples)
+            cf.add_weight(trajectory=weight_trajectory,
+                          field=weight,
+                          fluctuations=weight_fluctuations)
+            cf.do(update=global_args[&#39;update&#39;])
+
+def ik(input_file, trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0,
+       kmax=15.0, kgrid=None, ksamples=30, *input_files,
+       **global_args):
+    &#34;&#34;&#34;Spectral density&#34;&#34;&#34;
+    global_args = _compat(global_args)
+    if kgrid is not None:
+        kgrid = [float(_) for _ in kgrid.split(&#39;,&#39;)]
+    for th in _get_trajectories([input_file] + list(input_files), global_args):
+        if trajectory_radius is None:
+            trajectory_radius = input_file
+            pp.SpectralDensity(th, trajectory_radius,
+                               kgrid=kgrid, norigins=global_args[&#39;norigins&#39;],
+                               kmin=kmin, kmax=kmax, nk=nk, dk=dk,
+                               ksamples=ksamples).do(update=global_args[&#39;update&#39;])
+
+def msd(input_file, tmax=-1.0, tmax_fraction=0.75, tsamples=30,
+        sigma=1.0, func=&#39;linear&#39;, rmsd_max=-1.0, fix_cm=False,
+        no_offset=False, *input_files, **global_args):
+    &#34;&#34;&#34;Mean square displacement&#34;&#34;&#34;
+    func = _func_db[func]
+    global_args = _compat(global_args)
+    for th in _get_trajectories([input_file] + list(input_files), global_args):
+        dt = th.timestep
+        if tmax &gt; 0:
+            t_grid = [0.0] + func(dt, min(th.total_time, tmax), tsamples)
+        elif tmax_fraction &gt; 0:
+            t_grid = [0.0] + func(dt, tmax_fraction*th.total_time, tsamples)
+        else:
+            t_grid = None
+        ids = distinct_species(th[0].particle)
+        pp.MeanSquareDisplacement(th, tgrid=t_grid,
+                                  norigins=global_args[&#39;norigins&#39;],
+                                  sigma=sigma, rmax=rmsd_max, no_offset=no_offset,
+                                  fix_cm=fix_cm).do(update=global_args[&#39;update&#39;])
+        if len(ids) &gt; 1:
+            Partial(pp.MeanSquareDisplacement, ids, th, tgrid=t_grid,
+                    norigins=global_args[&#39;norigins&#39;], sigma=sigma,
+                    rmax=rmsd_max, no_offset=no_offset).do(update=global_args[&#39;update&#39;])
+
+def vacf(input_file, tmax=-1.0, tmax_fraction=0.10,
+         tsamples=30, func=&#39;linear&#39;, *input_files, **global_args):
+    &#34;&#34;&#34;Velocity autocorrelation function&#34;&#34;&#34;
+    global_args = _compat(global_args)
+    func = _func_db[func]
+    for th in _get_trajectories([input_file] + list(input_files), global_args):
+        if tmax &gt; 0:
+            t_grid = [0.0] + func(th.timestep, min(th.total_time, tmax), tsamples)
+        elif tmax_fraction &gt; 0:
+            t_grid = [0.0] + func(th.timestep, tmax_fraction*th.total_time, tsamples)
+        else:
+            t_grid = None
+        pp.VelocityAutocorrelation(th, t_grid, norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])
+        ids = distinct_species(th[0].particle)
+        if len(ids) &gt; 1:
+            Partial(pp.VelocityAutocorrelation, ids, th,
+                    t_grid, norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])
+
+def fkt(input_file, tmax=-1.0, tmax_fraction=0.75,
+        tsamples=60, kmin=7.0, kmax=7.0, ksamples=1, dk=0.1, nk=100,
+        kgrid=None, func=&#39;logx&#39;, fix_cm=False, total=False, *input_files,
+        **global_args):
+    &#34;&#34;&#34;Total intermediate scattering function&#34;&#34;&#34;
+    global_args = _compat(global_args)
+    func = _func_db[func]
+    for th in _get_trajectories([input_file] + list(input_files), global_args):
+        if tmax &gt; 0:
+            t_grid = [0.0] + func(th.timestep, tmax, tsamples)
+        elif tmax_fraction &gt; 0:
+            t_grid = [0.0] + func(th.timestep, tmax_fraction*th.total_time, tsamples)
+        else:
+            t_grid = None
+        if kgrid is not None:
+            k_grid = [float(_) for _ in kgrid.split(&#39;,&#39;)]
+        else:
+            k_grid = linear_grid(kmin, kmax, ksamples)
+        ids = distinct_species(th[0].particle)
+        if total or len(ids) == 1:
+            pp.IntermediateScattering(th, k_grid, t_grid,
+                                      norigins=global_args[&#39;norigins&#39;],
+                                      nk=nk, dk=dk, fix_cm=fix_cm).do(update=global_args[&#39;update&#39;])
+        if len(ids) &gt; 1:
+            Partial(pp.IntermediateScattering, ids, th, k_grid, t_grid,
+                    norigins=global_args[&#39;norigins&#39;],
+                    nk=nk, dk=dk, fix_cm=fix_cm).do(update=global_args[&#39;update&#39;])
+
+def fskt(input_file, tmax=-1.0, tmax_fraction=0.75, tsamples=60,
+         kmin=7.0, kmax=8.0, ksamples=1, dk=0.1, nk=8, kgrid=None,
+         func=&#39;logx&#39;, total=False, fix_cm=False, lookup_mb=64.0,
+         *input_files, **global_args):
+    &#34;&#34;&#34;Self intermediate scattering function&#34;&#34;&#34;
+    global_args = _compat(global_args)
+    func = _func_db[func]
+    if global_args[&#39;legacy&#39;]:
+        backend = pp.SelfIntermediateScatteringLegacy
+    else:
+        backend = pp.SelfIntermediateScattering
+    for th in _get_trajectories([input_file] + list(input_files), global_args):
+        if tmax &gt; 0:
+            t_grid = [0.0] + func(th.timestep, tmax, tsamples)
+        elif tmax_fraction &gt; 0:
+            t_grid = [0.0] + func(th.timestep, tmax_fraction*th.total_time, tsamples)
+        else:
+            t_grid = None
+        if kgrid is not None:
+            k_grid = [float(_) for _ in kgrid.split(&#39;,&#39;)]
+        else:
+            k_grid = linear_grid(kmin, kmax, ksamples)
+        ids = distinct_species(th[0].particle)
+        if total or len(ids) == 1:
+            backend(th, k_grid, t_grid, nk, dk=dk,
+                    norigins=global_args[&#39;norigins&#39;], fix_cm=fix_cm,
+                    lookup_mb=lookup_mb).do(update=global_args[&#39;update&#39;])
+        if len(ids) &gt; 1 and not global_args[&#39;no_partial&#39;]:
+            Partial(backend, ids, th, k_grid, t_grid, nk, dk=dk,
+                    norigins=global_args[&#39;norigins&#39;], fix_cm=fix_cm,
+                    lookup_mb=lookup_mb).do(update=global_args[&#39;update&#39;])
+
+def chi4qs(input_file, tsamples=60, a=0.3, tmax=-1.0, func=&#39;logx&#39;,
+           tmax_fraction=0.75, total=False, *input_files,
+           **global_args):
+    &#34;&#34;&#34;Dynamic susceptibility of self overlap&#34;&#34;&#34;
+    global_args = _compat(global_args)
+    func = _func_db[func]
+    if global_args[&#39;fast&#39;]:
+        backend = pp.Chi4SelfOverlapOpti
+    else:
+        backend = pp.Chi4SelfOverlap
+
+    for th in _get_trajectories([input_file] + list(input_files), global_args):
+        if tmax &gt; 0:
+            t_grid = [0.0] + func(th.timestep, min(th.total_time, tmax), tsamples)
+        elif tmax_fraction &gt; 0:
+            t_grid = [0.0] + func(th.timestep, tmax_fraction*th.total_time, tsamples)
+        else:
+            t_grid = None
+        if total:
+            backend(th, t_grid, a=a, norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])
+        ids = distinct_species(th[0].particle)
+        if not total and len(ids) &gt; 1:
+            Partial(backend, ids, th, t_grid, a=a,
+                    norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])
+
+def alpha2(input_file, tmax=-1.0, tmax_fraction=0.75,
+           tsamples=60, func=&#39;logx&#39;, *input_files, **global_args):
+    &#34;&#34;&#34;Non-Gaussian parameter&#34;&#34;&#34;
+    global_args = _compat(global_args)
+    func = _func_db[func]
+    for th in _get_trajectories([input_file] + list(input_files), global_args):
+        if tmax &gt; 0:
+            t_grid = [0.0] + func(th.timestep, tmax, tsamples)
+        elif tmax_fraction &gt; 0:
+            t_grid = [0.0] + func(th.timestep, tmax_fraction*th.total_time, tsamples)
+        else:
+            t_grid = None
+        pp.NonGaussianParameter(th, t_grid, norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])
+        ids = distinct_species(th[0].particle)
+        if len(ids) &gt; 1:
+            Partial(pp.NonGaussianParameter, ids, th, t_grid,
+                    norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])
+
+def qst(input_file, tmax=-1.0, tmax_fraction=0.75,
+        tsamples=60, func=&#39;logx&#39;, *input_files, **global_args):
+    &#34;&#34;&#34;Self overlap correlation function&#34;&#34;&#34;
+    global_args = _compat(global_args)
+    func = _func_db[func]
+    for th in _get_trajectories([input_file] + list(input_files), global_args):
+        if tmax &gt; 0:
+            t_grid = [0.0] + func(th.timestep, tmax, tsamples)
+        elif tmax_fraction &gt; 0:
+            t_grid = [0.0] + func(th.timestep, tmax_fraction*th.total_time, tsamples)
+        else:
+            t_grid = None
+        pp.SelfOverlap(th, t_grid, norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])
+        ids = distinct_species(th[0].particle)
+        if len(ids) &gt; 1:
+            Partial(pp.SelfOverlap, ids, th, t_grid,
+                    norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])
+
+def qt(input_file, tmax=-1.0, tmax_fraction=0.75,
+        tsamples=60, func=&#39;logx&#39;, *input_files, **global_args):
+    &#34;&#34;&#34;Collective overlap correlation function&#34;&#34;&#34;
+    global_args = _compat(global_args)
+    func = _func_db[func]
+    for th in _get_trajectories([input_file] + list(input_files), global_args):
+        if tmax &gt; 0:
+            t_grid = [0.0] + func(th.timestep, tmax, tsamples)
+        elif tmax_fraction &gt; 0:
+            t_grid = [0.0] + func(th.timestep, tmax_fraction*th.total_time, tsamples)
+        else:
+            t_grid = None
+        pp.CollectiveOverlap(th, t_grid, norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])
+        ids = distinct_species(th[0].particle)
+        if len(ids) &gt; 1:
+            Partial(pp.CollectiveOverlap, ids, th, t_grid,
+                    norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])
+
+def ba(input_file, dtheta=4.0, grandcanonical=False, *input_files, **global_args):
+    &#34;&#34;&#34;Bond-angle distribution&#34;&#34;&#34;
+    global_args = _compat(global_args)
+    for th in _get_trajectories([input_file] + list(input_files), global_args):
+        th._grandcanonical = grandcanonical
+
+        cf = pp.BondAngleDistribution(th, dtheta=dtheta, norigins=global_args[&#39;norigins&#39;])
+        if global_args[&#39;filter&#39;] is not None:
+            cf = pp.Filter(cf, global_args[&#39;filter&#39;])
+        cf.do(update=global_args[&#39;update&#39;])
+
+        # ids = distinct_species(th[0].particle)
+        # if len(ids) &gt; 1 and not global_args[&#39;no_partial&#39;]:
+        #     cf = Partial(pp.BondAngleDistribution, ids, th, dtheta=dtheta, norigins=global_args[&#39;norigins&#39;])
+        #     cf.do(update=global_args[&#39;update&#39;])</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="postprocessing.api.alpha2"><code class="name flex">
+<span>def <span class="ident">alpha2</span></span>(<span>input_file, tmax=-1.0, tmax_fraction=0.75, tsamples=60, func='logx', *input_files, **global_args)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Non-Gaussian parameter</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def alpha2(input_file, tmax=-1.0, tmax_fraction=0.75,
+           tsamples=60, func=&#39;logx&#39;, *input_files, **global_args):
+    &#34;&#34;&#34;Non-Gaussian parameter&#34;&#34;&#34;
+    global_args = _compat(global_args)
+    func = _func_db[func]
+    for th in _get_trajectories([input_file] + list(input_files), global_args):
+        if tmax &gt; 0:
+            t_grid = [0.0] + func(th.timestep, tmax, tsamples)
+        elif tmax_fraction &gt; 0:
+            t_grid = [0.0] + func(th.timestep, tmax_fraction*th.total_time, tsamples)
+        else:
+            t_grid = None
+        pp.NonGaussianParameter(th, t_grid, norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])
+        ids = distinct_species(th[0].particle)
+        if len(ids) &gt; 1:
+            Partial(pp.NonGaussianParameter, ids, th, t_grid,
+                    norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])</code></pre>
+</details>
+</dd>
+<dt id="postprocessing.api.ba"><code class="name flex">
+<span>def <span class="ident">ba</span></span>(<span>input_file, dtheta=4.0, grandcanonical=False, *input_files, **global_args)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Bond-angle distribution</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def ba(input_file, dtheta=4.0, grandcanonical=False, *input_files, **global_args):
+    &#34;&#34;&#34;Bond-angle distribution&#34;&#34;&#34;
+    global_args = _compat(global_args)
+    for th in _get_trajectories([input_file] + list(input_files), global_args):
+        th._grandcanonical = grandcanonical
+
+        cf = pp.BondAngleDistribution(th, dtheta=dtheta, norigins=global_args[&#39;norigins&#39;])
+        if global_args[&#39;filter&#39;] is not None:
+            cf = pp.Filter(cf, global_args[&#39;filter&#39;])
+        cf.do(update=global_args[&#39;update&#39;])
+
+        # ids = distinct_species(th[0].particle)
+        # if len(ids) &gt; 1 and not global_args[&#39;no_partial&#39;]:
+        #     cf = Partial(pp.BondAngleDistribution, ids, th, dtheta=dtheta, norigins=global_args[&#39;norigins&#39;])
+        #     cf.do(update=global_args[&#39;update&#39;])</code></pre>
+</details>
+</dd>
+<dt id="postprocessing.api.chi4qs"><code class="name flex">
+<span>def <span class="ident">chi4qs</span></span>(<span>input_file, tsamples=60, a=0.3, tmax=-1.0, func='logx', tmax_fraction=0.75, total=False, *input_files, **global_args)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Dynamic susceptibility of self overlap</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def chi4qs(input_file, tsamples=60, a=0.3, tmax=-1.0, func=&#39;logx&#39;,
+           tmax_fraction=0.75, total=False, *input_files,
+           **global_args):
+    &#34;&#34;&#34;Dynamic susceptibility of self overlap&#34;&#34;&#34;
+    global_args = _compat(global_args)
+    func = _func_db[func]
+    if global_args[&#39;fast&#39;]:
+        backend = pp.Chi4SelfOverlapOpti
+    else:
+        backend = pp.Chi4SelfOverlap
+
+    for th in _get_trajectories([input_file] + list(input_files), global_args):
+        if tmax &gt; 0:
+            t_grid = [0.0] + func(th.timestep, min(th.total_time, tmax), tsamples)
+        elif tmax_fraction &gt; 0:
+            t_grid = [0.0] + func(th.timestep, tmax_fraction*th.total_time, tsamples)
+        else:
+            t_grid = None
+        if total:
+            backend(th, t_grid, a=a, norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])
+        ids = distinct_species(th[0].particle)
+        if not total and len(ids) &gt; 1:
+            Partial(backend, ids, th, t_grid, a=a,
+                    norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])</code></pre>
+</details>
+</dd>
+<dt id="postprocessing.api.fkt"><code class="name flex">
+<span>def <span class="ident">fkt</span></span>(<span>input_file, tmax=-1.0, tmax_fraction=0.75, tsamples=60, kmin=7.0, kmax=7.0, ksamples=1, dk=0.1, nk=100, kgrid=None, func='logx', fix_cm=False, total=False, *input_files, **global_args)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Total intermediate scattering function</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def fkt(input_file, tmax=-1.0, tmax_fraction=0.75,
+        tsamples=60, kmin=7.0, kmax=7.0, ksamples=1, dk=0.1, nk=100,
+        kgrid=None, func=&#39;logx&#39;, fix_cm=False, total=False, *input_files,
+        **global_args):
+    &#34;&#34;&#34;Total intermediate scattering function&#34;&#34;&#34;
+    global_args = _compat(global_args)
+    func = _func_db[func]
+    for th in _get_trajectories([input_file] + list(input_files), global_args):
+        if tmax &gt; 0:
+            t_grid = [0.0] + func(th.timestep, tmax, tsamples)
+        elif tmax_fraction &gt; 0:
+            t_grid = [0.0] + func(th.timestep, tmax_fraction*th.total_time, tsamples)
+        else:
+            t_grid = None
+        if kgrid is not None:
+            k_grid = [float(_) for _ in kgrid.split(&#39;,&#39;)]
+        else:
+            k_grid = linear_grid(kmin, kmax, ksamples)
+        ids = distinct_species(th[0].particle)
+        if total or len(ids) == 1:
+            pp.IntermediateScattering(th, k_grid, t_grid,
+                                      norigins=global_args[&#39;norigins&#39;],
+                                      nk=nk, dk=dk, fix_cm=fix_cm).do(update=global_args[&#39;update&#39;])
+        if len(ids) &gt; 1:
+            Partial(pp.IntermediateScattering, ids, th, k_grid, t_grid,
+                    norigins=global_args[&#39;norigins&#39;],
+                    nk=nk, dk=dk, fix_cm=fix_cm).do(update=global_args[&#39;update&#39;])</code></pre>
+</details>
+</dd>
+<dt id="postprocessing.api.fskt"><code class="name flex">
+<span>def <span class="ident">fskt</span></span>(<span>input_file, tmax=-1.0, tmax_fraction=0.75, tsamples=60, kmin=7.0, kmax=8.0, ksamples=1, dk=0.1, nk=8, kgrid=None, func='logx', total=False, fix_cm=False, lookup_mb=64.0, *input_files, **global_args)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Self intermediate scattering function</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def fskt(input_file, tmax=-1.0, tmax_fraction=0.75, tsamples=60,
+         kmin=7.0, kmax=8.0, ksamples=1, dk=0.1, nk=8, kgrid=None,
+         func=&#39;logx&#39;, total=False, fix_cm=False, lookup_mb=64.0,
+         *input_files, **global_args):
+    &#34;&#34;&#34;Self intermediate scattering function&#34;&#34;&#34;
+    global_args = _compat(global_args)
+    func = _func_db[func]
+    if global_args[&#39;legacy&#39;]:
+        backend = pp.SelfIntermediateScatteringLegacy
+    else:
+        backend = pp.SelfIntermediateScattering
+    for th in _get_trajectories([input_file] + list(input_files), global_args):
+        if tmax &gt; 0:
+            t_grid = [0.0] + func(th.timestep, tmax, tsamples)
+        elif tmax_fraction &gt; 0:
+            t_grid = [0.0] + func(th.timestep, tmax_fraction*th.total_time, tsamples)
+        else:
+            t_grid = None
+        if kgrid is not None:
+            k_grid = [float(_) for _ in kgrid.split(&#39;,&#39;)]
+        else:
+            k_grid = linear_grid(kmin, kmax, ksamples)
+        ids = distinct_species(th[0].particle)
+        if total or len(ids) == 1:
+            backend(th, k_grid, t_grid, nk, dk=dk,
+                    norigins=global_args[&#39;norigins&#39;], fix_cm=fix_cm,
+                    lookup_mb=lookup_mb).do(update=global_args[&#39;update&#39;])
+        if len(ids) &gt; 1 and not global_args[&#39;no_partial&#39;]:
+            Partial(backend, ids, th, k_grid, t_grid, nk, dk=dk,
+                    norigins=global_args[&#39;norigins&#39;], fix_cm=fix_cm,
+                    lookup_mb=lookup_mb).do(update=global_args[&#39;update&#39;])</code></pre>
+</details>
+</dd>
+<dt id="postprocessing.api.gr"><code class="name flex">
+<span>def <span class="ident">gr</span></span>(<span>input_file, dr=0.04, grandcanonical=False, ndim=-1, rmax=-1.0, *input_files, **global_args)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Radial distribution function</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def gr(input_file, dr=0.04, grandcanonical=False, ndim=-1, rmax=-1.0, *input_files, **global_args):
+    &#34;&#34;&#34;Radial distribution function&#34;&#34;&#34;
+    global_args = _compat(global_args)
+    if global_args[&#39;legacy&#39;]:
+        backend = pp.RadialDistributionFunctionLegacy
+    else:
+        backend = pp.RadialDistributionFunction
+
+    for th in _get_trajectories([input_file] + list(input_files), global_args):
+        th._grandcanonical = grandcanonical
+        cf = backend(th, dr=dr, rmax=rmax,
+                     norigins=global_args[&#39;norigins&#39;],
+                     ndim=ndim)
+        if global_args[&#39;filter&#39;] is not None:
+            cf = pp.Filter(cf, global_args[&#39;filter&#39;])
+        cf.do(update=global_args[&#39;update&#39;])
+
+        ids = distinct_species(th[0].particle)
+        if len(ids) &gt; 1 and not global_args[&#39;no_partial&#39;]:
+            cf = Partial(backend, ids, th,
+                         dr=dr, rmax=rmax, norigins=global_args[&#39;norigins&#39;], ndim=ndim)
+            cf.do(update=global_args[&#39;update&#39;])</code></pre>
+</details>
+</dd>
+<dt id="postprocessing.api.ik"><code class="name flex">
+<span>def <span class="ident">ik</span></span>(<span>input_file, trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, kgrid=None, ksamples=30, *input_files, **global_args)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Spectral density</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def ik(input_file, trajectory_radius=None, nk=20, dk=0.1, kmin=-1.0,
+       kmax=15.0, kgrid=None, ksamples=30, *input_files,
+       **global_args):
+    &#34;&#34;&#34;Spectral density&#34;&#34;&#34;
+    global_args = _compat(global_args)
+    if kgrid is not None:
+        kgrid = [float(_) for _ in kgrid.split(&#39;,&#39;)]
+    for th in _get_trajectories([input_file] + list(input_files), global_args):
+        if trajectory_radius is None:
+            trajectory_radius = input_file
+            pp.SpectralDensity(th, trajectory_radius,
+                               kgrid=kgrid, norigins=global_args[&#39;norigins&#39;],
+                               kmin=kmin, kmax=kmax, nk=nk, dk=dk,
+                               ksamples=ksamples).do(update=global_args[&#39;update&#39;])</code></pre>
+</details>
+</dd>
+<dt id="postprocessing.api.msd"><code class="name flex">
+<span>def <span class="ident">msd</span></span>(<span>input_file, tmax=-1.0, tmax_fraction=0.75, tsamples=30, sigma=1.0, func='linear', rmsd_max=-1.0, fix_cm=False, no_offset=False, *input_files, **global_args)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Mean square displacement</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def msd(input_file, tmax=-1.0, tmax_fraction=0.75, tsamples=30,
+        sigma=1.0, func=&#39;linear&#39;, rmsd_max=-1.0, fix_cm=False,
+        no_offset=False, *input_files, **global_args):
+    &#34;&#34;&#34;Mean square displacement&#34;&#34;&#34;
+    func = _func_db[func]
+    global_args = _compat(global_args)
+    for th in _get_trajectories([input_file] + list(input_files), global_args):
+        dt = th.timestep
+        if tmax &gt; 0:
+            t_grid = [0.0] + func(dt, min(th.total_time, tmax), tsamples)
+        elif tmax_fraction &gt; 0:
+            t_grid = [0.0] + func(dt, tmax_fraction*th.total_time, tsamples)
+        else:
+            t_grid = None
+        ids = distinct_species(th[0].particle)
+        pp.MeanSquareDisplacement(th, tgrid=t_grid,
+                                  norigins=global_args[&#39;norigins&#39;],
+                                  sigma=sigma, rmax=rmsd_max, no_offset=no_offset,
+                                  fix_cm=fix_cm).do(update=global_args[&#39;update&#39;])
+        if len(ids) &gt; 1:
+            Partial(pp.MeanSquareDisplacement, ids, th, tgrid=t_grid,
+                    norigins=global_args[&#39;norigins&#39;], sigma=sigma,
+                    rmax=rmsd_max, no_offset=no_offset).do(update=global_args[&#39;update&#39;])</code></pre>
+</details>
+</dd>
+<dt id="postprocessing.api.qst"><code class="name flex">
+<span>def <span class="ident">qst</span></span>(<span>input_file, tmax=-1.0, tmax_fraction=0.75, tsamples=60, func='logx', *input_files, **global_args)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Self overlap correlation function</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def qst(input_file, tmax=-1.0, tmax_fraction=0.75,
+        tsamples=60, func=&#39;logx&#39;, *input_files, **global_args):
+    &#34;&#34;&#34;Self overlap correlation function&#34;&#34;&#34;
+    global_args = _compat(global_args)
+    func = _func_db[func]
+    for th in _get_trajectories([input_file] + list(input_files), global_args):
+        if tmax &gt; 0:
+            t_grid = [0.0] + func(th.timestep, tmax, tsamples)
+        elif tmax_fraction &gt; 0:
+            t_grid = [0.0] + func(th.timestep, tmax_fraction*th.total_time, tsamples)
+        else:
+            t_grid = None
+        pp.SelfOverlap(th, t_grid, norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])
+        ids = distinct_species(th[0].particle)
+        if len(ids) &gt; 1:
+            Partial(pp.SelfOverlap, ids, th, t_grid,
+                    norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])</code></pre>
+</details>
+</dd>
+<dt id="postprocessing.api.qt"><code class="name flex">
+<span>def <span class="ident">qt</span></span>(<span>input_file, tmax=-1.0, tmax_fraction=0.75, tsamples=60, func='logx', *input_files, **global_args)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Collective overlap correlation function</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def qt(input_file, tmax=-1.0, tmax_fraction=0.75,
+        tsamples=60, func=&#39;logx&#39;, *input_files, **global_args):
+    &#34;&#34;&#34;Collective overlap correlation function&#34;&#34;&#34;
+    global_args = _compat(global_args)
+    func = _func_db[func]
+    for th in _get_trajectories([input_file] + list(input_files), global_args):
+        if tmax &gt; 0:
+            t_grid = [0.0] + func(th.timestep, tmax, tsamples)
+        elif tmax_fraction &gt; 0:
+            t_grid = [0.0] + func(th.timestep, tmax_fraction*th.total_time, tsamples)
+        else:
+            t_grid = None
+        pp.CollectiveOverlap(th, t_grid, norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])
+        ids = distinct_species(th[0].particle)
+        if len(ids) &gt; 1:
+            Partial(pp.CollectiveOverlap, ids, th, t_grid,
+                    norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])</code></pre>
+</details>
+</dd>
+<dt id="postprocessing.api.sk"><code class="name flex">
+<span>def <span class="ident">sk</span></span>(<span>input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30, kgrid=None, weight=None, weight_trajectory=None, weight_fluctuations=False, *input_files, **global_args)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Structure factor</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def sk(input_file, nk=20, dk=0.1, kmin=-1.0, kmax=15.0, ksamples=30,
+       kgrid=None, weight=None, weight_trajectory=None,
+       weight_fluctuations=False, *input_files, **global_args):
+    &#34;&#34;&#34;
+    Structure factor
+    &#34;&#34;&#34;
+    from atooms.trajectory import TrajectoryXYZ
+    global_args = _compat(global_args)
+    if global_args[&#39;fast&#39;]:
+        backend = pp.StructureFactorFast
+    else:
+        backend = pp.StructureFactorLegacy
+    if kgrid is not None:
+        kgrid = [float(_) for _ in kgrid.split(&#39;,&#39;)]
+    for th in _get_trajectories([input_file] + list(input_files), global_args):
+        cf = backend(th, kgrid=kgrid,
+                     norigins=global_args[&#39;norigins&#39;], kmin=kmin,
+                     kmax=kmax, nk=nk, dk=dk, ksamples=ksamples)
+        if global_args[&#39;filter&#39;] is not None:
+            cf = pp.Filter(cf, global_args[&#39;filter&#39;])
+        if weight_trajectory is not None:
+            weight_trajectory = TrajectoryXYZ(weight_trajectory)
+        cf.add_weight(trajectory=weight_trajectory,
+                      field=weight,
+                      fluctuations=weight_fluctuations)
+        cf.do(update=global_args[&#39;update&#39;])
+
+        ids = distinct_species(th[0].particle)
+        if len(ids) &gt; 1 and not global_args[&#39;no_partial&#39;]:
+            cf = Partial(backend, ids, th, kgrid=kgrid,
+                         norigins=global_args[&#39;norigins&#39;],
+                         kmin=kmin, kmax=kmax, nk=nk, dk=dk,
+                         ksamples=ksamples)
+            cf.add_weight(trajectory=weight_trajectory,
+                          field=weight,
+                          fluctuations=weight_fluctuations)
+            cf.do(update=global_args[&#39;update&#39;])</code></pre>
+</details>
+</dd>
+<dt id="postprocessing.api.vacf"><code class="name flex">
+<span>def <span class="ident">vacf</span></span>(<span>input_file, tmax=-1.0, tmax_fraction=0.1, tsamples=30, func='linear', *input_files, **global_args)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Velocity autocorrelation function</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def vacf(input_file, tmax=-1.0, tmax_fraction=0.10,
+         tsamples=30, func=&#39;linear&#39;, *input_files, **global_args):
+    &#34;&#34;&#34;Velocity autocorrelation function&#34;&#34;&#34;
+    global_args = _compat(global_args)
+    func = _func_db[func]
+    for th in _get_trajectories([input_file] + list(input_files), global_args):
+        if tmax &gt; 0:
+            t_grid = [0.0] + func(th.timestep, min(th.total_time, tmax), tsamples)
+        elif tmax_fraction &gt; 0:
+            t_grid = [0.0] + func(th.timestep, tmax_fraction*th.total_time, tsamples)
+        else:
+            t_grid = None
+        pp.VelocityAutocorrelation(th, t_grid, norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])
+        ids = distinct_species(th[0].particle)
+        if len(ids) &gt; 1:
+            Partial(pp.VelocityAutocorrelation, ids, th,
+                    t_grid, norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="postprocessing" href="index.html">postprocessing</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="two-column">
+<li><code><a title="postprocessing.api.alpha2" href="#postprocessing.api.alpha2">alpha2</a></code></li>
+<li><code><a title="postprocessing.api.ba" href="#postprocessing.api.ba">ba</a></code></li>
+<li><code><a title="postprocessing.api.chi4qs" href="#postprocessing.api.chi4qs">chi4qs</a></code></li>
+<li><code><a title="postprocessing.api.fkt" href="#postprocessing.api.fkt">fkt</a></code></li>
+<li><code><a title="postprocessing.api.fskt" href="#postprocessing.api.fskt">fskt</a></code></li>
+<li><code><a title="postprocessing.api.gr" href="#postprocessing.api.gr">gr</a></code></li>
+<li><code><a title="postprocessing.api.ik" href="#postprocessing.api.ik">ik</a></code></li>
+<li><code><a title="postprocessing.api.msd" href="#postprocessing.api.msd">msd</a></code></li>
+<li><code><a title="postprocessing.api.qst" href="#postprocessing.api.qst">qst</a></code></li>
+<li><code><a title="postprocessing.api.qt" href="#postprocessing.api.qt">qt</a></code></li>
+<li><code><a title="postprocessing.api.sk" href="#postprocessing.api.sk">sk</a></code></li>
+<li><code><a title="postprocessing.api.vacf" href="#postprocessing.api.vacf">vacf</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>
