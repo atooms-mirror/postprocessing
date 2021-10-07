@@ -21,7 +21,7 @@ debug: version
 	python setup.py config_fc --quiet --opt '-O3 -funroll-loops -fbounds-check' install
 
 docs:
-	pdoc -o docs/api --force --html --skip-errors atooms
+	pdoc -o docs/api --force --html --skip-errors $(PROJECT)
 
 test:
 	mv $(PROJECT) $(PROJECT).tmp
