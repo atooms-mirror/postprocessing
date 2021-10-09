@@ -15,9 +15,7 @@
 /*
 @licstart  The following is the entire license notice for the
 JavaScript code in this tag.
-
 Copyright (C) 2012-2018 Free Software Foundation, Inc.
-
 The JavaScript code in this tag is free software: you can
 redistribute it and/or modify it under the terms of the GNU
 General Public License (GNU GPL) as published by the Free Software
@@ -25,14 +23,11 @@ Foundation, either version 3 of the License, or (at your option)
 any later version.  The code is distributed WITHOUT ANY WARRANTY;
 without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
-
 As additional permission under GNU GPL version 3 section 7, you
 may distribute non-source (e.g., minimized or compacted) forms of
 that code without the copy of the GNU GPL normally required by
 section 4, provided you include this license notice and a URL
 through which recipients can access the Corresponding Source.
-
-
 @licend  The above is the entire license notice
 for the JavaScript code in this tag.
 */
@@ -61,7 +56,6 @@ for the JavaScript code in this tag.
     MathJax.Hub.Config({
         displayAlign: "center",
         displayIndent: "0em",
-
         "HTML-CSS": { scale: 100,
                         linebreaks: { automatic: "false" },
                         webFont: "TeX"
@@ -89,43 +83,41 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org1da65da">Setup</a></li>
-<li><a href="#org0ab7fb2">Handling a trajectory</a></li>
-<li><a href="#orge5929c3">Analysis of the trajectory</a>
+<li><a href="#org6363e77">Setup</a></li>
+<li><a href="#orgf8c68ea">Handling a trajectory</a></li>
+<li><a href="#org3653140">Analysis of the trajectory</a>
 <ul>
-<li><a href="#org9e15b98">Structural correlations</a>
+<li><a href="#org4745c64">Structural correlations</a>
 <ul>
-<li><a href="#orgc1b2921">Radial distribution function</a></li>
+<li><a href="#orge83fc92">Radial distribution function</a></li>
 </ul>
 </li>
-<li><a href="#org76d604b">Dynamical correlations</a>
+<li><a href="#orgbd959cc">Dynamical correlations</a>
 <ul>
-<li><a href="#orgc56f790">Mean square displacement</a></li>
-<li><a href="#org0dd7c8a">Self intermediate scattering function</a></li>
+<li><a href="#org030deca">Mean square displacement</a></li>
+<li><a href="#org347a739">Self intermediate scattering function</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#orge5a4d7f">Writing your own correlation function</a></li>
+<li><a href="#org604f23d">Writing your own correlation function</a></li>
 </ul>
 </div>
 </div>
-<div id="outline-container-org1da65da" class="outline-2">
-<h2 id="org1da65da">Setup</h2>
-<div class="outline-text-2" id="text-org1da65da">
+<div id="outline-container-org6363e77" class="outline-2">
+<h2 id="org6363e77">Setup</h2>
+<div class="outline-text-2" id="text-org6363e77">
 <p>
 In this notebook, we are going to show how to perform standard analysis of molecular dynamics trajectories using the <b><b>atooms</b></b> package and its <b><b>postprocessing</b></b> library. You can install both of them from pypi. 
 </p>
-
 <p>
-We start with loading common libraries for plotting and path handling.
+We start by loading common libraries for plotting and path handling.
 </p>
 <div class="org-src-container">
 <pre class="src src-python"><span style="color: #483d8b;">import</span> matplotlib.pyplot <span style="color: #483d8b;">as</span> pl
 <span style="color: #483d8b;">import</span> sys
 </pre>
 </div>
-
 <p>
 We then import the <b><b>postprocessing</b></b> library and the trajectory class from <b><b>atooms</b></b>. In this particular case, we will read an XYZ file, so we load the <b><b>TrajectoryXYZ</b></b> class
 </p>
@@ -134,22 +126,20 @@ We then import the <b><b>postprocessing</b></b> library and the trajectory class
 <span style="color: #483d8b;">from</span> atooms.trajectory <span style="color: #483d8b;">import</span> TrajectoryXYZ 
 </pre>
 </div>
-
 <p>
-We consider an example trajectory, located in the postprocessing package. We can grab it at this link. Let's store the path to this file in a variable for later convenience
+We consider an example trajectory, located in the postprocessing package. We can grab from the git repository. Let's store the path to this file in a variable for later convenience
 </p>
 <div class="org-src-container">
 <pre class="src src-python"><span style="color: #483d8b;">from</span> atooms.core.utils <span style="color: #483d8b;">import</span> download
-download(<span style="color: #8b2252;">'https://framagit.org/atooms/postprocessing/raw/master/data/kalj-small.xyz'</span>, <span style="color: #8b2252;">"."</span>)
-<span style="color: #000000;">path</span> = <span style="color: #8b2252;">'kalj-small.xyz'</span>
+download(<span style="color: #8b2252;">'https://framagit.org/atooms/postprocessing/raw/master/data/kalj-small.xyz'</span>, <span style="color: #8b2252;">"/tmp"</span>)
+<span style="color: #000000;">path</span> = <span style="color: #8b2252;">'/tmp/kalj-small.xyz'</span>
 </pre>
 </div>
 </div>
 </div>
-
-<div id="outline-container-org0ab7fb2" class="outline-2">
-<h2 id="org0ab7fb2">Handling a trajectory</h2>
-<div class="outline-text-2" id="text-org0ab7fb2">
+<div id="outline-container-orgf8c68ea" class="outline-2">
+<h2 id="orgf8c68ea">Handling a trajectory</h2>
+<div class="outline-text-2" id="text-orgf8c68ea">
 <p>
 A trajectory is an object with many properties. To load a trajectory, we create an instance of the class as follows
 </p>
@@ -157,7 +147,6 @@ A trajectory is an object with many properties. To load a trajectory, we create 
 <pre class="src src-python"><span style="color: #000000;">th</span> = TrajectoryXYZ(path)
 </pre>
 </div>
-
 <p>
 The trajectory is a list-like object, in the sense that it can be iterated up and sliced. Each frame of the trajectory contains a <code>System</code> object, which is a full configration of the system at a given instant of time during the simulation. Here we print the first, the 10th and the last frame
 </p>
@@ -165,12 +154,6 @@ The trajectory is a list-like object, in the sense that it can be iterated up an
 <pre class="src src-python">th[0], th[10], th[-1]
 </pre>
 </div>
-
-<pre class="example">
-(&lt;atooms.system.system.System object at 0x7f9784ae2850&gt;, &lt;atooms.system.system.System object at 0x7f978493cd90&gt;, &lt;atooms.system.system.System object at 0x7f97849169a0&gt;)
-
-</pre>
-
 <p>
 To know how many frames we have
 </p>
@@ -178,12 +161,6 @@ To know how many frames we have
 <pre class="src src-python"><span style="color: #483d8b;">len</span>(th)
 </pre>
 </div>
-
-<pre class="example">
-101
-
-</pre>
-
 <p>
 To clarify: a slice is a list of frames, not a trajectory
 </p>
@@ -191,16 +168,12 @@ To clarify: a slice is a list of frames, not a trajectory
 <pre class="src src-python">th[10: 15]
 </pre>
 </div>
-
 <pre class="example">
-[&lt;atooms.system.system.System object at 0x7f9784ae2250&gt;, &lt;atooms.system.system.System object at 0x7f978493c070&gt;, &lt;atooms.system.system.System object at 0x7f97849163a0&gt;, &lt;atooms.system.system.System object at 0x7f9784b18340&gt;, &lt;atooms.system.system.System object at 0x7f97848b7f70&gt;]
-
+[&lt;atooms.system.system.System object at 0x7fee8d1c8d00&gt;, &lt;atooms.system.system.System object at 0x7fee8d1d56d0&gt;, &lt;atooms.system.system.System object at 0x7fee8d1df0a0&gt;, &lt;atooms.system.system.System object at 0x7fee8d13da30&gt;, &lt;atooms.system.system.System object at 0x7fee8d150400&gt;]
 </pre>
-
 <p>
 Note: it is actually possible to define a slice of a trajectory <b>as a trajectory</b> by using the <code>Sliced</code> class decorator, see below.
 </p>
-
 <p>
 If the trajectory contains metadata, these can be retrieved directly:
 </p>
@@ -210,19 +183,16 @@ If the trajectory contains metadata, these can be retrieved directly:
 <span style="color: #483d8b;">print</span>(<span style="color: #8b2252;">"Trajectory metadata"</span>, th.metadata)
 </pre>
 </div>
-
 <pre class="example">
 Timestep during the trajectory: 0.001
 Steps corresponding to the 3rd frame: 2000
 Trajectory metadata {'npart': 150, 'step': 0, 'columns': ['name', 'pos'], 'cell': [5.0, 5.0, 5.0], 'dt': 0.001, 'ndim': 3}
-
 </pre>
 </div>
 </div>
-
-<div id="outline-container-orge5929c3" class="outline-2">
-<h2 id="orge5929c3">Analysis of the trajectory</h2>
-<div class="outline-text-2" id="text-orge5929c3">
+<div id="outline-container-org3653140" class="outline-2">
+<h2 id="org3653140">Analysis of the trajectory</h2>
+<div class="outline-text-2" id="text-org3653140">
 <p>
 Now that we have constructed a trajectory object, we can proceed to the analysis. We are going to consider two main aspects of the analysis:
 </p>
@@ -231,34 +201,28 @@ Now that we have constructed a trajectory object, we can proceed to the analysis
 <li>dynamical correlations</li>
 </ul>
 </div>
-
-<div id="outline-container-org9e15b98" class="outline-3">
-<h3 id="org9e15b98">Structural correlations</h3>
-<div class="outline-text-3" id="text-org9e15b98">
+<div id="outline-container-org4745c64" class="outline-3">
+<h3 id="org4745c64">Structural correlations</h3>
+<div class="outline-text-3" id="text-org4745c64">
 </div>
-<div id="outline-container-orgc1b2921" class="outline-4">
-<h4 id="orgc1b2921">Radial distribution function</h4>
-<div class="outline-text-4" id="text-orgc1b2921">
+<div id="outline-container-orge83fc92" class="outline-4">
+<h4 id="orge83fc92">Radial distribution function</h4>
+<div class="outline-text-4" id="text-orge83fc92">
 <p>
 The radial distribution function \(g(r)\) describes how density varies as a function of the radial distance from a reference particle. In liquids, one normally averages over all particles, obtaining a descriptor of the probability to find a second particle a distance \(r\) from a given particle, relative to that of the ideal gas.
 </p>
-
 <p>
 For \(N\) particles of the same type at density \(\rho\) it is
 </p>
-
 <p>
 \[g(r)=\frac{1}{N\rho}\left\langle\sum_i^{N}\sum_{i\neq j}\delta(r-|\mathbf{r}_i-\mathbf{r}_j|)\right\rangle\].
 </p>
-
 <p>
 Notice that the average number of particles with a distance \(R\), i.e. the average <b><b>coordination</b></b> \(n(R)\), can be computed from the radial distribution function via integration in spherical coordinates (for 3D systems)
 </p>
-
 <p>
 \[n(R)=4\pi \rho\int_0^R g(r)r^2 dr\]
 </p>
-
 <p>
 In <b>postprocessing</b> the radial distribution function is a correlation object that acts on a trajectory. In order to compute it, we simply construct the object, specifying some parameters, and then run the calculation with the <code>do()</code> method
 </p>
@@ -267,7 +231,6 @@ In <b>postprocessing</b> the radial distribution function is a correlation objec
 gr.do()
 </pre>
 </div>
-
 <p>
 Once the calculation is performed, the radial distribution object gr contains (like all correlators in <b>postprocessing</b>) two arrays:
 </p>
@@ -275,7 +238,6 @@ Once the calculation is performed, the radial distribution object gr contains (l
 <li>the <code>grid</code> array contains the independent variable (or variables), binned according to our input parameters (in this case, the smallest space interval that we resolve, <code>dr</code>)</li>
 <li>the <code>value</code> array contains the actual value of teh computation, in this case the values of the \(g(r)\)</li>
 </ul>
-
 <p>
 We can directly plot the results with
 </p>
@@ -285,17 +247,13 @@ pl.xlabel(<span style="color: #8b2252;">"r"</span>)
 pl.ylabel(<span style="color: #8b2252;">"g(r)"</span>)
 </pre>
 </div>
-
-
 <div class="figure">
 <p><img src="gr.png" alt="gr.png">
 </p>
 </div>
-
 <p>
 As we can see, the function displays two narrow peaks around \(r=1\) and a broader peak further away. The several peaks correspond to the fact that the trajectory actualy contains two types of particles, noted as "A" and "B". 
 </p>
-
 <p>
 We can compute separate distribution functions for the \(A\) and \(B\) particles and also the cross distribution funtion for the probability to find a particle \(B\) at distance \(r\) from particle \(A\) using the <code>Partial</code> class in <b>postprocessing</b>:
 </p>
@@ -304,7 +262,6 @@ We can compute separate distribution functions for the \(A\) and \(B\) particles
 gr.do() 
 </pre>
 </div>
-
 <p>
 In this case, the result contains a dictionary <code>gr.partial</code>:
 </p>
@@ -313,15 +270,12 @@ In this case, the result contains a dictionary <code>gr.partial</code>:
 pprint(gr.partial)
 </pre>
 </div>
-
 <pre class="example">
-{('A', 'A'): &lt;atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f9784b20cd0&gt;,
- ('A', 'B'): &lt;atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f97846e2e50&gt;,
- ('B', 'A'): &lt;atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f9784b202e0&gt;,
- ('B', 'B'): &lt;atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f97846e2310&gt;}
-
+{('A', 'A'): &lt;atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7fee8cbd6c70&gt;,
+ ('A', 'B'): &lt;atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7fee8cbd6d00&gt;,
+ ('B', 'A'): &lt;atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7fee8cbd6cd0&gt;,
+ ('B', 'B'): &lt;atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7fee8cbd6d90&gt;}
 </pre>
-
 <p>
 We can treat the result as any norrmal dictionary: 
 </p>
@@ -333,13 +287,6 @@ pl.xlabel(<span style="color: #8b2252;">"r"</span>)
 pl.ylabel(r<span style="color: #8b2252;">"$g_{\alpha\beta}(r)$"</span>)
 </pre>
 </div>
-
-
-<div class="figure">
-<p><img src="gr_ab.png" alt="gr_ab.png">
-</p>
-</div>
-
 <p>
 Sometimes, it is useful to analyse only sections of a trajectory. To this purpose, one can slice the trajectory using <b>atooms</b> and analyse individual frames or subsets of frames. 
 </p>
@@ -353,39 +300,28 @@ pl.xlabel(<span style="color: #8b2252;">"r"</span>)
 pl.ylabel(<span style="color: #8b2252;">"g(r)"</span>)  <span style="color: #b22222;"># </span><span style="color: #b22222;">notice that the g(r) is more noisy</span>
 </pre>
 </div>
-
-
-<div class="figure">
-<p><img src="gr_slice.png" alt="gr_slice.png">
-</p>
 </div>
 </div>
 </div>
+<div id="outline-container-orgbd959cc" class="outline-3">
+<h3 id="orgbd959cc">Dynamical correlations</h3>
+<div class="outline-text-3" id="text-orgbd959cc">
 </div>
-
-<div id="outline-container-org76d604b" class="outline-3">
-<h3 id="org76d604b">Dynamical correlations</h3>
-<div class="outline-text-3" id="text-org76d604b">
-</div>
-<div id="outline-container-orgc56f790" class="outline-4">
-<h4 id="orgc56f790">Mean square displacement</h4>
-<div class="outline-text-4" id="text-orgc56f790">
+<div id="outline-container-org030deca" class="outline-4">
+<h4 id="org030deca">Mean square displacement</h4>
+<div class="outline-text-4" id="text-org030deca">
 <p>
 A very similar kind of anaysis can be performed on dynamical quantities, which quantify correlations in time.
 </p>
-
 <p>
 The most elementary of such quantities is the mean squared displacement (MSD). This is defined as
 </p>
-
 <p>
 \[ \delta r^2(t)= \langle |\mathbf{r}(t-t_0) - \mathbf{r}(t_0)|^2\rangle\]
 </p>
-
 <p>
 The average is normally perfomed over all the paricles \(N\) and over multiple values for the <b>origin</b> of time \(t_0\).
 </p>
-
 <p>
 The analysis process is now familiar. First we cosntruct the msd object and then perform the calculation with <code>do()</code>.
 </p>
@@ -394,20 +330,12 @@ The analysis process is now familiar. First we cosntruct the msd object and then
 msd.do()
 </pre>
 </div>
-
 <div class="org-src-container">
 <pre class="src src-python">pl.loglog(msd.grid, msd.value, <span style="color: #8b2252;">'o'</span>)
 pl.xlabel(<span style="color: #8b2252;">"t"</span>)
 pl.ylabel(<span style="color: #8b2252;">"MSD(t)"</span>);
 </pre>
 </div>
-
-
-<div class="figure">
-<p><img src="msd.png" alt="msd.png">
-</p>
-</div>
-
 <p>
 Again, we can compute partial mean square displacements using the <code>Partial</code> class
 </p>
@@ -420,18 +348,11 @@ pl.xlabel(<span style="color: #8b2252;">"t"</span>)
 pl.ylabel(<span style="color: #8b2252;">"MSD(t)"</span>)
 </pre>
 </div>
-
-
-<div class="figure">
-<p><img src="msd_ab.png" alt="msd_ab.png">
-</p>
 </div>
 </div>
-</div>
-
-<div id="outline-container-org0dd7c8a" class="outline-4">
-<h4 id="org0dd7c8a">Self intermediate scattering function</h4>
-<div class="outline-text-4" id="text-org0dd7c8a">
+<div id="outline-container-org347a739" class="outline-4">
+<h4 id="org347a739">Self intermediate scattering function</h4>
+<div class="outline-text-4" id="text-org347a739">
 <p>
 We compute the self part of the intermediate scattering function (ISF) at specific wave-vectors using a logarithmic time grid.
 </p>
@@ -442,11 +363,9 @@ We compute the self part of the intermediate scattering function (ISF) at specif
 isf.do()
 </pre>
 </div>
-
 <p>
 To get some info on the parameters passed to compute the ISF, have a look at the help for the base class with <code>help(pp.fourierspace.FourierSpaceCorrelation)</code>
 </p>
-
 <p>
 The ISF decays to zero at long times, as it should in an ergodic liquid.
 </p>
@@ -454,36 +373,25 @@ The ISF decays to zero at long times, as it should in an ergodic liquid.
 <pre class="src src-python">pl.semilogx(isf.partial[<span style="color: #8b2252;">'A'</span>].grid[1], isf.partial[<span style="color: #8b2252;">'A'</span>].value[0], <span style="color: #8b2252;">'-o'</span>) 
 </pre>
 </div>
-
-
-<div class="figure">
-<p><img src="isf.png" alt="isf.png">
-</p>
 </div>
 </div>
 </div>
 </div>
-</div>
-
-
-<div id="outline-container-orge5a4d7f" class="outline-2">
-<h2 id="orge5a4d7f">Writing your own correlation function</h2>
-<div class="outline-text-2" id="text-orge5a4d7f">
+<div id="outline-container-org604f23d" class="outline-2">
+<h2 id="org604f23d">Writing your own correlation function</h2>
+<div class="outline-text-2" id="text-org604f23d">
 <p>
 We can extend the correlation class to compute additional correlation functions. The particle coordinates are loaded into the <code>_pos</code> instance variable as a list of numpy arrays. Each numpy array is a <code>(ndim, npart)</code> representation of the full particles' coordinates in a given frame of the trajectory. This is a gist of a new correlation class.
 </p>
 <div class="org-src-container">
 <pre class="src src-python"><span style="color: #483d8b;">from</span> collections <span style="color: #483d8b;">import</span> defaultdict
 <span style="color: #483d8b;">import</span> numpy
-
 <span style="color: #483d8b;">def</span> <span style="color: #483d8b; font-weight: bold;">some_function</span>(x, pos):
 <span style="background-color: #f2f2f2;"> </span>   <span style="color: #483d8b;">return</span> 0.0
-
 <span style="color: #483d8b;">class</span> <span style="color: #483d8b; font-weight: bold;">NewCorrelation</span>(pp.correlation.Correlation):
 <span style="background-color: #f2f2f2;"> </span>   <span style="color: #483d8b;">def</span> <span style="color: #483d8b; font-weight: bold;">__init__</span>(<span style="color: #483d8b;">self</span>, trajectory, grid):
 <span style="background-color: #f2f2f2;"> </span>   <span style="background-color: #f2f2f2;"> </span>   pp.correlation.Correlation.__init__(<span style="color: #483d8b;">self</span>, trajectory, grid)
 <span style="background-color: #f2f2f2;"> </span>   <span style="background-color: #f2f2f2;"> </span>   <span style="color: #483d8b;">self</span>.phasespace = [<span style="color: #8b2252;">"pos"</span>]
-
 <span style="background-color: #f2f2f2;"> </span>   <span style="color: #483d8b;">def</span> <span style="color: #483d8b; font-weight: bold;">_compute</span>(<span style="color: #483d8b;">self</span>):
 <span style="background-color: #f2f2f2;"> </span>   <span style="background-color: #f2f2f2;"> </span>   <span style="color: #483d8b;">print</span>(<span style="color: #8b2252;">"Computing new correlation"</span>)
 <span style="background-color: #f2f2f2;"> </span>   <span style="background-color: #f2f2f2;"> </span>   <span style="color: #000000;">raw</span> = defaultdict(<span style="color: #483d8b;">list</span>)
@@ -493,18 +401,15 @@ We can extend the correlation class to compute additional correlation functions.
 <span style="background-color: #f2f2f2;"> </span>   <span style="background-color: #f2f2f2;"> </span>   <span style="color: #483d8b;">self</span>.value = [numpy.mean(raw[x]) <span style="color: #483d8b;">for</span> x <span style="color: #483d8b;">in</span> raw]
 </pre>
 </div>
-
 <div class="org-src-container">
 <pre class="src src-python"><span style="color: #000000;">nw</span> = NewCorrelation(th, [0.0, 1.0])
 nw.compute()
 <span style="color: #483d8b;">print</span>(nw.value)
 </pre>
 </div>
-
 <pre class="example">
 Computing new correlation
 [0.0, 0.0]
-
 </pre>
 </div>
 </div>

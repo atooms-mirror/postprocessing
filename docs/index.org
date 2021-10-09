@@ -10,7 +10,7 @@
 #+select_tags: export
 #+exclude_tags: noexport
 #+options: toc:4 num:nil title:nil author:nil email:nil timestamp:nil h:4 \n:nil @:t ::t |:t ^:{} _:{} *:t tex:t latex:t
-#+property: header-args:python :exports both :session :results output
+#+property: header-args:python :exports both :session :results output :tangle index.py
 #+property: header-args:gnuplot :exports results
 #+setupfile: /home/coslo/usr/org-config/latex.setup
 #+setupfile: https://coslo.frama.io/org-html-themes/org/theme-readtheorg.setup
@@ -33,11 +33,11 @@ from atooms.trajectory import TrajectoryXYZ
 
 #+results:
 
-We consider an example trajectory, located in the postprocessing package. We can grab it at this link. Let's store the path to this file in a variable for later convenience
+We consider an example trajectory, located in the postprocessing package. We can grab from the git repository. Let's store the path to this file in a variable for later convenience
 #+begin_src python
 from atooms.core.utils import download
-download('https://framagit.org/atooms/postprocessing/raw/master/data/kalj-small.xyz', ".")
-path = 'kalj-small.xyz'
+download('https://framagit.org/atooms/postprocessing/raw/master/data/kalj-small.xyz', "/tmp")
+path = '/tmp/kalj-small.xyz'
 #+end_src
 
 #+results:

@@ -618,6 +618,141 @@ negative indices have a different meaning.</p>
 </ul>
 </dd>
 <dt id="postprocessing.fkt.SelfIntermediateScatteringFast"><code class="flex name class">
+<span>class <span class="ident">SelfIntermediateScattering</span></span>
+<span>(</span><span>trajectory, kgrid=None, tgrid=None, nk=8, tsamples=60, dk=0.1, kmin=1.0, kmax=10.0, ksamples=10, norigins=-1, fix_cm=False, lookup_mb=64.0, normalize=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Self part of the intermediate scattering function (fast version)</p>
+<p>See the documentation of the <code>FourierSpaceCorrelation</code> base class
+for information on the instance variables.</p>
+<p>Possible inputs:</p>
+<ol>
+<li>kgrid is None:</li>
+</ol>
+<p>the k grid is determined internally from kmin, kmax, ksamples
+and the kvectors are sampled using nk and dk parameters</p>
+<ol>
+<li>kgrid is not None, via grid or setting the variable after
+construction:</li>
+</ol>
+<p>kvectors are sampled using nk and dk and the kgrid is
+eventually redefined so that its values correspond exactly to
+the norms of the kvectors in each group</p>
+<ol>
+<li>kvectors is not None or set after construction: </li>
+</ol>
+<p>kvectors must be a list of lists of kvectors in natural units</p>
+<p>Internal variables:</p>
+<ul>
+<li>
+<p>k0 : norm of the smallest kvector allowed by cell,
+determined internally at compute time.</p>
+</li>
+<li>
+<p>_kvectors: list of lists of ndim arrays, grouped by
+the averaged norm, whose indices are (ix, iy, iz), which
+identify the kvectors according to the following
+formulas. We write kvectors as</p>
+</li>
+</ul>
+<p>k = k0 * (jx, jy, jz)</p>
+<p>where jx, jy, jz are relative numbers. We tabulate
+exponentials over a grid and the indices (ix, iy, iz) of the
+tabulated array obey Fortran indexing. We symmetrize the j
+indices like this</p>
+<p>ix = jx + offset_j + 1, iy = jy + offset_j + 1, iz = jz + offset_j + 1</p>
+<p>where offset_j is the absolute value of the minimum of the
+whole set of (jx, jy, jz). This way we are sure that indices
+start from 1. This is necessary with numpy arrays, for which
+negative indices have a different meaning.</p>
+<ul>
+<li>_koffset: value of offset_j defined above</li>
+</ul></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class SelfIntermediateScatteringFast(SelfIntermediateScatteringLegacy):
+    &#34;&#34;&#34;
+    Self part of the intermediate scattering function (fast version)
+
+    See the documentation of the `FourierSpaceCorrelation` base class
+    for information on the instance variables.
+    &#34;&#34;&#34;
+    def _compute(self):
+        from atooms.postprocessing.fourierspace_wrap import fourierspace_module
+
+        # Shortcuts
+        pos = numpy.array(self._pos)
+        ndims = len(self.k0)
+        skip = self.skip
+
+        # Select the f90 kernel
+        if ndims == 3:
+            fskt_kernel = fourierspace_module.fskt_kernel_3d
+        elif ndims == 2:
+            fskt_kernel = fourierspace_module.fskt_kernel_2d
+        else:
+            fskt_kernel = fourierspace_module.fskt_kernel_nd
+
+        # To optimize without wasting too much memory (we have
+        # troubles here) we group particles in blocks and tabulate the
+        # exponentials over time. This is more memory consuming but we
+        # can optimize the inner loop. The esitmated amuount of
+        # allocated memory in Mb for the expo array is
+        # self.lookup_mb. Note that the actual memory used scales
+        # with number of k vectors, system size and number of frames.
+        # TODO: why 2?
+        kvec_size = 2*self._koffset + 1
+        pos_size = numpy.product(pos.shape)
+        target_size = self.lookup_mb * 1e6 / 16.  # 16 bytes for a (double) complex
+        number_of_blocks = int(pos_size * kvec_size / target_size)
+        number_of_blocks = max(1, number_of_blocks)
+        block = int(pos[0].shape[0] / float(number_of_blocks))
+        block = max(1, block)
+        block = min(pos.shape[1], block)
+
+        # Compute ACF
+        acf = [defaultdict(float) for _ in self.kgrid]
+        cnt = [defaultdict(float) for _ in self.kgrid]
+        origins = range(0, pos.shape[1], block)
+        for j in progress(origins):
+            # Tabulate exponentials
+            x = expo_sphere(self.k0, self._koffset, pos[:, j:j + block, :])
+            xf = numpy.asfortranarray(x)
+            for ik, klist in enumerate(self._kvectors):
+                for kvec in klist:
+                    kvec = numpy.array(kvec, dtype=numpy.int32)
+                    for off, i in self._discrete_tgrid:
+                        for i0 in range(off, x.shape[0]-i, skip):
+                            # Get the actual time difference. steps must be accessed efficiently (cached!)
+                            dt = self.trajectory.steps[i0+i] - self.trajectory.steps[i0]
+                            # Call f90 kernel
+                            res = fskt_kernel(xf, i0+1, i0+1+i, kvec+1)
+                            acf[ik][dt] += res.real
+                            cnt[ik][dt] += x.shape[1]
+
+        # Define grids
+        tgrid = sorted(acf[0].keys())
+        self.grid[0] = self.kgrid
+        self.grid[1] = [ti*self.trajectory.timestep for ti in tgrid]
+        self.value = [[acf[k][t] / cnt[k][t] for t in tgrid] for k in range(len(acf))]
+
+        # Normalization
+        if self.normalize:
+            for k in range(len(self.grid[0])):
+                for i in range(len(self.value[k])):
+                    self.value[k][i] /= self.value[k][0]</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="postprocessing.fkt.SelfIntermediateScatteringLegacy" href="#postprocessing.fkt.SelfIntermediateScatteringLegacy">SelfIntermediateScatteringLegacy</a></li>
+<li>postprocessing.fkt.IntermediateScatteringBase</li>
+<li><a title="postprocessing.fourierspace.FourierSpaceCorrelation" href="fourierspace.html#postprocessing.fourierspace.FourierSpaceCorrelation">FourierSpaceCorrelation</a></li>
+<li><a title="postprocessing.correlation.Correlation" href="correlation.html#postprocessing.correlation.Correlation">Correlation</a></li>
+</ul>
+</dd>
+<dt id="postprocessing.fkt.SelfIntermediateScatteringFast"><code class="flex name class">
 <span>class <span class="ident">SelfIntermediateScatteringFast</span></span>
 <span>(</span><span>trajectory, kgrid=None, tgrid=None, nk=8, tsamples=60, dk=0.1, kmin=1.0, kmax=10.0, ksamples=10, norigins=-1, fix_cm=False, lookup_mb=64.0, normalize=True)</span>
 </code></dt>
@@ -779,234 +914,6 @@ negative indices have a different meaning.</p>
 </ul>
 </li>
 </ul>
-</dd>
-<dt id="postprocessing.fkt.SelfIntermediateScatteringLegacy"><code class="flex name class">
-<span>class <span class="ident">SelfIntermediateScattering</span></span>
-<span>(</span><span>trajectory, kgrid=None, tgrid=None, nk=8, tsamples=60, dk=0.1, kmin=1.0, kmax=10.0, ksamples=10, norigins=-1, fix_cm=False, lookup_mb=64.0, normalize=True)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Self part of the intermediate scattering function.</p>
-<p>See the documentation of the <code>FourierSpaceCorrelation</code> base class
-for information on the instance variables.</p>
-<p>Possible inputs:</p>
-<ol>
-<li>kgrid is None:</li>
-</ol>
-<p>the k grid is determined internally from kmin, kmax, ksamples
-and the kvectors are sampled using nk and dk parameters</p>
-<ol>
-<li>kgrid is not None, via grid or setting the variable after
-construction:</li>
-</ol>
-<p>kvectors are sampled using nk and dk and the kgrid is
-eventually redefined so that its values correspond exactly to
-the norms of the kvectors in each group</p>
-<ol>
-<li>kvectors is not None or set after construction: </li>
-</ol>
-<p>kvectors must be a list of lists of kvectors in natural units</p>
-<p>Internal variables:</p>
-<ul>
-<li>
-<p>k0 : norm of the smallest kvector allowed by cell,
-determined internally at compute time.</p>
-</li>
-<li>
-<p>_kvectors: list of lists of ndim arrays, grouped by
-the averaged norm, whose indices are (ix, iy, iz), which
-identify the kvectors according to the following
-formulas. We write kvectors as</p>
-</li>
-</ul>
-<p>k = k0 * (jx, jy, jz)</p>
-<p>where jx, jy, jz are relative numbers. We tabulate
-exponentials over a grid and the indices (ix, iy, iz) of the
-tabulated array obey Fortran indexing. We symmetrize the j
-indices like this</p>
-<p>ix = jx + offset_j + 1, iy = jy + offset_j + 1, iz = jz + offset_j + 1</p>
-<p>where offset_j is the absolute value of the minimum of the
-whole set of (jx, jy, jz). This way we are sure that indices
-start from 1. This is necessary with numpy arrays, for which
-negative indices have a different meaning.</p>
-<ul>
-<li>_koffset: value of offset_j defined above</li>
-</ul></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class SelfIntermediateScatteringLegacy(IntermediateScatteringBase):
-    &#34;&#34;&#34;
-    Self part of the intermediate scattering function.
-
-    See the documentation of the `FourierSpaceCorrelation` base class
-    for information on the instance variables.
-    &#34;&#34;&#34;
-
-    symbol = &#39;fskt&#39;
-    short_name = &#39;F_s(k,t)&#39;
-    long_name = &#39;self intermediate scattering function&#39;
-    phasespace = &#39;pos&#39;
-
-    def __init__(self, trajectory, kgrid=None, tgrid=None, nk=8,
-                 tsamples=60, dk=0.1, kmin=1.0, kmax=10.0,
-                 ksamples=10, norigins=-1, fix_cm=False,
-                 lookup_mb=64.0, normalize=True):
-        super(SelfIntermediateScatteringLegacy,
-              self).__init__(trajectory, kgrid=kgrid, tgrid=tgrid,
-                             nk=nk, tsamples=tsamples, dk=dk, kmin=kmin,
-                             kmax=kmax, ksamples=ksamples, norigins=norigins,
-                             fix_cm=fix_cm, normalize=normalize)
-        self.lookup_mb = lookup_mb
-        &#34;&#34;&#34;Memory in Mb allocated for exponentials tabulation&#34;&#34;&#34;
-
-    def _compute(self):
-        # Shortcuts
-        pos = numpy.array(self._pos)
-        ndims = len(self.k0)
-        skip = self.skip
-        # To optimize without wasting too much memory (we have
-        # troubles here) we group particles in blocks and tabulate the
-        # exponentials over time. This is more memory consuming but we
-        # can optimize the inner loop. Even better, we could change
-        # the order in the tabulated expo array to speed things up
-        # Use 10 blocks, but do not exceed 200 particles
-        number_of_blocks = 10
-        block = int(pos[0].shape[0] / float(number_of_blocks))
-        block = max(20, block)
-        block = min(200, block)
-
-        acf = [defaultdict(float) for _ in self.kgrid]
-        cnt = [defaultdict(float) for _ in self.kgrid]
-        origins = range(0, pos.shape[1], block)
-        for j in progress(origins):
-            # Tabulate exponentials
-            x = expo_sphere(self.k0, self._koffset, pos[:, j:j + block, :])
-            for ik, klist in enumerate(self._kvectors):
-                for kvec in klist:
-                    for off, i in self._discrete_tgrid:
-                        for i0 in range(off, x.shape[0]-i, skip):
-                            # Get the actual time difference. steps must be accessed efficiently (cached!)
-                            dt = self.trajectory.steps[i0+i] - self.trajectory.steps[i0]
-                            # Dimensional switch
-                            if ndims == 3:
-                                acf[ik][dt] += numpy.sum(x[i0+i, :, 0, kvec[0]]*x[i0, :, 0, kvec[0]].conjugate() *
-                                                         x[i0+i, :, 1, kvec[1]]*x[i0, :, 1, kvec[1]].conjugate() *
-                                                         x[i0+i, :, 2, kvec[2]]*x[i0, :, 2, kvec[2]].conjugate()).real
-                            elif ndims == 2:
-                                acf[ik][dt] += numpy.sum(x[i0+i, :, 0, kvec[0]]*x[i0, :, 0, kvec[0]].conjugate() *
-                                                         x[i0+i, :, 1, kvec[1]]*x[i0, :, 1, kvec[1]].conjugate()).real
-
-                            else:
-                                # Arbitrary dimension (a bit slower)
-                                tmp = x[i0+i, :, 0, kvec[0]]*x[i0, :, 0, kvec[0]].conjugate()
-                                for idim in range(1, len(kvec)):
-                                    tmp *= x[i0+i, :, idim, kvec[idim]]*x[i0, :, idim, kvec[idim]].conjugate()
-                                acf[ik][dt] += numpy.sum(tmp).real
-                            cnt[ik][dt] += x.shape[1]
-
-        # Define grids
-        tgrid = sorted(acf[0].keys())
-        self.grid[0] = self.kgrid
-        self.grid[1] = [ti*self.trajectory.timestep for ti in tgrid]
-        self.value = [[acf[k][t] / cnt[k][t] for t in tgrid] for k in range(len(acf))]
-
-        # Normalization
-        if self.normalize:
-            for k in range(len(self.grid[0])):
-                for i in range(len(self.value[k])):
-                    self.value[k][i] /= self.value[k][0]
-
-    def analyze(self):
-        self.analysis[&#39;relaxation times tau&#39;] = _extract_tau(self.grid[0], self.grid[1], self.value)
-
-    def write(self):
-        Correlation.write(self)
-        if self._output_file != &#39;/dev/stdout&#39;:
-            with open(self._output_file + &#39;.tau&#39;, &#39;w&#39;) as out:
-                _write_tau(out, self.analysis)</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li>postprocessing.fkt.IntermediateScatteringBase</li>
-<li><a title="postprocessing.fourierspace.FourierSpaceCorrelation" href="fourierspace.html#postprocessing.fourierspace.FourierSpaceCorrelation">FourierSpaceCorrelation</a></li>
-<li><a title="postprocessing.correlation.Correlation" href="correlation.html#postprocessing.correlation.Correlation">Correlation</a></li>
-</ul>
-<h3>Subclasses</h3>
-<ul class="hlist">
-<li><a title="postprocessing.fkt.SelfIntermediateScatteringFast" href="#postprocessing.fkt.SelfIntermediateScatteringFast">SelfIntermediateScatteringFast</a></li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="postprocessing.fkt.SelfIntermediateScatteringLegacy.long_name"><code class="name">var <span class="ident">long_name</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="postprocessing.fkt.SelfIntermediateScatteringLegacy.phasespace"><code class="name">var <span class="ident">phasespace</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="postprocessing.fkt.SelfIntermediateScatteringLegacy.short_name"><code class="name">var <span class="ident">short_name</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="postprocessing.fkt.SelfIntermediateScatteringLegacy.symbol"><code class="name">var <span class="ident">symbol</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Instance variables</h3>
-<dl>
-<dt id="postprocessing.fkt.SelfIntermediateScatteringLegacy.lookup_mb"><code class="name">var <span class="ident">lookup_mb</span></code></dt>
-<dd>
-<div class="desc"><p>Memory in Mb allocated for exponentials tabulation</p></div>
-</dd>
-</dl>
-<h3>Methods</h3>
-<dl>
-<dt id="postprocessing.fkt.SelfIntermediateScatteringLegacy.analyze"><code class="name flex">
-<span>def <span class="ident">analyze</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Subclasses may implement this and store the results in the
-self.analysis dictonary</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def analyze(self):
-    self.analysis[&#39;relaxation times tau&#39;] = _extract_tau(self.grid[0], self.grid[1], self.value)</code></pre>
-</details>
-</dd>
-<dt id="postprocessing.fkt.SelfIntermediateScatteringLegacy.write"><code class="name flex">
-<span>def <span class="ident">write</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Write the correlation function and the analysis data to file</p>
-<p>The <code>output_path</code> instance variable is used to define the
-output files by interpolating the following variables:</p>
-<ul>
-<li>symbol</li>
-<li>short_name</li>
-<li>long_name</li>
-<li>tag</li>
-<li>tag_description</li>
-<li>trajectory</li>
-</ul>
-<p>The default is defined by core.pp_output_path, which currently
-looks like '{trajectory.filename}.pp.{symbol}.{tag}'</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def write(self):
-    Correlation.write(self)
-    if self._output_file != &#39;/dev/stdout&#39;:
-        with open(self._output_file + &#39;.tau&#39;, &#39;w&#39;) as out:
-            _write_tau(out, self.analysis)</code></pre>
-</details>
-</dd>
-</dl>
 </dd>
 <dt id="postprocessing.fkt.SelfIntermediateScatteringLegacy"><code class="flex name class">
 <span>class <span class="ident">SelfIntermediateScatteringLegacy</span></span>
@@ -1218,16 +1125,7 @@ negative indices have a different meaning.</p>
 <h4><code><a title="postprocessing.fkt.SelfIntermediateScatteringFast" href="#postprocessing.fkt.SelfIntermediateScatteringFast">SelfIntermediateScatteringFast</a></code></h4>
 </li>
 <li>
-<h4><code><a title="postprocessing.fkt.SelfIntermediateScatteringLegacy" href="#postprocessing.fkt.SelfIntermediateScatteringLegacy">SelfIntermediateScatteringLegacy</a></code></h4>
-<ul class="two-column">
-<li><code><a title="postprocessing.fkt.SelfIntermediateScatteringLegacy.analyze" href="#postprocessing.fkt.SelfIntermediateScatteringLegacy.analyze">analyze</a></code></li>
-<li><code><a title="postprocessing.fkt.SelfIntermediateScatteringLegacy.long_name" href="#postprocessing.fkt.SelfIntermediateScatteringLegacy.long_name">long_name</a></code></li>
-<li><code><a title="postprocessing.fkt.SelfIntermediateScatteringLegacy.lookup_mb" href="#postprocessing.fkt.SelfIntermediateScatteringLegacy.lookup_mb">lookup_mb</a></code></li>
-<li><code><a title="postprocessing.fkt.SelfIntermediateScatteringLegacy.phasespace" href="#postprocessing.fkt.SelfIntermediateScatteringLegacy.phasespace">phasespace</a></code></li>
-<li><code><a title="postprocessing.fkt.SelfIntermediateScatteringLegacy.short_name" href="#postprocessing.fkt.SelfIntermediateScatteringLegacy.short_name">short_name</a></code></li>
-<li><code><a title="postprocessing.fkt.SelfIntermediateScatteringLegacy.symbol" href="#postprocessing.fkt.SelfIntermediateScatteringLegacy.symbol">symbol</a></code></li>
-<li><code><a title="postprocessing.fkt.SelfIntermediateScatteringLegacy.write" href="#postprocessing.fkt.SelfIntermediateScatteringLegacy.write">write</a></code></li>
-</ul>
+<h4><code><a title="postprocessing.fkt.SelfIntermediateScatteringFast" href="#postprocessing.fkt.SelfIntermediateScatteringFast">SelfIntermediateScatteringFast</a></code></h4>
 </li>
 <li>
 <h4><code><a title="postprocessing.fkt.SelfIntermediateScatteringLegacy" href="#postprocessing.fkt.SelfIntermediateScatteringLegacy">SelfIntermediateScatteringLegacy</a></code></h4>

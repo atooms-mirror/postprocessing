@@ -22,7 +22,8 @@ debug: version
 
 docs:
 	pdoc -o docs/api --force --html --skip-errors $(PROJECT)
-	# sed -i '/^$/d' docs/tutorial/tutorial.html
+	sed -i '/^$$/d' docs/index.html
+	orgnb.py docs/index.org docs/postprocessing.ipynb
 
 test:
 	mv $(PROJECT) $(PROJECT).tmp
