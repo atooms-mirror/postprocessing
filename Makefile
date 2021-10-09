@@ -22,6 +22,7 @@ debug: version
 
 docs:
 	pdoc -o docs/api --force --html --skip-errors $(PROJECT)
+	# sed -i '/^$/d' docs/tutorial/tutorial.html
 
 test:
 	mv $(PROJECT) $(PROJECT).tmp

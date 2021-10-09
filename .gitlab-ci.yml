@@ -57,6 +57,7 @@ pages:
     paths:
       - public
   script:
-    echo
+    - mkdir -p public
+    - mv docs/* public/
   only:
     - master
