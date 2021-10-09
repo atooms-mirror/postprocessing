@@ -49,7 +49,12 @@ with Trajectory('data/trajectory.xyz') as t:
      p.do()
 ```
 
-Checkout the [tutorial](https://www-dft.ts.infn.it/~coslovich/pp_notebook/) and [notebook](https://framagit.org/atooms/postprocessing/raw/master/docs/tutorial.ipynb) for more details.
+Documentation
+-------------
+- [Tutorial](https://atooms.frama.io/postprocessing/index.html)
+- [Notebook](https://framagit.org/atooms/postprocessing/-/blob/master/docs/postprocessing.ipynb)
+- [Binder](https://mybinder.org/v2/git/https%3A%2F%2Fframagit.org%2Fatooms%2Fpostprocessing.git/HEAD?labpath=docs%2F)
+- [Public API](https://atooms.frama.io/postprocessing/api/postprocessing.html)
 
 Requirements
 ------------
