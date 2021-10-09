@@ -51,8 +51,7 @@ with Trajectory('data/trajectory.xyz') as t:
 
 Documentation
 -------------
-- [Tutorial](https://atooms.frama.io/postprocessing/index.html)
-- [Notebook](https://framagit.org/atooms/postprocessing/-/blob/master/docs/index.ipynb)
+- Tutorial: [pdf](https://atooms.frama.io/postprocessing/index.html), [jupyter notebook](https://framagit.org/atooms/postprocessing/-/blob/master/docs/index.ipynb), [pdf]((https://framagit.org/atooms/postprocessing/-/blob/master/docs/index.pdf))
 - [Public API](https://atooms.frama.io/postprocessing/api/postprocessing)
 
 Requirements
