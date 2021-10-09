@@ -57,6 +57,7 @@ th[0], th[10], th[-1]
 #+end_src
 
 #+results:
+: (<atooms.system.system.System object at 0x7f7cbff74a30>, <atooms.system.system.System object at 0x7f7cbff85400>, <atooms.system.system.System object at 0x7f7cbff91d90>)
 
 To know how many frames we have
 #+begin_src python
@@ -64,6 +65,7 @@ len(th)
 #+end_src
 
 #+results:
+: 101
 
 To clarify: a slice is a list of frames, not a trajectory
 #+begin_src python
@@ -71,7 +73,7 @@ th[10: 15]
 #+end_src
 
 #+results:
-: [<atooms.system.system.System object at 0x7fee8d1c8d00>, <atooms.system.system.System object at 0x7fee8d1d56d0>, <atooms.system.system.System object at 0x7fee8d1df0a0>, <atooms.system.system.System object at 0x7fee8d13da30>, <atooms.system.system.System object at 0x7fee8d150400>]
+: [<atooms.system.system.System object at 0x7f7cbff6fa90>, <atooms.system.system.System object at 0x7f7cbff7e490>, <atooms.system.system.System object at 0x7f7cbff8ee20>, <atooms.system.system.System object at 0x7f7cbfef0820>, <atooms.system.system.System object at 0x7f7cbfefe1f0>]
 
 Note: it is actually possible to define a slice of a trajectory *as a trajectory* by using the =Sliced= class decorator, see below.
 
@@ -146,10 +148,10 @@ pprint(gr.partial)
 #+end_src
 
 #+results:
-: {('A', 'A'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7fee8cbd6c70>,
-:  ('A', 'B'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7fee8cbd6d00>,
-:  ('B', 'A'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7fee8cbd6cd0>,
-:  ('B', 'B'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7fee8cbd6d90>}
+: {('A', 'A'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f7cbce85af0>,
+:  ('A', 'B'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f7cbcea0f10>,
+:  ('B', 'A'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f7cbcea08b0>,
+:  ('B', 'B'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f7cbcea0460>}
 
 We can treat the result as any norrmal dictionary: 
 #+begin_src python :prologue "pl.clf()" :epilogue "pl.savefig(image, bbox_inches='tight'); print(image); del image" :results file :var image="gr_ab.png"
@@ -159,6 +161,9 @@ pl.legend()
 pl.xlabel("r")
 pl.ylabel(r"$g_{\alpha\beta}(r)$")
 #+end_src
+
+#+results:
+[[file:gr_ab.png]]
 
 Sometimes, it is useful to analyse only sections of a trajectory. To this purpose, one can slice the trajectory using *atooms* and analyse individual frames or subsets of frames. 
 #+begin_src python :prologue "pl.clf()" :epilogue "pl.savefig(image, bbox_inches='tight'); print(image); del image" :results file :var image="gr_slice.png"
@@ -170,6 +175,9 @@ pl.plot(gr.grid, gr.value)
 pl.xlabel("r")
 pl.ylabel("g(r)")  # notice that the g(r) is more noisy
 #+end_src
+
+#+results:
+[[file:gr_slice.png]]
 
 ** Dynamical correlations
 
@@ -198,6 +206,7 @@ pl.ylabel("MSD(t)");
 #+end_src
 
 #+results:
+[[file:msd.png]]
 
 Again, we can compute partial mean square displacements using the =Partial= class
 #+begin_src python :prologue "pl.clf()" :epilogue "pl.savefig(image, bbox_inches='tight'); print(image); del image" :results file :var image="msd_ab.png"
@@ -210,6 +219,7 @@ pl.ylabel("MSD(t)")
 #+end_src
 
 #+results:
+[[file:msd_ab.png]]
 
 *** Self intermediate scattering function
 
@@ -229,6 +239,9 @@ The ISF decays to zero at long times, as it should in an ergodic liquid.
 #+begin_src python :prologue "pl.clf()" :epilogue "pl.savefig(image, bbox_inches='tight'); print(image); del image" :results file :var image="isf.png"
 pl.semilogx(isf.partial['A'].grid[1], isf.partial['A'].value[0], '-o') 
 #+end_src
+
+#+results:
+[[file:isf.png]]
 
 * Writing your own correlation function
 We can extend the correlation class to compute additional correlation functions. The particle coordinates are loaded into the =_pos= instance variable as a list of numpy arrays. Each numpy array is a =(ndim, npart)= representation of the full particles' coordinates in a given frame of the trajectory. This is a gist of a new correlation class.
