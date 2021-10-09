@@ -23,34 +23,34 @@ cache:
 #   - virtualenv env
 #   - source env/bin/activate
 
-# test:f90:
-#   image: python:latest
-#   coverage: '/^TOTAL.+?(\d+\%)$/'
-#   script:
-#   - python -V  # Print out python version for debugging
-#   - pip install virtualenv
-#   - virtualenv env
-#   - source env/bin/activate
-#   - pip install -r requirements.txt
-#   - apt-get update
-#   - apt-get -q -q -y install g++ gfortran
-#   - apt-get -q -q -y install python3
-#   - apt-get -q -q -y install python3-pip
-#   - python3 -V  # Print out python version for debugging
-#   - rm -rf env/
-#   - pip3 install virtualenv
-#   - virtualenv env
-#   - source env/bin/activate
-#   - pip install -r requirements.txt
-#   - pip install coverage
-#   - pip install .
-#   # - cd atooms/postprocessing
-#   # - f2py -c -m realspace_wrap realspace.f90
-#   # - f2py -c -m fourierspace_wrap fourierspace.f90
-#   # - cd ../../
-#   - make coverage
-#   # - coverage run --source atooms -m unittest discover -s tests
-#   # - coverage report -m
+test:f90:
+  image: python:latest
+  coverage: '/^TOTAL.+?(\d+\%)$/'
+  script:
+  - python -V  # Print out python version for debugging
+  - pip install virtualenv
+  - virtualenv env
+  - source env/bin/activate
+  - pip install -r requirements.txt
+  - apt-get update
+  - apt-get -q -q -y install g++ gfortran
+  - apt-get -q -q -y install python3
+  - apt-get -q -q -y install python3-pip
+  - python3 -V  # Print out python version for debugging
+  - rm -rf env/
+  - pip3 install virtualenv
+  - virtualenv env
+  - source env/bin/activate
+  - pip install -r requirements.txt
+  - pip install coverage
+  - pip install .
+  # - cd atooms/postprocessing
+  # - f2py -c -m realspace_wrap realspace.f90
+  # - f2py -c -m fourierspace_wrap fourierspace.f90
+  # - cd ../../
+  - make coverage
+  # - coverage run --source atooms -m unittest discover -s tests
+  # - coverage report -m
 
 pages:
   artifacts:
