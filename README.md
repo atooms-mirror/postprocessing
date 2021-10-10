@@ -3,7 +3,7 @@
 [![pypi](https://img.shields.io/pypi/v/atooms-pp.svg)](https://pypi.python.org/pypi/atooms-pp/)
 [![version](https://img.shields.io/pypi/pyversions/atooms-pp.svg)](https://pypi.python.org/pypi/atooms-pp/)
 [![license](https://img.shields.io/pypi/l/atooms-pp.svg)](https://en.wikipedia.org/wiki/GNU_General_Public_License)
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/https%3A%2F%2Fframagit.org%2Fatooms%2Fpostprocessing/HEAD?labpath=docs%2Findex.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/git/https%3A%2F%2Fframagit.org%2Fatooms%2Fpostprocessing/HEAD?labpath=docs%2Findex.ipynb)
 [![pipeline](https://framagit.org/atooms/postprocessing/badges/master/pipeline.svg)](https://framagit.org/atooms/postprocessing/badges/master/pipeline.svg)
 [![coverage report](https://framagit.org/atooms/postprocessing/badges/master/coverage.svg?job=test:f90)](https://framagit.org/atooms/postprocessing/-/commits/master)
 
@@ -74,8 +74,10 @@ Check out the [tutorial](https://atooms.frama.io/postprocessing/index.html) for 
 The tutorial is also available as
 - [org-mode file](https://framagit.org/atooms/postprocessing/-/blob/master/docs/index.org)
 - [jupyter notebook](https://framagit.org/atooms/postprocessing/-/blob/master/docs/index.ipynb)
-- [jupyter notebook on binder](https://framagit.org/atooms/postprocessing/-/blob/master/docs/index.ipynb) for interactive execution
+- [jupyter notebook on binder](https://mybinder.org/v2/git/https%3A%2F%2Fframagit.org%2Fatooms%2Fpostprocessing/HEAD?labpath=docs%2Findex.ipynb) for interactive execution
 - nice, old-school [pdf file](https://framagit.org/atooms/postprocessing/-/blob/master/docs/index.pdf)
+
+
 
 ## Requirements
 
