@@ -4,7 +4,8 @@
 #+html_doctype: html5
 #+options: html-style:nil
 
-In this notebook, we are going to show how to perform standard analysis of molecular dynamics trajectories using the **atooms** package and its **postprocessing** component. You can install **postprocessing** from pypi: =pip install atooms-pp=. 
+#+latex: \newpage
+In this tutorial, we are going to show how to perform standard analysis of molecular dynamics trajectories using the **atooms** package and its **postprocessing** component. You can install **postprocessing** from pypi: =pip install atooms-pp=. 
 
 * Setup                                                    :noexport:ARCHIVE:
 #+language: en

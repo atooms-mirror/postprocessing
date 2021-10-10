@@ -3,6 +3,7 @@
 [![pypi](https://img.shields.io/pypi/v/atooms-pp.svg)](https://pypi.python.org/pypi/atooms-pp/)
 [![version](https://img.shields.io/pypi/pyversions/atooms-pp.svg)](https://pypi.python.org/pypi/atooms-pp/)
 [![license](https://img.shields.io/pypi/l/atooms-pp.svg)](https://en.wikipedia.org/wiki/GNU_General_Public_License)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/https%3A%2F%2Fframagit.org%2Fatooms%2Fpostprocessing/HEAD?labpath=docs%2Findex.ipynb)
 [![pipeline](https://framagit.org/atooms/postprocessing/badges/master/pipeline.svg)](https://framagit.org/atooms/postprocessing/badges/master/pipeline.svg)
 [![coverage report](https://framagit.org/atooms/postprocessing/badges/master/coverage.svg?job=test:f90)](https://framagit.org/atooms/postprocessing/-/commits/master)
 
@@ -54,20 +55,27 @@ Available correlation and distribution functions
   - radial distribution function
   - mean square displacement
   - velocity auto-correlation function
-  - self and collective overlap functions
+  - self overlap functions
+  - collective overlap functions
   - dynamic susceptibility of the self overlap function
   - non-Gaussian parameter
   - bond-angle distribution
 - *Fourier space*
   - structure factor
   - spectral density
-  - self and collective intermediate scattering functions
+  - self intermediate scattering functions
+  - collective intermediate scattering functions
   - four-point dynamic susceptibility
 
 ## Documentation
 
-- [Tutorial](https://atooms.frama.io/postprocessing/index.html) (also available as [jupyter notebook](https://framagit.org/atooms/postprocessing/-/blob/master/docs/index.ipynb) and as [pdf file](https://framagit.org/atooms/postprocessing/-/blob/master/docs/index.pdf))
-- [Public API](https://atooms.frama.io/postprocessing/api/postprocessing)
+Check out the [tutorial](https://atooms.frama.io/postprocessing/index.html) for more examples and the [public API](https://atooms.frama.io/postprocessing/api/postprocessing) for full details.
+
+The tutorial is also available as
+- [org-mode file](https://framagit.org/atooms/postprocessing/-/blob/master/docs/index.org)
+- [jupyter notebook](https://framagit.org/atooms/postprocessing/-/blob/master/docs/index.ipynb)
+- [jupyter notebook on binder](https://framagit.org/atooms/postprocessing/-/blob/master/docs/index.ipynb) for interactive execution
+- nice, old-school [pdf file](https://framagit.org/atooms/postprocessing/-/blob/master/docs/index.pdf)
 
 ## Requirements
 
