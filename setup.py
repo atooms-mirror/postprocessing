@@ -47,7 +47,7 @@ try:
                                      sources=['atooms/postprocessing/fourierspace.f90'],
                                      extra_f90_compile_args=[])]
 
-except (ModuleNotFoundError, ImportError):
+except:
     from distutils.core import setup
 
 setup(**args)
