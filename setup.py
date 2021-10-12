@@ -50,4 +50,8 @@ try:
 except (ModuleNotFoundError, ImportError):
     from distutils.core import setup
 
-setup(**args)
+try:
+    setup(**args)
+except:
+    args["ext_modules"] = []
+    setup(**args)

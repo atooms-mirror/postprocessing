@@ -21,6 +21,9 @@ debug: version
 	python setup.py config_fc --quiet --opt '-O3 -funroll-loops -fbounds-check' install
 
 docs:
+	pdoc -o docs/api --force --html --skip-errors $(PROJECT)
+	sed -i '/^$$/d' docs/index.html
+	orgnb.py docs/index.org docs/postprocessing.ipynb
 
 test:
 	mv $(PROJECT) $(PROJECT).tmp
