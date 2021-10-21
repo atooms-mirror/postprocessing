@@ -190,7 +190,7 @@ def msd(input_file, tmax=-1.0, tmax_fraction=0.75, tsamples=30,
                                   norigins=global_args[&#39;norigins&#39;],
                                   sigma=sigma, rmax=rmsd_max, no_offset=no_offset,
                                   fix_cm=fix_cm).do(update=global_args[&#39;update&#39;])
-        if len(ids) &gt; 1:
+        if len(ids) &gt; 1 and not global_args[&#39;no_partial&#39;]:
             Partial(pp.MeanSquareDisplacement, ids, th, tgrid=t_grid,
                     norigins=global_args[&#39;norigins&#39;], sigma=sigma,
                     rmax=rmsd_max, no_offset=no_offset).do(update=global_args[&#39;update&#39;])
@@ -209,7 +209,7 @@ def vacf(input_file, tmax=-1.0, tmax_fraction=0.10,
             t_grid = None
         pp.VelocityAutocorrelation(th, t_grid, norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])
         ids = distinct_species(th[0].particle)
-        if len(ids) &gt; 1:
+        if len(ids) &gt; 1 and not global_args[&#39;no_partial&#39;]:
             Partial(pp.VelocityAutocorrelation, ids, th,
                     t_grid, norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])
 
@@ -236,7 +236,7 @@ def fkt(input_file, tmax=-1.0, tmax_fraction=0.75,
             pp.IntermediateScattering(th, k_grid, t_grid,
                                       norigins=global_args[&#39;norigins&#39;],
                                       nk=nk, dk=dk, fix_cm=fix_cm).do(update=global_args[&#39;update&#39;])
-        if len(ids) &gt; 1:
+        if len(ids) &gt; 1 and not global_args[&#39;no_partial&#39;]:
             Partial(pp.IntermediateScattering, ids, th, k_grid, t_grid,
                     norigins=global_args[&#39;norigins&#39;],
                     nk=nk, dk=dk, fix_cm=fix_cm).do(update=global_args[&#39;update&#39;])
@@ -312,7 +312,7 @@ def alpha2(input_file, tmax=-1.0, tmax_fraction=0.75,
             t_grid = None
         pp.NonGaussianParameter(th, t_grid, norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])
         ids = distinct_species(th[0].particle)
-        if len(ids) &gt; 1:
+        if len(ids) &gt; 1 and not global_args[&#39;no_partial&#39;]:
             Partial(pp.NonGaussianParameter, ids, th, t_grid,
                     norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])
 
@@ -330,7 +330,7 @@ def qst(input_file, tmax=-1.0, tmax_fraction=0.75,
             t_grid = None
         pp.SelfOverlap(th, t_grid, norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])
         ids = distinct_species(th[0].particle)
-        if len(ids) &gt; 1:
+        if len(ids) &gt; 1 and not global_args[&#39;no_partial&#39;]:
             Partial(pp.SelfOverlap, ids, th, t_grid,
                     norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])
 
@@ -348,7 +348,7 @@ def qt(input_file, tmax=-1.0, tmax_fraction=0.75,
             t_grid = None
         pp.CollectiveOverlap(th, t_grid, norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])
         ids = distinct_species(th[0].particle)
-        if len(ids) &gt; 1:
+        if len(ids) &gt; 1 and not global_args[&#39;no_partial&#39;]:
             Partial(pp.CollectiveOverlap, ids, th, t_grid,
                     norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])
 
@@ -399,7 +399,7 @@ def ba(input_file, dtheta=4.0, grandcanonical=False, *input_files, **global_args
             t_grid = None
         pp.NonGaussianParameter(th, t_grid, norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])
         ids = distinct_species(th[0].particle)
-        if len(ids) &gt; 1:
+        if len(ids) &gt; 1 and not global_args[&#39;no_partial&#39;]:
             Partial(pp.NonGaussianParameter, ids, th, t_grid,
                     norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])</code></pre>
 </details>
@@ -497,7 +497,7 @@ def ba(input_file, dtheta=4.0, grandcanonical=False, *input_files, **global_args
             pp.IntermediateScattering(th, k_grid, t_grid,
                                       norigins=global_args[&#39;norigins&#39;],
                                       nk=nk, dk=dk, fix_cm=fix_cm).do(update=global_args[&#39;update&#39;])
-        if len(ids) &gt; 1:
+        if len(ids) &gt; 1 and not global_args[&#39;no_partial&#39;]:
             Partial(pp.IntermediateScattering, ids, th, k_grid, t_grid,
                     norigins=global_args[&#39;norigins&#39;],
                     nk=nk, dk=dk, fix_cm=fix_cm).do(update=global_args[&#39;update&#39;])</code></pre>
@@ -631,7 +631,7 @@ def ba(input_file, dtheta=4.0, grandcanonical=False, *input_files, **global_args
                                   norigins=global_args[&#39;norigins&#39;],
                                   sigma=sigma, rmax=rmsd_max, no_offset=no_offset,
                                   fix_cm=fix_cm).do(update=global_args[&#39;update&#39;])
-        if len(ids) &gt; 1:
+        if len(ids) &gt; 1 and not global_args[&#39;no_partial&#39;]:
             Partial(pp.MeanSquareDisplacement, ids, th, tgrid=t_grid,
                     norigins=global_args[&#39;norigins&#39;], sigma=sigma,
                     rmax=rmsd_max, no_offset=no_offset).do(update=global_args[&#39;update&#39;])</code></pre>
@@ -660,7 +660,7 @@ def ba(input_file, dtheta=4.0, grandcanonical=False, *input_files, **global_args
             t_grid = None
         pp.SelfOverlap(th, t_grid, norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])
         ids = distinct_species(th[0].particle)
-        if len(ids) &gt; 1:
+        if len(ids) &gt; 1 and not global_args[&#39;no_partial&#39;]:
             Partial(pp.SelfOverlap, ids, th, t_grid,
                     norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])</code></pre>
 </details>
@@ -688,7 +688,7 @@ def ba(input_file, dtheta=4.0, grandcanonical=False, *input_files, **global_args
             t_grid = None
         pp.CollectiveOverlap(th, t_grid, norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])
         ids = distinct_species(th[0].particle)
-        if len(ids) &gt; 1:
+        if len(ids) &gt; 1 and not global_args[&#39;no_partial&#39;]:
             Partial(pp.CollectiveOverlap, ids, th, t_grid,
                     norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])</code></pre>
 </details>
@@ -764,7 +764,7 @@ def ba(input_file, dtheta=4.0, grandcanonical=False, *input_files, **global_args
             t_grid = None
         pp.VelocityAutocorrelation(th, t_grid, norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])
         ids = distinct_species(th[0].particle)
-        if len(ids) &gt; 1:
+        if len(ids) &gt; 1 and not global_args[&#39;no_partial&#39;]:
             Partial(pp.VelocityAutocorrelation, ids, th,
                     t_grid, norigins=global_args[&#39;norigins&#39;]).do(update=global_args[&#39;update&#39;])</code></pre>
 </details>
