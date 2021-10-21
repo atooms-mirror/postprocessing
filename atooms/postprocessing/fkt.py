@@ -73,7 +73,7 @@ class IntermediateScatteringBase(FourierSpaceCorrelation):
             if self.normalize:
                 if self.grid[1][0] > 0:
                     _log.info('adding t=0 to the time grid to normalize F_s(k,t)')
-                    self.grid[1] = [0.0] + self.grid[1]
+                    self.grid[1] = [0.0] + list(self.grid[1])
 
         # When a single time origin is requested,
         # make sure no additional time origins except the first frame is used

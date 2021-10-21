@@ -33,7 +33,7 @@ from atooms.trajectory import TrajectoryXYZ
 
 #+results:
 
-We consider a sa mple trajectory, which can be download from the repository of the postprocessing package itself. Let's store the path to this file in a variable for later convenience
+We consider a sample trajectory, which can be download from the repository of the postprocessing package itself. Let's store the path to this file in a variable for later convenience
 #+begin_src python
 from atooms.core.utils import download
 download('https://framagit.org/atooms/postprocessing/raw/master/data/kalj-small.xyz', "/tmp")
@@ -235,13 +235,11 @@ We compute the self part of the intermediate scattering function (ISF) at specif
 #+begin_src python
 from math import pi
 import numpy
-tgrid = [0] + list(numpy.logspace(0, 3, base=10))  # we must include t=0
+tgrid = numpy.logspace(0, 3, base=10)  # we must include t=0
 isf = pp.Partial(pp.SelfIntermediateScattering, species=["A"], trajectory=th,
                  kgrid=[2*pi, 2.5*pi], nk=1, tgrid=tgrid)
 isf.do()
 #+end_src
-
-#+results:
 
 To get some info on the parameters passed to compute the ISF, have a look at the help for the base class with =help(pp.fourierspace.FourierSpaceCorrelation)=
 
