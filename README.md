@@ -11,11 +11,6 @@ Post-processing tools to compute static and dynamic correlation functions from s
 
 ## Quick start
 
-Installation is easy (see [Installation](#installation) for more details)
-```
-pip install atooms-pp
-```
-
 We can now compute correlation functions from trajectories produced
 by particle simulation codes. Any trajectory format recognized by
 [atooms](https://framagit.org/atooms/atooms.git) can be processed, for instance most "xyz" files
@@ -27,12 +22,10 @@ file `trajectory.xyz` contained in the `data/` folder.
 ### From the command line
 
 ![https://www-dft.ts.infn.it/~coslovich/anim.gif](https://framagit.org/atooms/postprocessing/raw/master/docs/anim.gif)
-
-In the example above, we used 20% of the available time frames to compute the averages using the `--norigins` flag. Without it, atooms-pp applies an heuristics to determine the number of time frames required to achieve a reasonable data quality.
-
-The results of the calculation are stored in `data/trajectory.xyz.pp.sk`. If
-the system is a mixture of different types of particles, say A and B, the program will create additional files for
-partial correlations, named `trajectory.xyz.pp.sk.A-A`, `trajectory.xyz.pp.sk.B-B` and `trajectory.xyz.pp.sk.A-B`.
+```sh
+pp.py --norigins 0.2 msd data/trajectory.xyz
+```
+In the example above, we used 20% of the available time frames to compute the averages using the `--norigins` flag. Without it, atooms-pp applies an heuristics to determine the number of time frames required to achieve a reasonable data quality. The results of the calculation are stored in the file `data/trajectory.xyz.pp.sk`. 
 
 ### From Python
 
@@ -75,9 +68,7 @@ The tutorial is also available as
 - [org-mode file](https://framagit.org/atooms/postprocessing/-/blob/master/docs/index.org)
 - [jupyter notebook](https://framagit.org/atooms/postprocessing/-/blob/master/docs/index.ipynb)
 - [jupyter notebook on binder](https://mybinder.org/v2/git/https%3A%2F%2Fframagit.org%2Fatooms%2Fpostprocessing/HEAD?labpath=docs%2Findex.ipynb) for interactive execution
-- nice, old-school [pdf file](https://framagit.org/atooms/postprocessing/-/blob/master/docs/index.pdf)
-
-
+- [pdf file](https://framagit.org/atooms/postprocessing/-/blob/master/docs/index.pdf)
 
 ## Requirements
 
@@ -86,10 +77,16 @@ The tutorial is also available as
 - [optional] [argh](https://pypi.org/project/argh/) (only needed when using `pp.py`)
 - [optional] [tqdm](https://pypi.org/project/tqdm/) (enable progress bars)
 - [optional] [argcomplete](https://pypi.org/project/argcomplete/) (enable tab-completion for `pp.py`)
+- [optional] fortran compiler for more efficient execution
 
 ## Installation
 
-If you cannot install the package system-wide, you can still install it in the user space. Either from pypi
+Install with `pip`
+```
+pip install atooms-pp
+```
+
+If you cannot install the package system-wide, you can still install it in the user space
 ```
 pip install --user atooms-pp
 ```
@@ -107,4 +104,4 @@ Contributions to the project are welcome. If you wish to contribute, check out [
 
 ## Authors
 
-Daniele Coslovich: http://www-dft.ts.infn.it/~coslovich/
+Daniele Coslovich: https://www.units.it/daniele.coslovich/
