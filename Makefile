@@ -40,5 +40,5 @@ pep8:
 
 clean:
 	find $(PROJECT) tests -name '*.pyc' -name '*.so' -exec rm '{}' +
-	find $(PROJECT) tests -name -name '__pycache__' -exec rm -r '{}' +
+	find $(PROJECT) tests -name '__pycache__' -exec rm -r '{}' +
 	rm -rf build/ dist/
