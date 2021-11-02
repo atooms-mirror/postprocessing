@@ -15,6 +15,3 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### New
 - Add `FourierSpaceCorrelation.kvectors` as a property to store the lists of k-vectors used for each entry in `FourierSpaceCorrelation.kgrid`
 - Add `Partial.output_path` property
-
-
-
