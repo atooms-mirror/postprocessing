@@ -52,7 +52,13 @@ try:
         """Slightly customized tqdm progress bar"""
 
         def __init__(self, *args, **kwargs):
-            tqdm.__init__(self, disable=not active,
+            # If active option is passed it takes precedence over the module level variable
+            if 'active' in kwargs:
+                _active = kwargs['active']
+                kwargs.pop('active')
+            else:
+                _active = active
+            tqdm.__init__(self, disable=not _active,
                           bar_format=bar_format, ncols=ncols, file=sys.stdout, *args, **kwargs)
 
         def update(self, n=1):

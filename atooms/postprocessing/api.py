@@ -1,6 +1,7 @@
 """Post processing API."""
 
 import atooms.postprocessing as pp
+from atooms.postprocessing.progress import progress
 from atooms.postprocessing.partial import Partial
 from atooms.trajectory import Trajectory
 from atooms.trajectory.decorators import change_species, center
@@ -191,7 +192,11 @@ def fkt(input_file, tmax=-1.0, tmax_fraction=0.75,
     """Total intermediate scattering function"""
     global_args = _compat(global_args)
     func = _func_db[func]
-    for th in _get_trajectories([input_file] + list(input_files), global_args):
+    files = [input_file] + list(input_files)
+    traj = _get_trajectories(files, global_args)
+    bar = progress(active=True, total=len(files))
+    for i, th in enumerate(traj):
+        bar.update(i)
         if tmax > 0:
             t_grid = [0.0] + func(th.timestep, tmax, tsamples)
         elif tmax_fraction > 0:
