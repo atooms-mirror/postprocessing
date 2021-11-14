@@ -21,7 +21,6 @@ file `trajectory.xyz` contained in the `data/` folder.
 
 ### From the command line
 
-![https://www-dft.ts.infn.it/~coslovich/anim.gif](https://framagit.org/atooms/postprocessing/raw/master/docs/anim.gif)
 ```sh
 pp.py --norigins 0.2 msd data/trajectory.xyz
 ```
@@ -86,17 +85,12 @@ Install with `pip`
 pip install atooms-pp
 ```
 
-If you cannot install the package system-wide, you can still install it in the user space
-```
-pip install --user atooms-pp
-```
-or cloning the project repo 
+Or clone the project repository
 ```
 git clone https://framagit.org/atooms/postprocessing.git
 cd postprocessing
-pip install --user .
+make install
 ```
-The commands above will install `pp.py` under `~/.local/bin`. Make sure this folder is in your `$PATH`.
 
 ## Contributing
 
