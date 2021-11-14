@@ -1,5 +1,5 @@
 numpy
-atooms>=2,<4
+atooms>=2
 argh  # optional
 tqdm  # optional
 

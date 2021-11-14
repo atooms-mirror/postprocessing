@@ -22,7 +22,7 @@ args = dict(name='atooms-pp',
             url='http://www.coulomb.univ-montp2.fr/perso/daniele.coslovich/',
             packages=['atooms', 'atooms/postprocessing'],
             scripts=glob.glob(os.path.join('bin', '*.py')),
-            install_requires=['atooms>=1.10,<4', 'numpy', 'argh', 'tqdm'],
+            install_requires=['atooms>=2', 'numpy', 'argh', 'tqdm'],
             license='GPLv3',
             setup_requires = ['numpy'],
             classifiers=[
