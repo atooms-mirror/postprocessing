@@ -65,7 +65,7 @@ pygments_style = 'friendly'
 html_theme = 'alabaster'
 html_static_path = ['_static/custom.css']
 html_theme_options = {
-    'description': 'Analyze trajectories from particle-based simulations with atooms',
+    'description': 'Compute static and dynamic correlation functions from simulations of interacting particles',
     'fixed_sidebar': True,
     'sidebar_collapse': True,
     'extra_nav_links': {'Run this tutorial on Binder': 'https://atooms.frama.io/postprocessing/',

@@ -358,6 +358,7 @@ class Correlation(object):
                     # Fixing the CM must be done explicitly using
                     # particle.position_unfolded because atooms.system
                     # methods work with particle.position
+                    # TODO: can be revised with atooms 3.4.0
                     if self._fix_cm:
                         # Compute CM using unfolded positions, which is safe
                         cm = numpy.zeros_like(s.particle[0].position_unfolded)

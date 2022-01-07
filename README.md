@@ -61,13 +61,7 @@ Available correlation and distribution functions
 
 ## Documentation
 
-Check out the [tutorial](https://atooms.frama.io/postprocessing/index.html) for more examples and the [public API](https://atooms.frama.io/postprocessing/api/postprocessing) for full details.
-
-The tutorial is also available as
-- [org-mode file](https://framagit.org/atooms/postprocessing/-/blob/master/docs/index.org)
-- [jupyter notebook](https://framagit.org/atooms/postprocessing/-/blob/master/docs/index.ipynb)
-- [jupyter notebook on binder](https://mybinder.org/v2/git/https%3A%2F%2Fframagit.org%2Fatooms%2Fpostprocessing/HEAD?labpath=docs%2Findex.ipynb) for interactive execution
-- [pdf file](https://framagit.org/atooms/postprocessing/-/blob/master/docs/index.pdf)
+Check out the [tutorial](https://atooms.frama.io/postprocessing/tutorial) for more examples and the [public API](https://atooms.frama.io/postprocessing/api/postprocessing) for full details. Org-mode and jupyter notebooks are available under `docs/`. Try out the tutorial live on [Binder]( https://mybinder.org/v2/git/https%3A%2F%2Fframagit.org%2Fatooms%2Fpostprocessing/HEAD?labpath=docs%2Findex.ipynb).
 
 ## Requirements
 
