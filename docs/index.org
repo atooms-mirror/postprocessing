@@ -1,23 +1,18 @@
 #+title: Atooms: postprocessing
 #+author: Francesco Turci, Daniele Coslovich
-#+date: Minimum version: >= 2.0.0
-#+html_doctype: html5
-#+options: html-style:nil
+#+setupfile: org.setup
 
-#+latex: \newpage
-In this tutorial, we are going to show how to perform standard analysis of molecular dynamics trajectories using the **atooms** package and its **postprocessing** component. You can install **postprocessing** from pypi: =pip install atooms-pp=. 
+* Postprocessing with atooms
 
-* Setup                                                    :noexport:ARCHIVE:
-#+language: en
-#+select_tags: export
-#+exclude_tags: noexport
-#+options: toc:t num:t title:t author:t email:nil timestamp:t h:4 \n:nil @:t ::t |:t ^:{} _:{} *:t tex:t latex:t
-#+property: header-args:python :exports both :session :results output :tangle index.py
-#+property: header-args:gnuplot :exports results
-#+setupfile: /home/coslo/usr/org-config/latex.setup
-#+setupfile: https://coslo.frama.io/org-html-themes/org/theme-readtheorg.setup
+#+attr_rst: :directive toctree
+#+begin_quote
+    :hidden:
+    index
+#+end_quote
 
-* Setup
+In this tutorial, we are going to show how to perform standard analysis of molecular dynamics trajectories using the =atooms= package and its =postprocessing= component. You can install =postprocessing= from pypi: =pip install atooms-pp=. 
+
+** Setup
 
 We start by loading common libraries for plotting and path handling
 #+begin_src python :results none
@@ -25,7 +20,7 @@ import matplotlib.pyplot as pl
 import sys
 #+end_src
 
-We then import the **postprocessing** package and the trajectory class from **atooms**. In this particular case, we will read a trajectory file in XYZ format, so we load the =TrajectoryXYZ= class
+We then import the =postprocessing= package and the trajectory class from =atooms=. In this particular case, we will read a trajectory file in XYZ format, so we load the =TrajectoryXYZ= class
 #+begin_src python
 import atooms.postprocessing as pp
 from atooms.trajectory import TrajectoryXYZ 
@@ -42,7 +37,7 @@ path = '/tmp/kalj-small.xyz'
 
 #+results:
 
-* Handling a trajectory
+*** Handling a trajectory
 
 A trajectory is an object with many properties. To load a trajectory, we create an instance of the class as follows
 #+begin_src python
@@ -75,7 +70,10 @@ th[10: 12]
 #+results:
 : [<atooms.system.system.System object at 0x7f2b75813e50>, <atooms.system.system.System object at 0x7f2b75820850>]
 
-Note: it is actually possible to define a slice of a trajectory *as a trajectory* by using the =Sliced= class decorator, see below.
+#+attr_rst: :directive note
+#+begin_quote
+It is actually possible to define a slice of a trajectory *as a trajectory* by using the =Sliced= class decorator, see below.
+#+end_quote
 
 If the trajectory contains metadata, these can be retrieved directly:
 #+begin_src python
@@ -97,15 +95,15 @@ pprint(th.metadata)
 :  'npart': 150,
 :  'step': 0}
 
-* Analysis of the trajectory
+** Analysis of the trajectory
 
 Now that we have constructed a trajectory object, we can proceed to the analysis. We are going to consider two main aspects of the analysis:
 - structural correlations
 - dynamical correlations
 
-** Structural correlations
+*** Structural correlations
 
-*** Radial distribution function
+**** Radial distribution function
 
 The radial distribution function $g(r)$ describes how the local density varies as a function of the distance from a reference particle. In liquids, one normally averages over all particles, obtaining a descriptor of the probability to find a second particle a distance $r$ from a given particle, relative to that of the ideal gas.
 
@@ -113,11 +111,11 @@ For $N$ particles of the same type at density $\rho$ it is
 
 $$g(r)=\frac{1}{N\rho}\left\langle\sum_i^{N}\sum_{i\neq j}\delta(r-|\mathbf{r}_i-\mathbf{r}_j|)\right\rangle$$.
 
-Notice that the average number of particles with a distance $R$, i.e. the average **coordination number** $n(R)$, can be computed from the radial distribution function via integration in spherical coordinates (for 3D systems)
+Notice that the average number of particles with a distance $R$, i.e. the average *coordination number* $n(R)$, can be computed from the radial distribution function via integration in spherical coordinates (for 3D systems)
 
 $$n(R)=4\pi \rho\int_0^R g(r)r^2 dr$$
 
-In *postprocessing* the radial distribution function is a =Correlation= object that acts on a trajectory. In order to compute it, we simply construct the object, specifying some parameters, and then run the calculation with the =do()= method
+In =postprocessing= the radial distribution function is a =Correlation= object that acts on a trajectory. In order to compute it, we simply construct the object, specifying some parameters, and then run the calculation with the =do()= method
 #+begin_src python
 gr = pp.RadialDistributionFunction(th, norigins=5, dr=0.04)
 gr.do()
@@ -125,7 +123,7 @@ gr.do()
 
 #+results:
 
-Once the calculation is performed, the radial distribution object =gr= contains (like all correlators in *postprocessing*) two arrays:
+Once the calculation is performed, the radial distribution object =gr= contains (like all correlators in =postprocessing=) two arrays:
 - the =grid= array contains the independent variable (or variables), binned according to our input parameters (in this case, the smallest space interval that we resolve, =dr=)
 - the =value= array contains the actual value of the computation, in this case the values of $g(r)$
 
@@ -173,7 +171,7 @@ pl.ylabel(r"$g_{\alpha\beta}(r)$")
 #+results:
 [[file:gr_ab.png]]
 
-Sometimes, it is useful to analyse only sections of a trajectory. To this purpose, one can slice the trajectory using *atooms* and analyse individual frames or subsets of frames. 
+Sometimes, it is useful to analyse only sections of a trajectory. To this purpose, one can slice the trajectory using =atooms= and analyse individual frames or subsets of frames. 
 #+begin_src python :prologue "pl.clf()" :epilogue "pl.savefig(image, bbox_inches='tight'); print(image); del image" :results file :var image="gr_slice.png"
 from atooms import trajectory
 t =  trajectory.Sliced(th, slice(-1, len(th)))  # analyse only the last frame
@@ -187,9 +185,9 @@ pl.ylabel("g(r)")  # notice that the g(r) is more noisy
 #+results:
 [[file:gr_slice.png]]
 
-** Dynamical correlations
+*** Dynamical correlations
 
-*** Mean square displacement
+**** Mean square displacement
 
 A very similar kind of anaysis can be performed on dynamical quantities, which quantify correlations in time.
 
@@ -229,7 +227,7 @@ pl.ylabel("MSD(t)")
 #+results:
 [[file:msd_ab.png]]
 
-*** Self intermediate scattering function
+**** Self intermediate scattering function
 
 We compute the self part of the intermediate scattering function (ISF) at specific wave-vectors using a logarithmic time grid.
 #+begin_src python
@@ -253,8 +251,8 @@ pl.ylabel('ISF')
 #+results:
 [[file:isf.png]]
 
-** More correlation functions
-Here is the full list of correlation functions currently available in *postprocessing*, along with the corresponding classes:
+*** More correlation functions
+Here is the full list of correlation functions currently available in =postprocessing=, along with the corresponding classes:
 #+begin_src python
 import inspect
 import atooms.postprocessing as pp
@@ -287,7 +285,7 @@ for cls in inspect.getmembers(pp, inspect.isclass):
 
 Some of them have multiple implementations (ex. =Fast= and =Legacy=), which are picked at runtime depending on your platform. The fastest implementation will be automatically picked up, if possible.
 
-* Writing your own correlation function
+** Writing your own correlation function
 We can extend the correlation class to compute additional correlation functions. The particle coordinates are loaded into the =_pos= instance variable as a list of numpy arrays. Each numpy array is a =(ndim, npart)= representation of the full particles' coordinates in a given frame of the trajectory. This is a gist of a new correlation class.
 #+begin_src python
 from collections import defaultdict

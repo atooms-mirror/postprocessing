@@ -21,9 +21,11 @@ debug: version
 	python setup.py config_fc --quiet --opt '-O3 -funroll-loops -fbounds-check' install
 
 docs:
+	rm -rf docs/api
 	pdoc -o docs/api --force --html --skip-errors $(PROJECT)
-	sed -i '/^$$/d' docs/index.html
-	orgnb.py docs/index.org docs/postprocessing.ipynb
+	emacs docs/index.org --batch -l ~/.emacs -l ~/.emacs.d/org-mode.el -f org-rst-export-to-rst --kill
+	orgnb.py docs/*.org
+	make -C docs/ singlehtml
 
 test:
 	mv $(PROJECT) $(PROJECT).tmp

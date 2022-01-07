@@ -55,6 +55,9 @@ pages:
       - public
   script:
     - mkdir -p public
-    - mv docs/* public/
+    - mv docs/api/ public/
+    - pip install sphinx
+    - make -C docs singlehtml
+    - mv docs/_build/singlehtml/ public/tutorial
   only:
     - master

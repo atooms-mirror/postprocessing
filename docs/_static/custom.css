@@ -1,0 +1,34 @@
+div.bodywrapper {
+    margin: 0 0 0 320px;
+}
+div.sphinxsidebar {
+    width: 320px;
+}
+div.document {
+    width: 1040px;
+}
+div.sphinxsidebar hr {
+    width: 100%;
+}
+/* div.sphinxsidebar ul { */
+/*     margin: 0 0 !important; */
+/* } */
+div.sphinxsidebar li.toctree-l1 {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+}
+pre {
+    padding: 7px 15px;
+}
+div.body h4, div.body h5, div.body h6 {
+    margin: 10px 0px 10px 0px;
+}
+div.body h3 {
+    margin: 20px 0px 10px 0px;
+}
+div.admonition {
+    padding: 10px 15px;
+}
+div.note {
+    background-color: #0e84b51c;
+}
