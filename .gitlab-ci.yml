@@ -50,6 +50,7 @@ test:f90:
   # - coverage report -m
 
 pages:
+  image: python:3.8
   artifacts:
     paths:
       - public
