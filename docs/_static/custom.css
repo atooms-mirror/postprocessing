@@ -1,11 +1,6 @@
-div.bodywrapper {
-    margin: 0 0 0 320px;
-}
 div.sphinxsidebar {
-    width: 320px;
-}
-div.document {
-    width: 1040px;
+    height: 100vh;
+    overflow: auto;
 }
 div.sphinxsidebar hr {
     width: 100%;
@@ -31,4 +26,10 @@ div.admonition {
 }
 div.note {
     background-color: #0e84b51c;
+}
+
+@media screen and (max-width: 870px) {
+div.sphinxsidebar {
+    height: auto;
+}
 }

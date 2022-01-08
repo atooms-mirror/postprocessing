@@ -6,7 +6,6 @@
 
 #+attr_rst: :directive toctree
 #+begin_quote
-    :hidden:
     index
 #+end_quote
 
