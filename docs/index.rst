@@ -1,12 +1,11 @@
 
 
 
-Atooms: postprocessing
-----------------------
+Postprocessing with atooms
+--------------------------
 
 .. toctree::
 
-    :hidden:
     index
 
 In this tutorial, we are going to show how to perform standard analysis of molecular dynamics trajectories using the ``atooms`` package and its ``postprocessing`` component. You can install ``postprocessing`` from pypi: ``pip install atooms-pp``. 
@@ -128,7 +127,7 @@ For :math:`N` particles of the same type at density :math:`\rho` it is
 
 .
 
-Notice that the average number of particles with a distance :math:`R`, i.e. the average ****coordination number**** :math:`n(R)`, can be computed from the radial distribution function via integration in spherical coordinates (for 3D systems)
+Notice that the average number of particles with a distance :math:`R`, i.e. the average **coordination number** :math:`n(R)`, can be computed from the radial distribution function via integration in spherical coordinates (for 3D systems)
 
 
 
