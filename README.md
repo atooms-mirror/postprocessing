@@ -7,24 +7,22 @@
 [![pipeline](https://framagit.org/atooms/postprocessing/badges/master/pipeline.svg)](https://framagit.org/atooms/postprocessing/badges/master/pipeline.svg)
 [![coverage report](https://framagit.org/atooms/postprocessing/badges/master/coverage.svg?job=test:f90)](https://framagit.org/atooms/postprocessing/-/commits/master)
 
-Post-processing tools to compute static and dynamic correlation functions from simulations of interacting particles, such as molecular dynamics or Monte Carlo simulations. 
+A Python package to compute static and dynamic correlation functions from simulations of interacting particles, such as molecular dynamics or Monte Carlo simulations. Based on [atooms](https://framagit.org/atooms/atooms).
 
 ## Quick start
 
-We can now compute correlation functions from trajectories produced
-by particle simulation codes. Any trajectory format recognized by
+Postprocessing works on trajectories. Any trajectory format recognized by
 [atooms](https://framagit.org/atooms/atooms.git) can be processed, for instance most "xyz" files
 should work fine. If you use a custom trajectory format, it is easy to [add it](https://atooms.frama.io/atooms/).
 
-As an example, we compute the structure factor S(k) for the trajectory
-file `trajectory.xyz` contained in the `data/` folder.
+As an example, we compute the structure factor S(k) from the file `trajectory.xyz` in the `data/` folder.
 
 ### From the command line
 
 ```sh
 pp.py --norigins 0.2 msd data/trajectory.xyz
 ```
-In the example above, we used 20% of the available time frames to compute the averages using the `--norigins` flag. Without it, atooms-pp applies an heuristics to determine the number of time frames required to achieve a reasonable data quality. The results of the calculation are stored in the file `data/trajectory.xyz.pp.sk`. 
+We just used 20% of the available time frames to compute the averages using the `--norigins` flag. Without it, `atooms-pp` applies an heuristics to determine the number of time frames required to achieve a reasonable data quality. The results of the calculation are stored in the file `data/trajectory.xyz.pp.sk`. 
 
 ### From Python
 
