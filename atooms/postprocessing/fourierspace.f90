@@ -1,3 +1,4 @@
+! Note: complex(8) in the f2py kind convention is converted to complex_double. This means both real and imaginary parts are double precision. See f2cmap_all['complexkind'] entry in numpy/f2py/capi_maps.py.
 module fourierspace_module
 
    implicit none
