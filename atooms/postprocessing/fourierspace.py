@@ -34,7 +34,7 @@ def expo_sphere(k0, nk_max, pos):
     # This leaves many unused vectors in the other directions, which
     # could be dropped using different nkmax for x, y, z
     # The shape of expo is nframes, N, ndim, 2*nk+1
-    expo = numpy.ndarray((len(pos), ) + pos[0].shape + (2*nk_max+1, ), numpy.complex)
+    expo = numpy.ndarray((len(pos), ) + pos[0].shape + (2*nk_max+1, ), numpy.complex128)
     expo[..., nk_max] = numpy.complex(1.0, 0.0)
     # First fill positive k
     for j in range(pos[0].shape[-1]):
@@ -59,7 +59,7 @@ def expo_sphere_safe(k0, kmax, pos):
     im = numpy.complex(0.0, 1.0)
     ndims = pos.shape[-1]
     nk_max = 1 + int(kmax / min(k0))
-    expo = numpy.ndarray(pos.shape + (2*nk_max+1, ), numpy.complex)
+    expo = numpy.ndarray(pos.shape + (2*nk_max+1, ), numpy.complex128)
     expo[:, :, :, nk_max] = numpy.complex(1.0, 0.0)
 
     for j in range(ndims):
