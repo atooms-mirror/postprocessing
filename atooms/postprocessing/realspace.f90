@@ -66,21 +66,21 @@ contains
     real(8), intent(in)       :: dtheta
     integer(4), intent(inout) :: hist(:)
     ! Variables
-    real(8)    :: r_ij(3), r_ik(3), d_ij, d_ik
-    integer(4) :: nNeighbors, nPoints, j, neigh_j, k, neigh_k, bin
+    real(8)    :: r_ij(size(positions,1)), r_ik(size(positions,2)), d_ij, d_ik
+    integer(4) :: n_neighbors, n_points, j, neigh_j, k, neigh_k, bin
     real(8)    :: dotprod, prod, costheta, theta
     ! Computation
     hist = 0
-    nNeighbors = size(neighbors)
-    nPoints = size(hist)
+    n_neighbors = size(neighbors)
+    n_points = size(hist)
     ! Loop over all neighbors j
-    do j=1,nNeighbors
+    do j=1,n_neighbors
       neigh_j = neighbors(j)+1  ! PYTHON
       r_ij(:) = center(:) - positions(:,neigh_j)
       call pbc(r_ij,box)
       d_ij = sqrt(sum(r_ij**2))
       ! Loop over all neighbors k != j
-      do k=1,nNeighbors
+      do k=1,n_neighbors
         neigh_k = neighbors(k)+1  ! PYTHON
         if (neigh_k /= neigh_j) then
           r_ik(:) = center(:) - positions(:,neigh_k)  
@@ -104,7 +104,7 @@ contains
           !bin = NINT(theta)+1
           !--test
           bin = floor(theta/dtheta) + 1
-          if (bin <= nPoints) hist(bin) = hist(bin) + 1
+          if (bin <= n_points) hist(bin) = hist(bin) + 1
         end if
       end do
     end do
