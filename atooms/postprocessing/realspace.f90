@@ -66,7 +66,7 @@ contains
     real(8), intent(in)       :: dtheta
     integer(4), intent(inout) :: hist(:)
     ! Variables
-    real(8)    :: r_ij(size(positions,1)), r_ik(size(positions,2)), d_ij, d_ik
+    real(8)    :: r_ij(size(positions,1)), r_ik(size(positions,1)), d_ij, d_ik
     integer(4) :: n_neighbors, n_points, j, neigh_j, k, neigh_k, bin
     real(8)    :: dotprod, prod, costheta, theta
     ! Computation
