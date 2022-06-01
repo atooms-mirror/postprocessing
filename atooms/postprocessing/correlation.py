@@ -177,7 +177,13 @@ class Correlation(object):
     indicates which variables should be read from the trajectory file.
     They will be available as self._pos, self._pos_unf, self._vel.
     """
-
+    _symmetric = True
+    """
+    If nbodies>1, a symmetric correlation function is invariant under
+    the exchange between _pos_0 and _pos_1. In that case, _symmetric
+    is True.
+    """
+    
     def __init__(self, trj, grid, output_path=None, norigins=None, fix_cm=False):
         # Accept a trajectory-like instance or a path to a trajectory
         if isinstance(trj, str):

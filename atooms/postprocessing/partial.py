@@ -81,7 +81,7 @@ class Partial(object):
                 for j in range(len(self.species)):
                     isp = self.species[i]
                     jsp = self.species[j]
-                    if j >= i:
+                    if j >= i or not self.self.partial[(isp, jsp)]._symmetric:
                         self.partial[(isp, jsp)].compute()
                     else:
                         # The isp-jsp has been already calculated
