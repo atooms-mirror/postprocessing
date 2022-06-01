@@ -87,6 +87,7 @@ class Partial(object):
                         # The isp-jsp has been already calculated
                         self.partial[(isp, jsp)].grid = self.partial[(jsp, isp)].grid
                         self.partial[(isp, jsp)].value = self.partial[(jsp, isp)].value
+                        self.partial[(isp, jsp)].analysis = self.partial[(jsp, isp)].analysis
 
     def write(self):
         for partial in self.partial.values():
