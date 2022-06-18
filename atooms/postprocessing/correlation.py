@@ -109,6 +109,15 @@ def _subtract_mean(weight):
     return weight
 
 
+def _is_iterable(maybe_iterable):
+    try:
+        iter(maybe_iterable)
+    except TypeError:
+        return False
+    else:
+        return True
+
+
 class Correlation(object):
     """
     Base class for correlation functions.
@@ -582,16 +591,8 @@ class Correlation(object):
         The default is defined by core.pp_output_path, which currently
         looks like '{trajectory.filename}.pp.{symbol}.{tag}'
         """
-        def is_iterable(maybe_iterable):
-            try:
-                iter(maybe_iterable)
-            except TypeError:
-                return False
-            else:
-                return True
-
         # Pack grid and value into arrays to dump
-        if is_iterable(self.grid[0]) and len(self.grid) == 2:
+        if _is_iterable(self.grid[0]) and len(self.grid) == 2:
             x = numpy.array(self.grid[0]).repeat(len(self.value[0]))
             y = numpy.array(self.grid[1] * len(self.grid[0]))
             z = numpy.array(self.value).flatten()
@@ -656,3 +657,16 @@ class Correlation(object):
 
     def __call__(self):
         self.do()
+
+    def show(self, now=True):
+        try:
+            import matplotlib.pyplot as plt
+        except ImportError:
+            return
+
+        if not _is_iterable(self.grid[0]):
+            plt.plot(self.grid, self.value)
+            plt.ylabel(self.short_name)
+            plt.xlabel(self.grid_name[0])
+        if now:
+            plt.show()
