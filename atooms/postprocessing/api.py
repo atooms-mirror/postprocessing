@@ -339,7 +339,7 @@ def ba(input_file, dtheta=4.0, grandcanonical=False, *input_files, **global_args
             cf = pp.Filter(cf, global_args['filter'])
         cf.do(update=global_args['update'])
 
-        # ids = distinct_species(th[0].particle)
-        # if len(ids) > 1 and not global_args['no_partial']:
-        #     cf = Partial(pp.BondAngleDistribution, ids, th, dtheta=dtheta, norigins=global_args['norigins'])
-        #     cf.do(update=global_args['update'])
+        ids = distinct_species(th[0].particle)
+        if len(ids) > 1 and not global_args['no_partial']:
+            cf = Partial(pp.BondAngleDistribution, ids, th, dtheta=dtheta, norigins=global_args['norigins'])
+            cf.do(update=global_args['update'])
