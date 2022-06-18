@@ -232,11 +232,14 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
             rho = n_1 / system.cell.volume
             nmax = self.rmax**ndims * rho
             if int(min(system.cell.side / self.rmax)) > 3 and nmax * n_0 < 1e6:
-                _log.info('using linked cells')
                 linkedcells = LinkedCells(rcut=self.rmax)
             else:
-                _log.info('not using linked cells')
                 linkedcells = None
+
+        if linkedcells is None:
+            _log.info('not using linked cells')
+        else:
+            _log.info('using linked cells')
 
         # Main loop for average
         origins = range(0, len(self.trajectory), self.skip)
