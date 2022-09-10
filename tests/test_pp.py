@@ -56,24 +56,31 @@ class TestRealSpace(unittest.TestCase):
             self.reference_path = os.path.join(os.path.dirname(sys.argv[0]), '../data')
 
     def test_msd_partial(self):
+        import warnings
+        warnings.simplefilter('ignore', RuntimeWarning)
+        from atooms.postprocessing.partial import Partial
         ref_grid = numpy.array([0, 3.0, 45.0, 90.0])
-        ref_value = {'A': numpy.array([0.0, 0.12678160738346345, 1.2085486450303853, 2.1661186644014219]),
-                     'B': numpy.array([0.0, 0.21626803585653143, 2.2289735958089922, 4.2971113171074578])}
+        ref_value = {'A': numpy.array([0.0, 0.12708190185520277, 1.2131017102523827, 2.1696872045992075]),
+                     'B': numpy.array([0.0, 0.22107274740436153, 2.3018226393609473, 4.354207960272026])}
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         for i in ['A', 'B']:
             with trajectory.Sliced(trajectory.TrajectoryXYZ(f), slice(0, 1000, 1)) as t:
-                t.add_callback(filter_species, i)
+                p = Partial(postprocessing.MeanSquareDisplacement, ['A', 'B'], t, [0.0, 3.0, 45.0, 90], fix_cm=True)
+                p.compute()
+                self.assertLess(deviation(p.partial[i].grid, ref_grid), 4e-2)
+                self.assertLess(deviation(p.partial[i].value, ref_value[i]), 4e-2)
+
+        f = os.path.join(self.reference_path, 'kalj-small-unfolded.xyz')
+        for i in ['A', 'B']:
+            with trajectory.Sliced(trajectory.TrajectoryXYZ(f), slice(0, 1000, 1)) as t:
                 p = postprocessing.MeanSquareDisplacement(t, [0.0, 3.0, 45.0, 90], fix_cm=True)
-                import warnings
-                warnings.simplefilter('ignore', RuntimeWarning)
+                p.add_filter(filter_species, i)
                 p.compute()
                 self.assertLess(deviation(p.grid, ref_grid), 4e-2)
                 self.assertLess(deviation(p.value, ref_value[i]), 4e-2)
 
-    def test_msd_partial_filter(self):
-        ref_grid = numpy.array([0, 3.0, 45.0, 90.0])
-        ref_value = {'A': numpy.array([0.0, 0.126669, 1.21207, 2.16563]),
-                     'B': numpy.array([0.0, 0.220299, 2.31111, 4.37561])}
+        # This calculation is correct, because filter is applied after unfolding
+        # If we apply the filter to the trajectory, there are slight differences for small particles
         f = os.path.join(self.reference_path, 'kalj-small.xyz')
         ts = trajectory.Sliced(trajectory.TrajectoryXYZ(f), slice(0, 1000, 1))
         for i in ['A', 'B']:
