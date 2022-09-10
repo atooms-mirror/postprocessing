@@ -367,9 +367,6 @@ class Correlation(object):
             if hasattr(th[0].particle[0], 'position_unfolded'):
                 # Unfolded positions are present in the trajectory
                 for s in progress(th):
-                    # Apply filter if there is one
-                    if len(self._cbk) > 0:
-                        s = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
                     # Fixing the CM must be done explicitly using
                     # particle.position_unfolded because atooms.system
                     # methods work with particle.position
@@ -385,6 +382,10 @@ class Correlation(object):
                         # Subtract it
                         for p in s.particle:
                             p.position_unfolded -= cm
+                    # Apply filter if there is one
+                    # This must be done after the CM has been fixed
+                    if len(self._cbk) > 0:
+                        s = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
                     self._pos_unf.append(s.dump('particle.position_unfolded'))
             else:
                 for s in progress(th):
