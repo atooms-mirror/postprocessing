@@ -112,8 +112,6 @@ class TestRealSpace(unittest.TestCase):
         ts.close()
 
     def test_gr_partial_big(self):
-        from atooms.core.utils import setup_logging
-        setup_logging('atooms.postprocessing', level=20)
         f = os.path.join(self.reference_path, 'ka_N20000.xyz')
         ts = trajectory.TrajectoryXYZ(f)
         isp = 'B'
@@ -126,11 +124,19 @@ class TestRealSpace(unittest.TestCase):
         p1 = postprocessing.RadialDistributionFunctionFast(ts, rmax=5)
         p1.add_filter(filter_species, isp)
         res[5] = p1.compute()
-        p.show(now=False)
-        p1.show(now=True)
-        # self.assertLess(deviation(res[-1][1], res[5][1]), 1e-6)
+        # p.show(now=False)
+        # p1.show()
+        #self.assertLess(deviation(res[-1][1], res[5][1]), 1e-3)
         ts.close()
 
+    def test_gr_big(self):
+        f = os.path.join(self.reference_path, 'ka_N20000.xyz')
+        ts = trajectory.TrajectoryXYZ(f)
+        p = postprocessing.RadialDistributionFunctionFast(ts, rmax=5)
+        p.compute()
+        #self.assertLess(deviation(res[-1][1], res[5][1]), 1e-6)
+        ts.close()
+        
     def test_gr_partial_fast(self):
         # This will test fast if available
         self._test_gr_partial(postprocessing.RadialDistributionFunction)

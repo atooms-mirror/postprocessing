@@ -267,13 +267,12 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
                 else:
                     neighbors, number_of_neighbors = linkedcells.compute(side, self._pos_0[i], self._pos_1[i], as_array=True)
 
-            # Transpose the arrays for fortran
-            # TODO: can we avoid this?
+            # Shortcuts
             if distinct:
-                pos_0 = self._pos_0[i].transpose()
-                pos_1 = self._pos_1[i].transpose()
+                pos_0 = self._pos_0[i]
+                pos_1 = self._pos_1[i]
             else:
-                pos_0 = self._pos_0[i].transpose()
+                pos_0 = self._pos_0[i]
                 pos_1 = pos_0
 
             # With a non-periodic cell, which just bounds the physical
@@ -282,27 +281,27 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
             if hasattr(system.cell, 'periodic') and not numpy.any(system.cell.periodic):
                 # mask = numpy.ndarray(pos_0.shape[1], dtype=numpy.bool)
                 # TODO: bool does not work
-                mask = compute.on_surface(pos_0, side, self.rmax)
+                mask = compute.on_surface_c(pos_0, side, self.rmax)
                 mask = mask == 1
                 pos_0 = pos_0[:, mask]
                 # Force distinct calculation
                 distinct = True
 
             # Store number of particles for normalization
-            N_0.append(pos_0.shape[1])
-            N_1.append(pos_1.shape[1])
+            N_0.append(pos_0.shape[0])
+            N_1.append(pos_1.shape[0])
 
             # Compute g(r)
             if not distinct:
                 if linkedcells is None:
-                    compute.gr_self(pos_0, side, dr, gr, bins)
+                    compute.gr_self_c(pos_0, side, dr, gr, bins)
                 else:
-                    compute.gr_neighbors_self('C', pos_0, neighbors, number_of_neighbors, side, dr, gr, bins)
+                    compute.gr_neighbors_self_c('C', pos_0, neighbors, number_of_neighbors, side, dr, gr, bins)
             else:
                 if linkedcells is None:
-                    compute.gr_distinct(pos_0, pos_1, side, dr, gr, bins)
+                    compute.gr_distinct_c(pos_0, pos_1, side, dr, gr, bins)
                 else:
-                    compute.gr_neighbors_distinct('C', pos_0, pos_1, neighbors, number_of_neighbors, side, dr, gr, bins)
+                    compute.gr_neighbors_distinct_c('C', pos_0, pos_1, neighbors, number_of_neighbors, side, dr, gr, bins)
 
             # Damned copies in python
             gr_all.append(gr.copy())

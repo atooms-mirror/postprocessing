@@ -194,9 +194,9 @@ def fkt(input_file, tmax=-1.0, tmax_fraction=0.75,
     func = _func_db[func]
     files = [input_file] + list(input_files)
     traj = _get_trajectories(files, global_args)
-    bar = progress(active=True, total=len(files))
+    # bar = progress(active=True, total=len(files))
     for i, th in enumerate(traj):
-        bar.update(i)
+        # bar.update(i)
         if tmax > 0:
             t_grid = [0.0] + func(th.timestep, tmax, tsamples)
         elif tmax_fraction > 0:

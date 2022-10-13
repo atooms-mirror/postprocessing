@@ -56,6 +56,20 @@ contains
        mask(i) = any(abs(pos(:,i)) > hbox(:) - delta)
     end do
   end subroutine on_surface
+
+  ! Return a logical mask that tells which particles are close to the
+  ! surface of the cell (within a distance delta)
+  subroutine on_surface_c(pos,box,delta,mask)
+    real(8), intent(in)    :: pos(:,:)
+    real(8), intent(in)    :: box(:), delta
+    logical, intent(out) :: mask(size(pos, 1))
+    real(8) :: hbox(size(box))
+    integer :: i
+    hbox = box / 2
+    do i = 1,size(pos,1)
+       mask(i) = any(abs(pos(i,:)) > hbox(:) - delta)
+    end do
+  end subroutine on_surface_c
   
   subroutine bond_angle(center,positions,neighbors,box,dtheta,hist)
     ! Parameters
@@ -282,6 +296,51 @@ contains
     end do
   end subroutine gr_neighbors_self
 
+  subroutine gr_neighbors_self_c(offset, positions, neighbors, number_of_neighbors, box, dr, hist, bins)
+    character(1), intent(in)  :: offset
+    real(8), intent(in)       :: positions(:,:), dr
+    integer(8), intent(in)    :: neighbors(:,:), number_of_neighbors(:)
+    integer(8), intent(inout) :: hist(:)
+    real(8), intent(inout) :: bins(:)
+    real(8)                   :: distances(size(positions,1))  ! stack
+    real(8), intent(in)       :: box(:)
+    real(8)    :: dist(size(box)), dist_sq, pos(size(box)), rmax, hbox(size(box))
+    integer(8) :: i, j, ii, jj, bin, k, delta
+    if (offset == 'C') then
+       delta = 1
+    else
+       delta = 0
+    end if    
+    ! Since hist is already allocated in the main, 
+    ! we infer the bin width from its size and the max possible distance
+    rmax = dr * size(hist)
+    hbox = box / 2
+    hist = 0
+    do i = 1, size(positions,1)
+       pos = positions(i,:)
+       ! Compute distances with particle i
+       k = 0
+       do jj=1,number_of_neighbors(i)
+          j = neighbors(i,jj) + delta
+          k = k+1
+          dist(:) = positions(j,:) - pos(:)
+          where (abs(dist) > hbox)
+             dist = dist - sign(box,dist)
+          end where
+          distances(k) = sqrt(sum(dist**2))
+       end do
+       ! Bin distances
+       do j=1,k
+          bin = floor(distances(j) / dr) + 1
+          hist(bin) = hist(bin) + 1
+       end do
+    end do
+    ! Bins
+    do j=1,size(bins)
+       bins(j) = dr * (j-1) + dr / 2
+    end do
+  end subroutine gr_neighbors_self_c
+  
   subroutine gr_neighbors_distinct(offset, positions, other, neighbors, number_of_neighbors, box, dr, hist, bins)
     character(1), intent(in)  :: offset
     real(8), intent(in)       :: positions(:,:), other(:,:), dr
@@ -337,6 +396,51 @@ contains
        bins(j) = dr * (j-1) + dr / 2
     end do
   end subroutine gr_neighbors_distinct
+
+  subroutine gr_neighbors_distinct_c(offset, positions, other, neighbors, number_of_neighbors, box, dr, hist, bins)
+    character(1), intent(in)  :: offset
+    real(8), intent(in)       :: positions(:,:), other(:,:), dr
+    integer(8), intent(in)    :: neighbors(:,:), number_of_neighbors(:)
+    integer(8), intent(inout) :: hist(:)
+    real(8), intent(inout) :: bins(:)
+    real(8)                   :: distances(size(positions,1))  ! stack
+    real(8), intent(in)       :: box(:)
+    real(8)    :: dist(size(box)), dist_sq, pos(size(box)), rmax, hbox(size(box))
+    integer(8) :: i, j, ii, jj, bin, k, delta
+    if (offset == 'C') then
+       delta = 1
+    else
+       delta = 0
+    end if    
+    ! Since hist is already allocated in the main, 
+    ! we infer the bin width from its size and the max possible distance
+    rmax = dr * size(hist)
+    hbox = box / 2
+    hist = 0
+    do i = 1, size(positions,1)
+       pos = positions(i,:)
+       ! Compute distances with particle i
+       k = 0
+       do jj=1,number_of_neighbors(i)
+          j = neighbors(i,jj) + delta
+          k = k+1
+          dist(:) = other(:,j) - pos(:)
+          where (abs(dist) > hbox)
+             dist = dist - sign(box,dist)
+          end where
+          distances(k) = sqrt(sum(dist**2))
+       end do
+       ! Bin distances
+       do j=1,k
+          bin = floor(distances(j) / dr) + 1
+          hist(bin) = hist(bin) + 1
+       end do
+    end do
+    ! Bins
+    do j=1,size(bins)
+       bins(j) = dr * (j-1) + dr / 2
+    end do
+  end subroutine gr_neighbors_distinct_c
   
   subroutine gr_self(positions, box, dr, hist, bins)
     real(8), intent(in)       :: positions(:,:), dr
@@ -385,6 +489,46 @@ contains
     end do
   end subroutine gr_self
 
+  subroutine gr_self_C(positions, box, dr, hist, bins)
+    real(8), intent(in)       :: positions(:,:), dr
+    integer(8), intent(inout) :: hist(:)
+    real(8), intent(inout)    :: bins(:)
+    real(8), intent(in)       :: box(:)
+    real(8)                   :: distances(size(positions,1))  ! stack
+    real(8)    :: dist(size(box)), dist_sq, pos(size(box)), hbox(size(box)), rdist, rmax
+    integer(8) :: i, j, ii, bin, k
+    ! Hist is already allocated in the main, 
+    ! Bins are defined as i*dr + dr/2 with i=1,...,size(bins)
+    rmax = dr * size(bins)
+    hbox = box / 2
+    hist = 0
+    do i = 1, size(positions,1)
+       pos = positions(i,:)
+       ! Compute distances with particle i
+       k = 0
+       do j=i+1,size(positions,1)
+          dist(:) = positions(j,:) - pos(:)
+          where (abs(dist) > hbox)
+             dist = dist - sign(box,dist)
+          end where
+          rdist = sqrt(sum(dist**2))
+          if (rdist < rmax) then
+             k = k+1
+             distances(k) = rdist
+          end if
+       end do
+       ! Bin distances
+       do j=1,k
+          bin = floor(distances(j) / dr) + 1
+          hist(bin) = hist(bin) + 1
+       end do
+    end do
+    ! Bins
+    do j=1,size(bins)
+       bins(j) = dr * (j-1) + dr / 2
+    end do
+  end subroutine gr_self_C
+  
   subroutine gr_distinct(positions1, positions2, box, dr, hist, bins)
     real(8), intent(in)       :: positions1(:,:), positions2(:,:), dr
     integer(8), intent(inout) :: hist(:)
@@ -432,6 +576,46 @@ contains
     end do
   end subroutine gr_distinct
 
+  subroutine gr_distinct_c(positions1, positions2, box, dr, hist, bins)
+    real(8), intent(in)       :: positions1(:,:), positions2(:,:), dr
+    integer(8), intent(inout) :: hist(:)
+    real(8), intent(inout) :: bins(:)
+    real(8)                   :: distances(size(positions2,1))  ! stack
+    real(8), intent(in)       :: box(:)
+    real(8)    :: dist(size(box)), dist_sq, pos(size(box)), rmax, hbox(size(box)), rdist
+    integer(8) :: i, j, ii, bin, k
+    ! Since hist is already allocated in the main, 
+    ! we infer the bin width from its size and the max possible distance
+    hbox = box / 2
+    rmax = dr * size(hist)
+    hist = 0
+    do i=1,size(positions1,1)
+       pos = positions1(i,:)
+       ! Compute distances with particle i
+       k = 0
+       do j=1,size(positions2,1)
+          dist(:) = positions2(j,:) - pos(:)
+          where (abs(dist) > hbox)
+             dist = dist - sign(box,dist)
+          end where
+          rdist = sqrt(sum(dist**2))
+          if (rdist < rmax) then
+             k = k+1
+             distances(k) = rdist
+          end if
+       end do
+       ! Bin distances
+       do j=1,k
+          bin = floor(distances(j) / dr) + 1
+          hist(bin) = hist(bin) + 1
+       end do
+    end do
+    ! Bins
+    do j=1,size(bins)
+       bins(j) = dr * (j-1) + dr / 2
+    end do
+  end subroutine gr_distinct_c
+  
   subroutine distances_self(start, end, positions, box, hbox, distances, k)
     integer(8), intent(in)    :: start, end
     integer(8), intent(out) :: k
