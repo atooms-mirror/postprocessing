@@ -207,7 +207,10 @@ class Correlation(object):
         self.comments = None  # can be modified by user at run time
         self.tag = ''
         self.tag_description = 'the whole system'
-        self.output_path = output_path if output_path is not None else core.pp_output_path
+        if self.trajectory.filename is None:
+            self.output_path = None
+        else:
+            self.output_path = output_path if output_path is not None else core.pp_output_path
         self.skip = adjust_skip(self.trajectory, norigins)
 
         # Callbacks
@@ -629,13 +632,14 @@ class Correlation(object):
         # and make sure the path to the output file exists
         import os
         from atooms.core.utils import mkdir
-        mkdir(os.path.dirname(self._output_file))
-        with open(self._output_file, 'w') as fh:
-            fh.write(comments)
-            if len(analysis) > 0:
-                fh.write(analysis)
-            numpy.savetxt(fh, dump, fmt="%g")
-            fh.flush()
+        if self._output_file is not None:
+            mkdir(os.path.dirname(self._output_file))
+            with open(self._output_file, 'w') as fh:
+                fh.write(comments)
+                if len(analysis) > 0:
+                    fh.write(analysis)
+                numpy.savetxt(fh, dump, fmt="%g")
+                fh.flush()
 
     def do(self, update=False):
         """
