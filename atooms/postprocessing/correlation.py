@@ -192,7 +192,7 @@ class Correlation(object):
     the exchange between _pos_0 and _pos_1. In that case, _symmetric
     is True.
     """
-    
+
     def __init__(self, trj, grid, output_path=None, norigins=None, fix_cm=False):
         # Accept a trajectory-like instance or a path to a trajectory
         if isinstance(trj, str):

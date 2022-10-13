@@ -136,7 +136,7 @@ class TestRealSpace(unittest.TestCase):
         p.compute()
         #self.assertLess(deviation(res[-1][1], res[5][1]), 1e-6)
         ts.close()
-        
+
     def test_gr_partial_fast(self):
         # This will test fast if available
         self._test_gr_partial(postprocessing.RadialDistributionFunction)
@@ -259,7 +259,7 @@ class TestFourierSpace(unittest.TestCase):
         self.assertEqual(q.grid, p.grid)
         self.assertEqual(q.value, p.value)
         t.close()
-        
+
     def test_sk_variable_cell(self):
         # TODO: this test has no assertion
         def deformation(s, scale=0.01):

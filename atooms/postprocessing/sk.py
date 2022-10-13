@@ -61,7 +61,7 @@ class StructureFactorLegacy(FourierSpaceCorrelation):
         nsteps = len(self._pos_0)
         ndims = len(self.k0)
         kgrid = self.kgrid
-        
+
         # Setup k vectors and tabulate rho
         cnt = [0 for k in kgrid]
         rho_0_av = [complex(0., 0.) for k in kgrid]

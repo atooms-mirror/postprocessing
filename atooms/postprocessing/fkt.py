@@ -179,6 +179,7 @@ class SelfIntermediateScatteringFast(SelfIntermediateScatteringLegacy):
     See the documentation of the `FourierSpaceCorrelation` base class
     for information on the instance variables.
     """
+
     def _compute(self):
         from atooms.postprocessing.fourierspace_wrap import fourierspace_module
 
@@ -285,7 +286,7 @@ class IntermediateScattering(IntermediateScatteringBase):
         for it in range(nsteps):
             # Tabulate exponentials
             expo_0 = expo_sphere(self.k0, self._koffset, self._pos_0[it])
-            
+
             # Optimize a bit here: if there is only one filter (alpha-alpha or total calculation)
             # expo_2 will be just a reference to expo_1
             if self._pos_1 is self._pos_0:
@@ -340,7 +341,7 @@ class IntermediateScattering(IntermediateScatteringBase):
                         # Get the actual time difference
                         # TODO: It looks like the order of i0 and ik lopps should be swapped
                         dt = self.trajectory.steps[i0+i] - self.trajectory.steps[i0]
-                        acf[ik][dt] += (rho_0[i0+i][kvec] * rho_1[i0][kvec].conjugate()).real #/ self._pos[i0].shape[0]
+                        acf[ik][dt] += (rho_0[i0+i][kvec] * rho_1[i0][kvec].conjugate()).real  # / self._pos[i0].shape[0]
                         cnt[ik][dt] += 1
 
         # Normalization

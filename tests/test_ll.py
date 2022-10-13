@@ -39,5 +39,6 @@ class Test(unittest.TestCase):
         self.assertEqual(set(nn[3][0: num[3]]), set([1, 2]))
         self.assertTrue(lc.on_border([2.5, 0.0, 0.0]))
 
+
 if __name__ == '__main__':
     unittest.main()

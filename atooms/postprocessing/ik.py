@@ -50,7 +50,7 @@ class SpectralDensity(FourierSpaceCorrelation):
             # If cell changes we have to update
             if cell_variable:
                 self._setup(i)
-                
+
             expo = expo_sphere(self.k0, self._koffset, self._pos[i])
             for k, klist in enumerate(self._kvectors):
                 for kvec in klist:

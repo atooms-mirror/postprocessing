@@ -155,9 +155,9 @@ class FourierSpaceCorrelation(Correlation):
           exponentials over a grid and the indices (ix, iy, iz) of the
           tabulated array obey Fortran indexing. We symmetrize the j
           indices like this
-          
+
           ix = jx + offset_j + 1, iy = jy + offset_j + 1, iz = jz + offset_j + 1
-        
+
           where offset_j is the absolute value of the minimum of the
           whole set of (jx, jy, jz). This way we are sure that indices
           start from 1. This is necessary with numpy arrays, for which
@@ -192,7 +192,7 @@ class FourierSpaceCorrelation(Correlation):
         # This allows to copy over the kvectors and kgrid
         if sample == 0 and self.kgrid is not None:
             return
-        
+
         # We subclass compute to define k grid at compute time
         # Find k-norms grid and store it a self.kgrid (the norms are sorted)
         variables = self.short_name.split('(')[1][:-1]
@@ -221,7 +221,7 @@ class FourierSpaceCorrelation(Correlation):
 
         # Setup the grid of wave-vectors
         self._kvectors, self._koffset = self._setup_grid_sphere(len(self.kgrid) * [self.dk],
-                                                               self.kgrid, self.k0)
+                                                                self.kgrid, self.k0)
 
         # Decimate
         # Setting the seed here once so as to get the same set
@@ -233,12 +233,12 @@ class FourierSpaceCorrelation(Correlation):
         for i, klist in enumerate(self._kvectors):
             nk = min(self.nk, len(klist))
             self._kvectors[i] = random.sample(klist, nk)
-        
+
         # Define the grid using the actual kvectors
         # average k norms appear after decimation.
         for i, klist in enumerate(self._kvectors):
             self.kgrid[i] = numpy.mean([_k_norm(kvec, self.k0, self._koffset) for kvec in klist])
-        
+
     @staticmethod
     def _setup_grid_sphere(dk, kgrid, k0):
         """
@@ -249,8 +249,8 @@ class FourierSpaceCorrelation(Correlation):
         Returns a list of lists of kvectors, one entry for each element in the grid.
         """
         _log.info('setting up the wave-vector grid')
-        kvec = [[] for _ in range(len(kgrid))] #defaultdict(list)
-        
+        kvec = [[] for _ in range(len(kgrid))]  # defaultdict(list)
+
         # With elongated box, we choose the smallest k0 component to
         # setup the integer grid. This must be consistent with
         # expo_grid() otherwise it wont find the vectors
@@ -306,7 +306,7 @@ class FourierSpaceCorrelation(Correlation):
                 kvectors[-1].append(list(actual_vec))
         return kvectors
 
-    @kvectors.setter    
+    @kvectors.setter
     def kvectors(self, kvectors):
         # Smallest kvector
         sample = 0
@@ -328,13 +328,13 @@ class FourierSpaceCorrelation(Correlation):
         for klist in self._kvectors:
             for i in range(len(klist)):
                 klist[i] = tuple(klist[i] + self._koffset)
-    
+
         # Define kgrid
         self.kgrid = []
         for klist in self._kvectors:
             knorm = numpy.mean([_k_norm(kvec, self.k0, self._koffset) for kvec in klist])
             self.kgrid.append(knorm)
-            
+
     def report(self, verbose=False):
         """
         Return a formatted report of the wave-vector grid used to compute

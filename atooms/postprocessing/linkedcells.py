@@ -46,7 +46,7 @@ class LinkedCells(object):
                     neigh_cell[(ix, iy)] = \
                         [(ix+1, iy), (ix+1, iy+1), (ix, iy+1), (ix-1, iy+1)]
             return neigh_cell
-        
+
         def _map_3d_nonewton(n_cell):
             neigh_cell = {}
             for ix in range(n_cell[0]):
@@ -72,7 +72,7 @@ class LinkedCells(object):
                                 continue
                             neigh_cell[(ix, iy)].append((ix+deltax, iy+deltay))
             return neigh_cell
-        
+
         if len(self.n_cell) == 3:
             if newton:
                 self._neigh_cell = _map_3d_newton(self.n_cell)

@@ -30,5 +30,6 @@ class Test(unittest.TestCase):
         xmin, fmin = results[0]
         self.assertAlmostEqual(xmin, 1.0)
 
+
 if __name__ == '__main__':
     unittest.main()

@@ -43,5 +43,6 @@ class TestApi(unittest.TestCase):
     def test_chi4qs(self):
         api.chi4qs(self.test_file)
 
+
 if __name__ == '__main__':
     unittest.main()

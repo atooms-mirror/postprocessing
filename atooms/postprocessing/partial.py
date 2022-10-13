@@ -51,13 +51,13 @@ class Partial(object):
     @property
     def output_path(self):
         return self._output_path
-        
+
     @output_path.setter
     def output_path(self, path):
         self._output_path = path
         for key in self.partial:
             self.partial[key].output_path = path
-                    
+
     def add_weight(self, trajectory=None, field=None, fluctuations=False):
         for key in self.partial:
             self.partial[key].add_weight(trajectory, field, fluctuations)
@@ -92,7 +92,7 @@ class Partial(object):
     def write(self):
         for partial in self.partial.values():
             partial.write()
-                        
+
     def do(self, update=False):
         if update and not self.need_update():
             return
