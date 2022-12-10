@@ -95,6 +95,8 @@ class Partial(object):
 
     def do(self, update=False):
         if update and not self.need_update():
+            for partial in self.partial.values():
+                partial.read()
             return
 
         self.compute()
