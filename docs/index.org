@@ -13,18 +13,34 @@ In this tutorial, we are going to show how to perform standard analysis of molec
 
 ** Setup
 
-We start with a few imports. We will read a trajectory file in XYZ format, so we also load the =TrajectoryXYZ= class from =atooms=.
+We start with a few imports and plot customizations. We will read a trajectory file in XYZ format, so we also load the =TrajectoryXYZ= class from =atooms=.
 #+begin_src python :results none
+import matplotlib
 import matplotlib.pyplot as pl
 import atooms.postprocessing as pp
 from atooms.trajectory import TrajectoryXYZ 
+
+pl.rcParams.update({
+    "font.family": "serif",
+    'font.size': 11.0,
+    'axes.labelsize': 'medium',
+    'xtick.major.pad': 2.0,
+    'ytick.major.pad': 2.0,
+    'xtick.major.size': 4.0,
+    'ytick.major.size': 4.0,
+    'savefig.bbox': 'tight',
+    'savefig.dpi': 180,
+    'axes.spines.right': False,
+    'axes.spines.top': False,
+    'legend.frameon': False,
+})
 #+end_src
 
-We consider a sample trajectory, which can be downloaded from the package repository. Let's store the path to this file in a variable for later convenience
+We consider a sample trajectory, which can be downloaded from the package repository.
 #+begin_src python
 from atooms.core.utils import download
-download('https://framagit.org/atooms/postprocessing/raw/master/data/kalj-small.xyz', "/tmp")
-path = '/tmp/kalj-small.xyz'
+download('https://framagit.org/atooms/postprocessing/raw/master/data/kalj.xyz', "/tmp")
+path = '/tmp/kalj.xyz'
 #+end_src
 
 #+results:
@@ -55,7 +71,7 @@ print(len(th))
 #+end_src
 
 #+results:
-: 101
+: 521
 
 #+attr_rst: :directive note
 #+begin_quote
@@ -72,12 +88,12 @@ pprint(th.metadata)
 #+end_src
 
 #+results:
-: Timestep during the trajectory: 0.001
-: Steps after which the 3rd frame was stored: 2000
+: Timestep during the trajectory: 0.002
+: Steps after which the 3rd frame was stored: 2
 : Additional metadata:
 : {'cell': [5.0, 5.0, 5.0],
-:  'columns': ['name', 'pos'],
-:  'dt': 0.001,
+:  'columns': ['species', 'position'],
+:  'dt': 0.002,
 :  'ndim': 3,
 :  'npart': 150,
 :  'step': 0}
@@ -87,7 +103,7 @@ pprint(th.metadata)
 Now that we have constructed a trajectory object, we can proceed to the analysis. We are going to consider two main aspects of the analysis:
 - structural correlations
 - dynamical correlations
-
+  
 *** Structural correlations
 
 **** Radial distribution function
@@ -102,10 +118,14 @@ Notice that the average number of particles with a distance $R$, i.e. the averag
 
 $$n(R)=4\pi \rho\int_0^R g(r)r^2 dr$$
 
-In =postprocessing= the radial distribution function is a =Correlation= object that takes a trajectory as input. In order to compute the correlation function, we construct the object, specifying some parameters, and then run the calculation with the =compute()= method
+In =postprocessing= the radial distribution function is a =Correlation= object that takes a trajectory as input. In order to compute the correlation function, we construct the object, specifying some parameters, and then run the calculation with the =compute()= method.
 #+begin_src python
-gr = pp.RadialDistributionFunction(th, dr=0.02)
+# We let postprocessing choose a reasonable number of time origins for the average
+gr = pp.RadialDistributionFunction(th, dr=0.03)
 gr.compute()
+# We average over all the frames
+gr_all = pp.RadialDistributionFunction(th, dr=0.03, norigins=len(th))
+gr_all.compute()
 #+end_src
 
 #+results:
@@ -114,15 +134,17 @@ Once the calculation is performed, the radial distribution object =gr= contains 
 - the =grid= array contains the independent variable (or variables), binned according to our input parameters (in this case, the smallest space interval that we resolve, =dr=)
 - the =value= array contains the actual value of the computation, in this case the values of $g(r)$
 
-We can directly plot the results with
+As you can see there is very little improvement when using the full trajectory.
 #+begin_src python :prologue "pl.clf()" :epilogue "pl.savefig(image, bbox_inches='tight'); print(image); del image" :results file :var image="gr.png"
-pl.plot(gr.grid, gr.value)
+pl.plot(gr.grid, gr.value, label='Default')
+pl.plot(gr_all.grid, gr_all.value, label='All time origins')
 pl.xlabel("r")
 pl.ylabel("g(r)")
 #+end_src
 
 #+results:
 [[file:gr.png]]
+
 
 You can show the results right away with the =show()= method, which formats the labels automatically. The method returns a =matplotlib= axis object for further customization.
 #+begin_src python :prologue "pl.clf()"
@@ -133,8 +155,8 @@ As we can see, the correlation function displays two narrow peaks around $r=1$ a
 
 We can compute separate distribution functions for the $A$ and $B$ particles and also the cross distribution funtion for the probability to find a particle $B$ at distance $r$ from particle $A$ using the =Partial= class.
 #+begin_src python
-gr = pp.Partial(pp.RadialDistributionFunction, species=['A', 'B'], trajectory=th, dr=0.02)
-gr.partial[('B', 'B')].dr = 0.05
+gr = pp.Partial(pp.RadialDistributionFunction, species=['A', 'B'], trajectory=th, dr=0.03, norigins=len(th))
+gr.partial[('B', 'B')].dr = 0.06
 gr.compute() 
 #+end_src
 
@@ -149,17 +171,17 @@ pprint(gr.partial)
 #+end_src
 
 #+results:
-: {('A', 'A'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f8303c308b0>,
-:  ('A', 'B'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f8303ce6c70>,
-:  ('B', 'A'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f8303c30940>,
-:  ('B', 'B'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f8303c30a90>}
+: {('A', 'A'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7fca93e8dd60>,
+:  ('A', 'B'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7fca93e8dbe0>,
+:  ('B', 'A'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7fca93e8dc70>,
+:  ('B', 'B'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7fca93e8de80>}
 
 We plot all correlation functions
 #+begin_src python :prologue "pl.clf()" :epilogue "pl.savefig(image, bbox_inches='tight'); print(image); del image" :results file :var image="gr_ab.png"
-for key,g in gr.partial.items(): 
+for key,g in gr.partial.items():
     pl.plot(g.grid, g.value, label=str("".join(key)))
 pl.legend()
-pl.xlabel("r")
+pl.xlabel("$r$")
 pl.ylabel(r"$g_{\alpha\beta}(r)$")
 #+end_src
 
@@ -170,7 +192,7 @@ Sometimes, it is useful to analyse only sections of a trajectory. To this purpos
 #+begin_src python :prologue "pl.clf()" :epilogue "pl.savefig(image, bbox_inches='tight'); print(image); del image" :results file :var image="gr_slice.png"
 from atooms import trajectory
 t =  trajectory.Sliced(th, slice(len(th)//2, len(th)))  # analyse only the 2nd half
-gr = pp.RadialDistributionFunction(t, dr=0.02)
+gr = pp.RadialDistributionFunction(t, dr=0.03)
 gr.compute()
 pl.plot(gr.grid, gr.value)
 pl.xlabel("r")
@@ -190,16 +212,11 @@ $$ \delta r^2(t)= \langle |\mathbf{r}(t-t_0) - \mathbf{r}(t_0)|^2\rangle$$
 
 The average is usually performed over all the $N$ particles and over multiple time origins $t_0$.
 
-The analysis process is now familiar. First we construct the msd object and then perform the calculation with =do()=.
-#+begin_src python
+The analysis process is now familiar. First we construct the msd object and then perform the calculation with =compute()=. By default, the time grid is linear.
+#+begin_src python :prologue "pl.clf()" :epilogue "pl.savefig(image, bbox_inches='tight'); print(image); del image" :results file :var image="msd.png"
 msd = pp.MeanSquareDisplacement(th)
 msd.compute()
-#+end_src
-
-#+results:
-
-#+begin_src python :prologue "pl.clf()" :epilogue "pl.savefig(image, bbox_inches='tight'); print(image); del image" :results file :var image="msd.png"
-pl.loglog(msd.grid, msd.value, '-o')
+pl.plot(msd.grid, msd.value, '-o')
 pl.xlabel("t")
 pl.ylabel("MSD(t)");
 #+end_src
@@ -207,9 +224,11 @@ pl.ylabel("MSD(t)");
 #+results:
 [[file:msd.png]]
 
-Again, we can compute partial mean square displacements using the =Partial= class
+Again, we can compute partial mean square displacements using the =Partial= class. This time we use an expoentially spaced time grid. We can clearly distinguish the short time balistic regime from the diffusion one at long times. The intermediate inflection is a signal of incipient glassy dynamics.
 #+begin_src python :prologue "pl.clf()" :epilogue "pl.savefig(image, bbox_inches='tight'); print(image); del image" :results file :var image="msd_ab.png"
-msds = pp.Partial(pp.MeanSquareDisplacement, species=['A','B'], trajectory=th, norigins=100)
+import numpy
+tgrid = th.timestep * numpy.logspace(0, 5, base=10)
+msds = pp.Partial(pp.MeanSquareDisplacement, species=['A','B'], trajectory=th, tgrid=tgrid)
 msds.compute()
 pl.loglog(msds.partial['A'].grid, msds.partial['A'].value, '-o', label='A')
 pl.loglog(msds.partial['B'].grid, msds.partial['B'].value, '-o', label='B')
@@ -223,21 +242,29 @@ pl.ylabel("MSD(t)")
 
 **** Self intermediate scattering function
 
-We compute the self part of the intermediate scattering function (ISF) at specific wave-vectors using a logarithmic time grid.
+We compute the self part of the intermediate scattering function (ISF) at specific wave-vectors using a logarithmic time grid. We specify the norm of the wave-vector we want to use for our calculation (=kgrid=) and the number of wave-vectors over which the correlation function will be averaged (=nk=). They are chosen at random in a shell of width =dk=. To get more info on the parameters passed to compute the ISF, have a look at the help for the base class with =help(pp.fourierspace.FourierSpaceCorrelation)=.
 #+begin_src python
 from math import pi
 import numpy
-tgrid = numpy.logspace(0, 3, base=10)  # we must include t=0
+tgrid = th.timestep * numpy.logspace(0, 5, base=10)
 isf = pp.Partial(pp.SelfIntermediateScattering, species=["A"], trajectory=th,
-                 kgrid=[2*pi, 2.5*pi], nk=1, tgrid=tgrid)
+                 kgrid=[pi, 7.0], nk=3, dk=0.1, tgrid=tgrid)
 isf.do()
 #+end_src
 
-To get some info on the parameters passed to compute the ISF, have a look at the help for the base class with =help(pp.fourierspace.FourierSpaceCorrelation)=
+#+results:
+
+#+attr_rst: :directive note
+#+begin_quote
+Note that now =grid= is a tuple of lists: the first one is the list of all the $k$'s (the $k$-number grid) while the second is the list of $t$'s (the time grid, which is identical for all wave-vectors).
+#+end_quote
 
 The ISF decays to zero at long times, as it should in an ergodic liquid.
 #+begin_src python :prologue "pl.clf()" :epilogue "pl.savefig(image, bbox_inches='tight'); print(image); del image" :results file :var image="isf.png"
-pl.semilogx(isf.partial['A'].grid[1], isf.partial['A'].value[0], '-o') 
+isf_A = isf.partial['A']
+pl.semilogx(isf_A.grid[1], isf_A.value[0], '-o', label=f'k={isf_A.grid[0][0]:.2f}') 
+pl.semilogx(isf_A.grid[1], isf_A.value[1], '-o', label=f'k={isf_A.grid[0][1]:.2f}') 
+pl.legend()
 pl.xlabel('t')
 pl.ylabel('ISF')
 #+end_src
@@ -247,7 +274,7 @@ pl.ylabel('ISF')
 
 *** More correlation functions
 Here is the full list of correlation functions currently available in =postprocessing=, along with the corresponding classes:
-#+begin_src python
+#+begin_src python :export results
 import inspect
 import atooms.postprocessing as pp
 for cls in inspect.getmembers(pp, inspect.isclass):    
