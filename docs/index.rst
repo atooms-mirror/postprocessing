@@ -13,21 +13,15 @@ In this tutorial, we are going to show how to perform standard analysis of molec
 Setup
 ~~~~~
 
-We start by loading common libraries for plotting and path handling
+We start with a few imports. We will read a trajectory file in XYZ format, so we also load the ``TrajectoryXYZ`` class from ``atooms``.
 
 .. code:: python
 
     import matplotlib.pyplot as pl
-    import sys
-
-We then import the ``postprocessing`` package and the trajectory class from ``atooms``. In this particular case, we will read a trajectory file in XYZ format, so we load the ``TrajectoryXYZ`` class
-
-.. code:: python
-
     import atooms.postprocessing as pp
     from atooms.trajectory import TrajectoryXYZ 
 
-We consider a sample trajectory, which can be download from the repository of the postprocessing package itself. Let's store the path to this file in a variable for later convenience
+We consider a sample trajectory, which can be downloaded from the package repository. Let's store the path to this file in a variable for later convenience
 
 .. code:: python
 
@@ -44,39 +38,32 @@ A trajectory is an object with many properties. To load a trajectory, we create 
 
     th = TrajectoryXYZ(path)
 
-The trajectory is a list-like object, in the sense that it can be iterated up and sliced. Each frame of the trajectory contains a ``System`` object, which is a full configration of the system at a given instant of time during the simulation. Here we print the first, the 10th and the last frame
+The trajectory is a list-like object, in the sense that it can be iterated upon and sliced. Each frame of the trajectory contains a ``System`` object, which is a snaphot of the system at a given instant ("frame") during the simulation. We have a look at the last frame
 
 .. code:: python
 
-    th[0], th[10], th[-1]
+    print(th[-1])
 
 ::
 
-    (<atooms.system.system.System object at 0x7f2b75818dc0>, <atooms.system.system.System object at 0x7f2b75825790>, <atooms.system.system.System object at 0x7f2b75775160>)
+    system composed by N=150 particles
+    with chemical composition C={'A': 120, 'B': 30}
+    with chemical concentration x={'A': 0.8, 'B': 0.2}
+    enclosed in a cubic box at number density rho=1.200000
 
 To know how many frames we have
 
 .. code:: python
 
-    len(th)
+    print(len(th))
 
 ::
 
     101
 
-To clarify: a slice is a list of frames, not a trajectory
-
-.. code:: python
-
-    th[10: 12]
-
-::
-
-    [<atooms.system.system.System object at 0x7f2b75813e50>, <atooms.system.system.System object at 0x7f2b75820850>]
-
 .. note::
 
-    It is actually possible to define a slice of a trajectory **as a trajectory** by using the ``Sliced`` class decorator, see below.
+    To clarify: a slice like ``th[10: 12]`` is a list of frames, not a trajectory. It is possible to define a slice of a trajectory **as a trajectory** instance by using the ``Sliced`` class decorator, see below.
 
 If the trajectory contains metadata, these can be retrieved directly:
 
@@ -84,14 +71,14 @@ If the trajectory contains metadata, these can be retrieved directly:
 
     from pprint import pprint
     print("Timestep during the trajectory:", th.timestep)
-    print("Steps corresponding to the 3rd frame:", th.steps[2])
+    print("Steps after which the 3rd frame was stored:", th.steps[2])
     print("Additional metadata:")
     pprint(th.metadata)
 
 ::
 
     Timestep during the trajectory: 0.001
-    Steps corresponding to the 3rd frame: 2000
+    Steps after which the 3rd frame was stored: 2000
     Additional metadata:
     {'cell': [5.0, 5.0, 5.0],
      'columns': ['name', 'pos'],
@@ -135,12 +122,12 @@ Notice that the average number of particles with a distance :math:`R`, i.e. the 
 
     n(R)=4\pi \rho\int_0^R g(r)r^2 dr
 
-In ``postprocessing`` the radial distribution function is a ``Correlation`` object that acts on a trajectory. In order to compute it, we simply construct the object, specifying some parameters, and then run the calculation with the ``do()`` method
+In ``postprocessing`` the radial distribution function is a ``Correlation`` object that takes a trajectory as input. In order to compute the correlation function, we construct the object, specifying some parameters, and then run the calculation with the ``compute()`` method
 
 .. code:: python
 
-    gr = pp.RadialDistributionFunction(th, norigins=5, dr=0.04)
-    gr.do()
+    gr = pp.RadialDistributionFunction(th, dr=0.02)
+    gr.compute()
 
 Once the calculation is performed, the radial distribution object ``gr`` contains (like all correlators in ``postprocessing``) two arrays:
 
@@ -158,16 +145,25 @@ We can directly plot the results with
 
 .. image:: gr.png
 
-As we can see, the function displays two narrow peaks around :math:`r=1` and a broader peak further away. The presence of several peaks is due to the fact that the system actually contains two types of particles, noted :math:`A` and :math:`B`. 
-
-We can compute separate distribution functions for the :math:`A` and :math:`B` particles and also the cross distribution funtion for the probability to find a particle :math:`B` at distance :math:`r` from particle :math:`A` using the ``Partial`` class:
+You can show the results right away with the ``show()`` method, which formats the labels automatically. The method returns a ``matplotlib`` axis object for further customization.
 
 .. code:: python
 
-    gr = pp.Partial(pp.RadialDistributionFunction, species=['A', 'B'], trajectory=th, norigins=100)
-    gr.do() 
+    gr.show()
 
-In this case, the result contains a dictionary ``gr.partial``:
+As we can see, the correlation function displays two narrow peaks around :math:`r=1` and a broader peak further away. The presence of several peaks is due to the fact that the system actually contains two types of particles, noted :math:`A` and :math:`B`. 
+
+We can compute separate distribution functions for the :math:`A` and :math:`B` particles and also the cross distribution funtion for the probability to find a particle :math:`B` at distance :math:`r` from particle :math:`A` using the ``Partial`` class.
+
+.. code:: python
+
+    gr = pp.Partial(pp.RadialDistributionFunction, species=['A', 'B'], trajectory=th, dr=0.02)
+    gr.partial[('B', 'B')].dr = 0.05
+    gr.compute() 
+
+Note how we modified the bin width ``dr`` for the $B$-:math:`B` correlations to compensate for the reduced statistics for the minority species.
+
+In this case, the result contains a dictionary ``gr.partial``
 
 .. code:: python
 
@@ -176,12 +172,12 @@ In this case, the result contains a dictionary ``gr.partial``:
 
 ::
 
-    {('A', 'A'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f7cbce85af0>,
-     ('A', 'B'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f7cbcea0f10>,
-     ('B', 'A'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f7cbcea08b0>,
-     ('B', 'B'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f7cbcea0460>}
+    {('A', 'A'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f8303c308b0>,
+     ('A', 'B'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f8303ce6c70>,
+     ('B', 'A'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f8303c30940>,
+     ('B', 'B'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f8303c30a90>}
 
-We can treat the result as any normal dictionary: 
+We plot all correlation functions
 
 .. code:: python
 
@@ -198,12 +194,12 @@ Sometimes, it is useful to analyse only sections of a trajectory. To this purpos
 .. code:: python
 
     from atooms import trajectory
-    t =  trajectory.Sliced(th, slice(-1, len(th)))  # analyse only the last frame
-    gr = pp.RadialDistributionFunction(t, dr=0.04)
-    gr.do()
+    t =  trajectory.Sliced(th, slice(len(th)//2, len(th)))  # analyse only the 2nd half
+    gr = pp.RadialDistributionFunction(t, dr=0.02)
+    gr.compute()
     pl.plot(gr.grid, gr.value)
     pl.xlabel("r")
-    pl.ylabel("g(r)")  # notice that the g(r) is more noisy
+    pl.ylabel("g(r)")
 
 .. image:: gr_slice.png
 
@@ -213,9 +209,7 @@ Dynamical correlations
 Mean square displacement
 ::::::::::::::::::::::::
 
-A very similar kind of anaysis can be performed on dynamical quantities, which quantify correlations in time.
-
-The most elementary of such quantities is the mean squared displacement (MSD). This is defined as
+We can also compute dynamical correlation functions. The simplest of such quantities is the mean squared displacement (MSD). This is defined as
 
 
 
@@ -223,18 +217,18 @@ The most elementary of such quantities is the mean squared displacement (MSD). T
 
     \delta r^2(t)= \langle |\mathbf{r}(t-t_0) - \mathbf{r}(t_0)|^2\rangle
 
-The average is normally perfomed over all the :math:`N` particles and over multiple values for the **origin** of time :math:`t_0`.
+The average is usually performed over all the :math:`N` particles and over multiple time origins :math:`t_0`.
 
 The analysis process is now familiar. First we construct the msd object and then perform the calculation with ``do()``.
 
 .. code:: python
 
     msd = pp.MeanSquareDisplacement(th)
-    msd.do()
+    msd.compute()
 
 .. code:: python
 
-    pl.loglog(msd.grid, msd.value, 'o')
+    pl.loglog(msd.grid, msd.value, '-o')
     pl.xlabel("t")
     pl.ylabel("MSD(t)");
 
@@ -245,9 +239,10 @@ Again, we can compute partial mean square displacements using the ``Partial`` cl
 .. code:: python
 
     msds = pp.Partial(pp.MeanSquareDisplacement, species=['A','B'], trajectory=th, norigins=100)
-    msds.do()
-    pl.loglog(msds.partial['A'].grid, msds.partial['A'].value, 'o')
-    pl.loglog(msds.partial['B'].grid, msds.partial['B'].value, 'o')
+    msds.compute()
+    pl.loglog(msds.partial['A'].grid, msds.partial['A'].value, '-o', label='A')
+    pl.loglog(msds.partial['B'].grid, msds.partial['B'].value, '-o', label='B')
+    pl.legend()
     pl.xlabel("t")
     pl.ylabel("MSD(t)")
 
@@ -334,7 +329,6 @@ We can extend the correlation class to compute additional correlation functions.
             self.phasespace = ["pos"]
 
         def _compute(self):
-            print("Computing new correlation")
             raw = defaultdict(list)
             for i in range(len(self._pos)):
                 for x in self.grid: 
@@ -349,5 +343,51 @@ We can extend the correlation class to compute additional correlation functions.
 
 ::
 
-    Computing new correlation
     [0.0, 0.0]
+
+Storing results and analysis
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The correlation functions can be written to files, using the ``write()`` method. 
+
+.. code:: python
+
+    msd = pp.MeanSquareDisplacement(th)
+    msd.compute()
+    msd.write()
+
+The output file path is interpolated using the variable ``core.pp_output_path``
+
+.. code:: python
+
+    print({} gives {}'.format(pp.core.pp_output_path, msd._output_file))
+
+::
+
+    {trajectory.filename}.pp.{symbol}.{tag} leads to /tmp/kalj-small.xyz.pp.msd
+
+To change the output file pattern just modify the string. You can use any ``Correlation`` attribute enclosed in brackets to parameterize the output.
+
+The output file is a simple columnar text file containing the grid and values of the correlation function.
+
+Some correlation functions may implement some basic analysis as well
+
+.. code:: python
+
+    msd.analyze()
+    pprint(msd.analysis)
+
+::
+
+    {'diffusion coefficient D': 0.004481283121206189,
+     'diffusive time tau_D': 30.841529039944426}
+
+If ``analyze()`` is called before ``compute()``, the above dictionary will be written in the output file as well.
+
+Finally, you can perform all the steps above (``compute``, ``analyze``, ``write``) in one sweep like this
+
+.. code:: python
+
+    msd.do()
+
+If the calculation has been written to disk already and the trajectory file has not changed since, ``do(update=True)`` will load the correlation function, without recalcuting everything.

@@ -138,6 +138,15 @@ def _subtract_mean(weight):
     return weight
 
 
+def _is_iterable(maybe_iterable):
+    try:
+        iter(maybe_iterable)
+    except TypeError:
+        return False
+    else:
+        return True
+
+
 class Correlation(object):
     &#34;&#34;&#34;
     Base class for correlation functions.
@@ -206,6 +215,12 @@ class Correlation(object):
     indicates which variables should be read from the trajectory file.
     They will be available as self._pos, self._pos_unf, self._vel.
     &#34;&#34;&#34;
+    _symmetric = True
+    &#34;&#34;&#34;
+    If nbodies&gt;1, a symmetric correlation function is invariant under
+    the exchange between _pos_0 and _pos_1. In that case, _symmetric
+    is True.
+    &#34;&#34;&#34;
 
     def __init__(self, trj, grid, output_path=None, norigins=None, fix_cm=False):
         # Accept a trajectory-like instance or a path to a trajectory
@@ -221,7 +236,10 @@ class Correlation(object):
         self.comments = None  # can be modified by user at run time
         self.tag = &#39;&#39;
         self.tag_description = &#39;the whole system&#39;
-        self.output_path = output_path if output_path is not None else core.pp_output_path
+        if self.trajectory.filename is None:
+            self.output_path = None
+        else:
+            self.output_path = output_path if output_path is not None else core.pp_output_path
         self.skip = adjust_skip(self.trajectory, norigins)
 
         # Callbacks
@@ -381,9 +399,6 @@ class Correlation(object):
             if hasattr(th[0].particle[0], &#39;position_unfolded&#39;):
                 # Unfolded positions are present in the trajectory
                 for s in progress(th):
-                    # Apply filter if there is one
-                    if len(self._cbk) &gt; 0:
-                        s = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
                     # Fixing the CM must be done explicitly using
                     # particle.position_unfolded because atooms.system
                     # methods work with particle.position
@@ -399,6 +414,10 @@ class Correlation(object):
                         # Subtract it
                         for p in s.particle:
                             p.position_unfolded -= cm
+                    # Apply filter if there is one
+                    # This must be done after the CM has been fixed
+                    if len(self._cbk) &gt; 0:
+                        s = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
                     self._pos_unf.append(s.dump(&#39;particle.position_unfolded&#39;))
             else:
                 for s in progress(th):
@@ -605,16 +624,8 @@ class Correlation(object):
         The default is defined by core.pp_output_path, which currently
         looks like &#39;{trajectory.filename}.pp.{symbol}.{tag}&#39;
         &#34;&#34;&#34;
-        def is_iterable(maybe_iterable):
-            try:
-                iter(maybe_iterable)
-            except TypeError:
-                return False
-            else:
-                return True
-
         # Pack grid and value into arrays to dump
-        if is_iterable(self.grid[0]) and len(self.grid) == 2:
+        if _is_iterable(self.grid[0]) and len(self.grid) == 2:
             x = numpy.array(self.grid[0]).repeat(len(self.value[0]))
             y = numpy.array(self.grid[1] * len(self.grid[0]))
             z = numpy.array(self.value).flatten()
@@ -650,13 +661,14 @@ class Correlation(object):
         # and make sure the path to the output file exists
         import os
         from atooms.core.utils import mkdir
-        mkdir(os.path.dirname(self._output_file))
-        with open(self._output_file, &#39;w&#39;) as fh:
-            fh.write(comments)
-            if len(analysis) &gt; 0:
-                fh.write(analysis)
-            numpy.savetxt(fh, dump, fmt=&#34;%g&#34;)
-            fh.flush()
+        if self._output_file is not None:
+            mkdir(os.path.dirname(self._output_file))
+            with open(self._output_file, &#39;w&#39;) as fh:
+                fh.write(comments)
+                if len(analysis) &gt; 0:
+                    fh.write(analysis)
+                numpy.savetxt(fh, dump, fmt=&#34;%g&#34;)
+                fh.flush()
 
     def do(self, update=False):
         &#34;&#34;&#34;
@@ -678,7 +690,20 @@ class Correlation(object):
         self.write()
 
     def __call__(self):
-        self.do()</code></pre>
+        self.do()
+
+    def show(self, now=True):
+        try:
+            import matplotlib.pyplot as plt
+        except ImportError:
+            return
+
+        if not _is_iterable(self.grid[0]):
+            plt.plot(self.grid, self.value)
+            plt.ylabel(self.short_name)
+            plt.xlabel(self.grid_name[0])
+        if now:
+            plt.show()</code></pre>
 </details>
 </section>
 <section>
@@ -916,6 +941,12 @@ e.g. <code>self._pos_0</code> and <code>self._pos_1</code></p>
     indicates which variables should be read from the trajectory file.
     They will be available as self._pos, self._pos_unf, self._vel.
     &#34;&#34;&#34;
+    _symmetric = True
+    &#34;&#34;&#34;
+    If nbodies&gt;1, a symmetric correlation function is invariant under
+    the exchange between _pos_0 and _pos_1. In that case, _symmetric
+    is True.
+    &#34;&#34;&#34;
 
     def __init__(self, trj, grid, output_path=None, norigins=None, fix_cm=False):
         # Accept a trajectory-like instance or a path to a trajectory
@@ -931,7 +962,10 @@ e.g. <code>self._pos_0</code> and <code>self._pos_1</code></p>
         self.comments = None  # can be modified by user at run time
         self.tag = &#39;&#39;
         self.tag_description = &#39;the whole system&#39;
-        self.output_path = output_path if output_path is not None else core.pp_output_path
+        if self.trajectory.filename is None:
+            self.output_path = None
+        else:
+            self.output_path = output_path if output_path is not None else core.pp_output_path
         self.skip = adjust_skip(self.trajectory, norigins)
 
         # Callbacks
@@ -1091,9 +1125,6 @@ e.g. <code>self._pos_0</code> and <code>self._pos_1</code></p>
             if hasattr(th[0].particle[0], &#39;position_unfolded&#39;):
                 # Unfolded positions are present in the trajectory
                 for s in progress(th):
-                    # Apply filter if there is one
-                    if len(self._cbk) &gt; 0:
-                        s = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
                     # Fixing the CM must be done explicitly using
                     # particle.position_unfolded because atooms.system
                     # methods work with particle.position
@@ -1109,6 +1140,10 @@ e.g. <code>self._pos_0</code> and <code>self._pos_1</code></p>
                         # Subtract it
                         for p in s.particle:
                             p.position_unfolded -= cm
+                    # Apply filter if there is one
+                    # This must be done after the CM has been fixed
+                    if len(self._cbk) &gt; 0:
+                        s = self._cbk[0](s, *self._cbk_args[0], **self._cbk_kwargs[0])
                     self._pos_unf.append(s.dump(&#39;particle.position_unfolded&#39;))
             else:
                 for s in progress(th):
@@ -1315,16 +1350,8 @@ e.g. <code>self._pos_0</code> and <code>self._pos_1</code></p>
         The default is defined by core.pp_output_path, which currently
         looks like &#39;{trajectory.filename}.pp.{symbol}.{tag}&#39;
         &#34;&#34;&#34;
-        def is_iterable(maybe_iterable):
-            try:
-                iter(maybe_iterable)
-            except TypeError:
-                return False
-            else:
-                return True
-
         # Pack grid and value into arrays to dump
-        if is_iterable(self.grid[0]) and len(self.grid) == 2:
+        if _is_iterable(self.grid[0]) and len(self.grid) == 2:
             x = numpy.array(self.grid[0]).repeat(len(self.value[0]))
             y = numpy.array(self.grid[1] * len(self.grid[0]))
             z = numpy.array(self.value).flatten()
@@ -1360,13 +1387,14 @@ e.g. <code>self._pos_0</code> and <code>self._pos_1</code></p>
         # and make sure the path to the output file exists
         import os
         from atooms.core.utils import mkdir
-        mkdir(os.path.dirname(self._output_file))
-        with open(self._output_file, &#39;w&#39;) as fh:
-            fh.write(comments)
-            if len(analysis) &gt; 0:
-                fh.write(analysis)
-            numpy.savetxt(fh, dump, fmt=&#34;%g&#34;)
-            fh.flush()
+        if self._output_file is not None:
+            mkdir(os.path.dirname(self._output_file))
+            with open(self._output_file, &#39;w&#39;) as fh:
+                fh.write(comments)
+                if len(analysis) &gt; 0:
+                    fh.write(analysis)
+                numpy.savetxt(fh, dump, fmt=&#34;%g&#34;)
+                fh.flush()
 
     def do(self, update=False):
         &#34;&#34;&#34;
@@ -1388,7 +1416,20 @@ e.g. <code>self._pos_0</code> and <code>self._pos_1</code></p>
         self.write()
 
     def __call__(self):
-        self.do()</code></pre>
+        self.do()
+
+    def show(self, now=True):
+        try:
+            import matplotlib.pyplot as plt
+        except ImportError:
+            return
+
+        if not _is_iterable(self.grid[0]):
+            plt.plot(self.grid, self.value)
+            plt.ylabel(self.short_name)
+            plt.xlabel(self.grid_name[0])
+        if now:
+            plt.show()</code></pre>
 </details>
 <h3>Subclasses</h3>
 <ul class="hlist">
@@ -1396,7 +1437,6 @@ e.g. <code>self._pos_0</code> and <code>self._pos_1</code></p>
 <li><a title="postprocessing.ba.BondAngleDistribution" href="ba.html#postprocessing.ba.BondAngleDistribution">BondAngleDistribution</a></li>
 <li><a title="postprocessing.chi4t.Chi4SelfOverlap" href="chi4t.html#postprocessing.chi4t.Chi4SelfOverlap">Chi4SelfOverlap</a></li>
 <li><a title="postprocessing.fourierspace.FourierSpaceCorrelation" href="fourierspace.html#postprocessing.fourierspace.FourierSpaceCorrelation">FourierSpaceCorrelation</a></li>
-<li><a title="postprocessing.fraction.Fraction" href="fraction.html#postprocessing.fraction.Fraction">Fraction</a></li>
 <li><a title="postprocessing.gr.RadialDistributionFunctionLegacy" href="gr.html#postprocessing.gr.RadialDistributionFunctionLegacy">RadialDistributionFunctionLegacy</a></li>
 <li><a title="postprocessing.msd.MeanSquareDisplacement" href="msd.html#postprocessing.msd.MeanSquareDisplacement">MeanSquareDisplacement</a></li>
 <li><a title="postprocessing.qt.CollectiveOverlap" href="qt.html#postprocessing.qt.CollectiveOverlap">CollectiveOverlap</a></li>
@@ -1683,6 +1723,29 @@ correlation function.</p></div>
             _log.warn(&#34;Ignoring some columns in %s&#34;, self._output_file)</code></pre>
 </details>
 </dd>
+<dt id="postprocessing.correlation.Correlation.show"><code class="name flex">
+<span>def <span class="ident">show</span></span>(<span>self, now=True)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def show(self, now=True):
+    try:
+        import matplotlib.pyplot as plt
+    except ImportError:
+        return
+
+    if not _is_iterable(self.grid[0]):
+        plt.plot(self.grid, self.value)
+        plt.ylabel(self.short_name)
+        plt.xlabel(self.grid_name[0])
+    if now:
+        plt.show()</code></pre>
+</details>
+</dd>
 <dt id="postprocessing.correlation.Correlation.write"><code class="name flex">
 <span>def <span class="ident">write</span></span>(<span>self)</span>
 </code></dt>
@@ -1721,16 +1784,8 @@ looks like '{trajectory.filename}.pp.{symbol}.{tag}'</p></div>
     The default is defined by core.pp_output_path, which currently
     looks like &#39;{trajectory.filename}.pp.{symbol}.{tag}&#39;
     &#34;&#34;&#34;
-    def is_iterable(maybe_iterable):
-        try:
-            iter(maybe_iterable)
-        except TypeError:
-            return False
-        else:
-            return True
-
     # Pack grid and value into arrays to dump
-    if is_iterable(self.grid[0]) and len(self.grid) == 2:
+    if _is_iterable(self.grid[0]) and len(self.grid) == 2:
         x = numpy.array(self.grid[0]).repeat(len(self.value[0]))
         y = numpy.array(self.grid[1] * len(self.grid[0]))
         z = numpy.array(self.value).flatten()
@@ -1766,13 +1821,14 @@ looks like '{trajectory.filename}.pp.{symbol}.{tag}'</p></div>
     # and make sure the path to the output file exists
     import os
     from atooms.core.utils import mkdir
-    mkdir(os.path.dirname(self._output_file))
-    with open(self._output_file, &#39;w&#39;) as fh:
-        fh.write(comments)
-        if len(analysis) &gt; 0:
-            fh.write(analysis)
-        numpy.savetxt(fh, dump, fmt=&#34;%g&#34;)
-        fh.flush()</code></pre>
+    if self._output_file is not None:
+        mkdir(os.path.dirname(self._output_file))
+        with open(self._output_file, &#39;w&#39;) as fh:
+            fh.write(comments)
+            if len(analysis) &gt; 0:
+                fh.write(analysis)
+            numpy.savetxt(fh, dump, fmt=&#34;%g&#34;)
+            fh.flush()</code></pre>
 </details>
 </dd>
 </dl>
@@ -1815,6 +1871,7 @@ looks like '{trajectory.filename}.pp.{symbol}.{tag}'</p></div>
 <li><code><a title="postprocessing.correlation.Correlation.phasespace" href="#postprocessing.correlation.Correlation.phasespace">phasespace</a></code></li>
 <li><code><a title="postprocessing.correlation.Correlation.read" href="#postprocessing.correlation.Correlation.read">read</a></code></li>
 <li><code><a title="postprocessing.correlation.Correlation.short_name" href="#postprocessing.correlation.Correlation.short_name">short_name</a></code></li>
+<li><code><a title="postprocessing.correlation.Correlation.show" href="#postprocessing.correlation.Correlation.show">show</a></code></li>
 <li><code><a title="postprocessing.correlation.Correlation.static" href="#postprocessing.correlation.Correlation.static">static</a></code></li>
 <li><code><a title="postprocessing.correlation.Correlation.symbol" href="#postprocessing.correlation.Correlation.symbol">symbol</a></code></li>
 <li><code><a title="postprocessing.correlation.Correlation.write" href="#postprocessing.correlation.Correlation.write">write</a></code></li>

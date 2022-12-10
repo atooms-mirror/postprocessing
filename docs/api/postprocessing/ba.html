@@ -84,6 +84,7 @@ class BondAngleDistribution(Correlation):
     short_name = &#39;D(theta)&#39;
     long_name = &#39;bond angle distribution&#39;
     phasespace = [&#39;pos&#39;, &#39;ids&#39;]
+    _symmetric = False
 
     def __init__(self, trajectory, norigins=None, dtheta=4.0, rcut=None):
         Correlation.__init__(self, trajectory, None, norigins=norigins)
@@ -174,6 +175,7 @@ class BondAngleDistribution(Correlation):
     short_name = &#39;D(theta)&#39;
     long_name = &#39;bond angle distribution&#39;
     phasespace = [&#39;pos&#39;, &#39;ids&#39;]
+    _symmetric = False
 
     def __init__(self, trajectory, norigins=None, dtheta=4.0, rcut=None):
         Correlation.__init__(self, trajectory, None, norigins=norigins)

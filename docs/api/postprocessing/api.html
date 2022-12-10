@@ -223,9 +223,9 @@ def fkt(input_file, tmax=-1.0, tmax_fraction=0.75,
     func = _func_db[func]
     files = [input_file] + list(input_files)
     traj = _get_trajectories(files, global_args)
-    bar = progress(active=True, total=len(files))
+    # bar = progress(active=True, total=len(files))
     for i, th in enumerate(traj):
-        bar.update(i)
+        # bar.update(i)
         if tmax &gt; 0:
             t_grid = [0.0] + func(th.timestep, tmax, tsamples)
         elif tmax_fraction &gt; 0:
@@ -368,10 +368,10 @@ def ba(input_file, dtheta=4.0, grandcanonical=False, *input_files, **global_args
             cf = pp.Filter(cf, global_args[&#39;filter&#39;])
         cf.do(update=global_args[&#39;update&#39;])
 
-        # ids = distinct_species(th[0].particle)
-        # if len(ids) &gt; 1 and not global_args[&#39;no_partial&#39;]:
-        #     cf = Partial(pp.BondAngleDistribution, ids, th, dtheta=dtheta, norigins=global_args[&#39;norigins&#39;])
-        #     cf.do(update=global_args[&#39;update&#39;])</code></pre>
+        ids = distinct_species(th[0].particle)
+        if len(ids) &gt; 1 and not global_args[&#39;no_partial&#39;]:
+            cf = Partial(pp.BondAngleDistribution, ids, th, dtheta=dtheta, norigins=global_args[&#39;norigins&#39;])
+            cf.do(update=global_args[&#39;update&#39;])</code></pre>
 </details>
 </section>
 <section>
@@ -429,10 +429,10 @@ def ba(input_file, dtheta=4.0, grandcanonical=False, *input_files, **global_args
             cf = pp.Filter(cf, global_args[&#39;filter&#39;])
         cf.do(update=global_args[&#39;update&#39;])
 
-        # ids = distinct_species(th[0].particle)
-        # if len(ids) &gt; 1 and not global_args[&#39;no_partial&#39;]:
-        #     cf = Partial(pp.BondAngleDistribution, ids, th, dtheta=dtheta, norigins=global_args[&#39;norigins&#39;])
-        #     cf.do(update=global_args[&#39;update&#39;])</code></pre>
+        ids = distinct_species(th[0].particle)
+        if len(ids) &gt; 1 and not global_args[&#39;no_partial&#39;]:
+            cf = Partial(pp.BondAngleDistribution, ids, th, dtheta=dtheta, norigins=global_args[&#39;norigins&#39;])
+            cf.do(update=global_args[&#39;update&#39;])</code></pre>
 </details>
 </dd>
 <dt id="postprocessing.api.chi4qs"><code class="name flex">
@@ -488,9 +488,9 @@ def ba(input_file, dtheta=4.0, grandcanonical=False, *input_files, **global_args
     func = _func_db[func]
     files = [input_file] + list(input_files)
     traj = _get_trajectories(files, global_args)
-    bar = progress(active=True, total=len(files))
+    # bar = progress(active=True, total=len(files))
     for i, th in enumerate(traj):
-        bar.update(i)
+        # bar.update(i)
         if tmax &gt; 0:
             t_grid = [0.0] + func(th.timestep, tmax, tsamples)
         elif tmax_fraction &gt; 0:

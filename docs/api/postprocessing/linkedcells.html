@@ -35,14 +35,6 @@
 from collections import defaultdict
 import numpy
 
-def _pbc(t, N):
-    for i in range(len(t)):
-        if t[i] &gt;= N[i]:
-            t[i] -= N[i]
-        elif t[i] &lt; 0:
-            t[i] += N[i]
-    return t
-
 # TODO: define iterator over cells
 
 class LinkedCells(object):
@@ -53,27 +45,75 @@ class LinkedCells(object):
         self._is_adjusted = False
 
     def _map(self, newton):
-        self._neigh_cell = {}
-        if newton:
+        def _pbc(t, N):
+            for i in range(len(t)):
+                if t[i] &gt;= N[i]:
+                    t[i] -= N[i]
+                elif t[i] &lt; 0:
+                    t[i] += N[i]
+            return t
+
+        def _map_3d_newton(n_cell):
+            neigh_cell = {}
             for ix in range(self.n_cell[0]):
                 for iy in range(self.n_cell[1]):
                     for iz in range(self.n_cell[2]):
-                        self._neigh_cell[(ix, iy, iz)] = \
-                            [(ix+1, iy, iz), (ix+1, iy+1, iz), (ix, iy+1, iz), (ix-1, iy+1, iz),
-                             (ix+1, iy, iz-1), (ix+1, iy+1, iz-1), (ix, iy+1, iz-1), (ix-1, iy+1, iz-1),
-                             (ix+1, iy, iz+1), (ix+1, iy+1, iz+1), (ix, iy+1, iz+1), (ix-1, iy+1, iz+1),
+                        # This is a map of neighbouring cells obeying III law
+                        neigh_cell[(ix, iy, iz)] = \
+                            [(ix+1, iy, iz), (ix+1, iy+1, iz), (ix, iy+1, iz),
+                             (ix-1, iy+1, iz), (ix+1, iy, iz-1), (ix+1, iy+1, iz-1),
+                             (ix, iy+1, iz-1), (ix-1, iy+1, iz-1), (ix+1, iy, iz+1),
+                             (ix+1, iy+1, iz+1), (ix, iy+1, iz+1), (ix-1, iy+1, iz+1),
                              (ix, iy, iz+1)]
-        else:
+            return neigh_cell
+
+        def _map_2d_newton(n_cell):
+            neigh_cell = {}
             for ix in range(self.n_cell[0]):
                 for iy in range(self.n_cell[1]):
-                    for iz in range(self.n_cell[2]):
-                        self._neigh_cell[(ix, iy, iz)] = []
+                    # This is a map of neighbouring cells obeying III law
+                    neigh_cell[(ix, iy)] = \
+                        [(ix+1, iy), (ix+1, iy+1), (ix, iy+1), (ix-1, iy+1)]
+            return neigh_cell
+
+        def _map_3d_nonewton(n_cell):
+            neigh_cell = {}
+            for ix in range(n_cell[0]):
+                for iy in range(n_cell[1]):
+                    for iz in range(n_cell[2]):
+                        neigh_cell[(ix, iy, iz)] = []
                         for deltax in [-1, 0, 1]:
                             for deltay in [-1, 0, 1]:
                                 for deltaz in [-1, 0, 1]:
                                     if deltax == deltay == deltaz == 0:
                                         continue
-                                    self._neigh_cell[(ix, iy, iz)].append((ix+deltax, iy+deltay, iz+deltaz))
+                                    neigh_cell[(ix, iy, iz)].append((ix+deltax, iy+deltay, iz+deltaz))
+            return neigh_cell
+
+        def _map_2d_nonewton(n_cell):
+            neigh_cell = {}
+            for ix in range(n_cell[0]):
+                for iy in range(n_cell[1]):
+                    neigh_cell[(ix, iy)] = []
+                    for deltax in [-1, 0, 1]:
+                        for deltay in [-1, 0, 1]:
+                            if deltax == deltay == 0:
+                                continue
+                            neigh_cell[(ix, iy)].append((ix+deltax, iy+deltay))
+            return neigh_cell
+
+        if len(self.n_cell) == 3:
+            if newton:
+                self._neigh_cell = _map_3d_newton(self.n_cell)
+            else:
+                self._neigh_cell = _map_3d_nonewton(self.n_cell)
+        elif len(self.n_cell) == 2:
+            if newton:
+                self._neigh_cell = _map_2d_newton(self.n_cell)
+            else:
+                self._neigh_cell = _map_2d_nonewton(self.n_cell)
+        else:
+            raise ValueError(&#39;linked cells not supported for dimensions not in {2,3}&#39;)
 
         # Apply PBC to neighboring &#34;ghost&#34; cells
         for i in self._neigh_cell:
@@ -272,27 +312,75 @@ class LinkedCells(object):
         self._is_adjusted = False
 
     def _map(self, newton):
-        self._neigh_cell = {}
-        if newton:
+        def _pbc(t, N):
+            for i in range(len(t)):
+                if t[i] &gt;= N[i]:
+                    t[i] -= N[i]
+                elif t[i] &lt; 0:
+                    t[i] += N[i]
+            return t
+
+        def _map_3d_newton(n_cell):
+            neigh_cell = {}
             for ix in range(self.n_cell[0]):
                 for iy in range(self.n_cell[1]):
                     for iz in range(self.n_cell[2]):
-                        self._neigh_cell[(ix, iy, iz)] = \
-                            [(ix+1, iy, iz), (ix+1, iy+1, iz), (ix, iy+1, iz), (ix-1, iy+1, iz),
-                             (ix+1, iy, iz-1), (ix+1, iy+1, iz-1), (ix, iy+1, iz-1), (ix-1, iy+1, iz-1),
-                             (ix+1, iy, iz+1), (ix+1, iy+1, iz+1), (ix, iy+1, iz+1), (ix-1, iy+1, iz+1),
+                        # This is a map of neighbouring cells obeying III law
+                        neigh_cell[(ix, iy, iz)] = \
+                            [(ix+1, iy, iz), (ix+1, iy+1, iz), (ix, iy+1, iz),
+                             (ix-1, iy+1, iz), (ix+1, iy, iz-1), (ix+1, iy+1, iz-1),
+                             (ix, iy+1, iz-1), (ix-1, iy+1, iz-1), (ix+1, iy, iz+1),
+                             (ix+1, iy+1, iz+1), (ix, iy+1, iz+1), (ix-1, iy+1, iz+1),
                              (ix, iy, iz+1)]
-        else:
+            return neigh_cell
+
+        def _map_2d_newton(n_cell):
+            neigh_cell = {}
             for ix in range(self.n_cell[0]):
                 for iy in range(self.n_cell[1]):
-                    for iz in range(self.n_cell[2]):
-                        self._neigh_cell[(ix, iy, iz)] = []
+                    # This is a map of neighbouring cells obeying III law
+                    neigh_cell[(ix, iy)] = \
+                        [(ix+1, iy), (ix+1, iy+1), (ix, iy+1), (ix-1, iy+1)]
+            return neigh_cell
+
+        def _map_3d_nonewton(n_cell):
+            neigh_cell = {}
+            for ix in range(n_cell[0]):
+                for iy in range(n_cell[1]):
+                    for iz in range(n_cell[2]):
+                        neigh_cell[(ix, iy, iz)] = []
                         for deltax in [-1, 0, 1]:
                             for deltay in [-1, 0, 1]:
                                 for deltaz in [-1, 0, 1]:
                                     if deltax == deltay == deltaz == 0:
                                         continue
-                                    self._neigh_cell[(ix, iy, iz)].append((ix+deltax, iy+deltay, iz+deltaz))
+                                    neigh_cell[(ix, iy, iz)].append((ix+deltax, iy+deltay, iz+deltaz))
+            return neigh_cell
+
+        def _map_2d_nonewton(n_cell):
+            neigh_cell = {}
+            for ix in range(n_cell[0]):
+                for iy in range(n_cell[1]):
+                    neigh_cell[(ix, iy)] = []
+                    for deltax in [-1, 0, 1]:
+                        for deltay in [-1, 0, 1]:
+                            if deltax == deltay == 0:
+                                continue
+                            neigh_cell[(ix, iy)].append((ix+deltax, iy+deltay))
+            return neigh_cell
+
+        if len(self.n_cell) == 3:
+            if newton:
+                self._neigh_cell = _map_3d_newton(self.n_cell)
+            else:
+                self._neigh_cell = _map_3d_nonewton(self.n_cell)
+        elif len(self.n_cell) == 2:
+            if newton:
+                self._neigh_cell = _map_2d_newton(self.n_cell)
+            else:
+                self._neigh_cell = _map_2d_nonewton(self.n_cell)
+        else:
+            raise ValueError(&#39;linked cells not supported for dimensions not in {2,3}&#39;)
 
         # Apply PBC to neighboring &#34;ghost&#34; cells
         for i in self._neigh_cell:

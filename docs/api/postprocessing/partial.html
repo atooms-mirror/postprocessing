@@ -81,13 +81,13 @@ class Partial(object):
     @property
     def output_path(self):
         return self._output_path
-        
+
     @output_path.setter
     def output_path(self, path):
         self._output_path = path
         for key in self.partial:
             self.partial[key].output_path = path
-                    
+
     def add_weight(self, trajectory=None, field=None, fluctuations=False):
         for key in self.partial:
             self.partial[key].add_weight(trajectory, field, fluctuations)
@@ -111,19 +111,22 @@ class Partial(object):
                 for j in range(len(self.species)):
                     isp = self.species[i]
                     jsp = self.species[j]
-                    if j &gt;= i:
+                    if j &gt;= i or not self.partial[(isp, jsp)]._symmetric:
                         self.partial[(isp, jsp)].compute()
                     else:
                         # The isp-jsp has been already calculated
                         self.partial[(isp, jsp)].grid = self.partial[(jsp, isp)].grid
                         self.partial[(isp, jsp)].value = self.partial[(jsp, isp)].value
+                        self.partial[(isp, jsp)].analysis = self.partial[(jsp, isp)].analysis
 
     def write(self):
         for partial in self.partial.values():
             partial.write()
-                        
+
     def do(self, update=False):
         if update and not self.need_update():
+            for partial in self.partial.values():
+                partial.read()
             return
 
         self.compute()
@@ -192,13 +195,13 @@ class Partial(object):
     @property
     def output_path(self):
         return self._output_path
-        
+
     @output_path.setter
     def output_path(self, path):
         self._output_path = path
         for key in self.partial:
             self.partial[key].output_path = path
-                    
+
     def add_weight(self, trajectory=None, field=None, fluctuations=False):
         for key in self.partial:
             self.partial[key].add_weight(trajectory, field, fluctuations)
@@ -222,19 +225,22 @@ class Partial(object):
                 for j in range(len(self.species)):
                     isp = self.species[i]
                     jsp = self.species[j]
-                    if j &gt;= i:
+                    if j &gt;= i or not self.partial[(isp, jsp)]._symmetric:
                         self.partial[(isp, jsp)].compute()
                     else:
                         # The isp-jsp has been already calculated
                         self.partial[(isp, jsp)].grid = self.partial[(jsp, isp)].grid
                         self.partial[(isp, jsp)].value = self.partial[(jsp, isp)].value
+                        self.partial[(isp, jsp)].analysis = self.partial[(jsp, isp)].analysis
 
     def write(self):
         for partial in self.partial.values():
             partial.write()
-                        
+
     def do(self, update=False):
         if update and not self.need_update():
+            for partial in self.partial.values():
+                partial.read()
             return
 
         self.compute()
@@ -299,12 +305,13 @@ def output_path(self):
             for j in range(len(self.species)):
                 isp = self.species[i]
                 jsp = self.species[j]
-                if j &gt;= i:
+                if j &gt;= i or not self.partial[(isp, jsp)]._symmetric:
                     self.partial[(isp, jsp)].compute()
                 else:
                     # The isp-jsp has been already calculated
                     self.partial[(isp, jsp)].grid = self.partial[(jsp, isp)].grid
-                    self.partial[(isp, jsp)].value = self.partial[(jsp, isp)].value</code></pre>
+                    self.partial[(isp, jsp)].value = self.partial[(jsp, isp)].value
+                    self.partial[(isp, jsp)].analysis = self.partial[(jsp, isp)].analysis</code></pre>
 </details>
 </dd>
 <dt id="postprocessing.partial.Partial.do"><code class="name flex">
@@ -318,6 +325,8 @@ def output_path(self):
 </summary>
 <pre><code class="python">def do(self, update=False):
     if update and not self.need_update():
+        for partial in self.partial.values():
+            partial.read()
         return
 
     self.compute()
