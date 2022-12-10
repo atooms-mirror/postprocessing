@@ -33,7 +33,7 @@ img {
     margin-right: auto;
     max-width: 70%
 }
-div.highlight-default pre {
+div.highlight-none pre {
     background-color: rgb(255, 255, 255);
     color: #7B8591;
     padding: 0px 15px;

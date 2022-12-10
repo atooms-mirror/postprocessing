@@ -61,6 +61,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 #     'titles_only': False
 # }
 
+# https://pygments.org/styles/
 pygments_style = 'friendly'
 html_theme = 'alabaster'
 html_static_path = ['_static/custom.css']
@@ -74,7 +75,8 @@ html_theme_options = {
     'sidebar_width': '270px',
     'body_max_width': 'auto',
     'page_width': '1100px',
-#    'code_highlight_bg': '#111',
+    # this must be changed along pre background it seems... 
+    # 'code_highlight_bg': '#2e3440',
 }
 
 html_sidebars = {

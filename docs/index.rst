@@ -17,25 +17,9 @@ We start with a few imports and plot customizations. We will read a trajectory f
 
 .. code:: python
 
-    import matplotlib
     import matplotlib.pyplot as pl
     import atooms.postprocessing as pp
     from atooms.trajectory import TrajectoryXYZ 
-
-    pl.rcParams.update({
-        "font.family": "serif",
-        'font.size': 11.0,
-        'axes.labelsize': 'medium',
-        'xtick.major.pad': 2.0,
-        'ytick.major.pad': 2.0,
-        'xtick.major.size': 4.0,
-        'ytick.major.size': 4.0,
-        'savefig.bbox': 'tight',
-        'savefig.dpi': 180,
-        'axes.spines.right': False,
-        'axes.spines.top': False,
-        'legend.frameon': False,
-    })
 
 We consider a sample trajectory, which can be downloaded from the package repository.
 
@@ -304,19 +288,6 @@ More correlation functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Here is the full list of correlation functions currently available in ``postprocessing``, along with the corresponding classes:
-
-.. code:: python
-
-    import inspect
-    import atooms.postprocessing as pp
-    for cls in inspect.getmembers(pp, inspect.isclass):    
-        if issubclass(cls[1], pp.Correlation) \
-           and cls[1] is not pp.Correlation \
-           and not 'Fast' in cls[0] \
-           and not 'Legacy' in cls[0] \
-           and not 'Optimized' in cls[0] \
-           and not 'Susceptibility' == cls[0]:
-            print('- `{}`: {}'.format(cls[0], cls[1].long_name))
 
 ::
 
