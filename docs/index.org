@@ -308,39 +308,86 @@ for cls in inspect.getmembers(pp, inspect.isclass):
 
 Some of them have multiple implementations (ex. =Fast= and =Legacy=), which are picked at runtime depending on your platform. The fastest implementation will be automatically picked up, if possible.
 
-** Writing your own correlation function
+** Writing your own correlation functions
 
-We can extend the correlation class to compute additional correlation functions. The particle coordinates are loaded into the =_pos= instance variable as a list of numpy arrays. Each numpy array is a =(ndim, npart)= representation of the full particles' coordinates in a given frame of the trajectory. This is a gist of a new correlation class.
+We can extend the correlation class to compute additional correlation functions. By default, we get access to particles' positions and velocities stored in the following =Correlation= attributes
+
+- =_pos=: positions as a list of =(ndim, npart)= numpy arrays, one per frame
+- =_pos_unf=: same as above but positions are PBC-unfolded (useful for dynamic correlations)
+- =_vel=: velocities as a list of =(ndim, npart)= numpy arrays, one per frame
+
+*** Static correlations
+
+This is a gist of a new correlation class that computes a static correlation over some grid and averages it over the frames
 #+begin_src python
+import atooms.postprocessing as pp
 from collections import defaultdict
 import numpy
 
-def some_function(x, pos):
-    return 0.0
-
-class NewCorrelation(pp.correlation.Correlation):
+class NewStaticCorrelation(pp.correlation.Correlation):
     def __init__(self, trajectory, grid):
-        pp.correlation.Correlation.__init__(self, trajectory, grid)
+        # The grid will be stored in self grid
+        super().__init__(trajectory, grid)
+        # We only need the positions
         self.phasespace = ["pos"]
 
     def _compute(self):
-        raw = defaultdict(list)
+        # Kernel function
+        def my_correlation(grid, pos):
+            return numpy.ones_like(grid)
+
+        # We average over all the frames here
+        raw = []
         for i in range(len(self._pos)):
-            for x in self.grid: 
-                raw[x].append(some_function(x, self._pos[i]))        
-        self.value = [numpy.mean(raw[x]) for x in raw]
-#+end_src
+            raw.append(my_correlation(self.grid, self._pos[i]))
+        self.value = numpy.array(raw).mean(axis=0)
 
-#+results:
-
-#+begin_src python
-nw = NewCorrelation(th, [0.0, 1.0])
+from atooms.trajectory import TrajectoryXYZ
+th = TrajectoryXYZ(path)
+nw = NewStaticCorrelation(th, [0.0, 1.0])
 nw.compute()
-print(nw.value)
 #+end_src
 
-#+results:
-: [0.0, 0.0]
+*** Dynamic correlations
+
+To compute time-dependent correlation function, we can proceed as above, looping over time origins and computing correlations between frames spaced by intervals given by an input =grid=. There is a helper function that deals with finding a suitable set of frames to best match an input =grid= (assumed to be in real time). This deals with the general case of trajectories with exponential time spacing.
+#+begin_src python
+from collections import defaultdict
+import atooms.postprocessing as pp
+import numpy
+from atooms.postprocessing.helpers import setup_t_grid
+
+class NewDynamicCorrelation(pp.correlation.Correlation):
+    def __init__(self, trajectory, tgrid):
+        pp.correlation.Correlation.__init__(self, trajectory, tgrid)
+        self.phasespace = ["pos"]
+        # Here we setup a grid of frames that best match the input tgrid
+        # See below how to use it
+        self._discrete_tgrid = setup_t_grid(self.trajectory, tgrid)
+
+    def _compute(self):
+        # Kernel function
+        def my_correlation(grid, pos_0, pos_1):
+            return 1.0
+
+        assert 0 in self.grid
+        raw = defaultdict(list)
+        # Here we get an offset frame and a corresponding separation t (in frame)
+        for offset, t in self._discrete_tgrid:
+            # We loop over compatible origin frames t_0, starting from offset,
+            # skipping every self.skip frame
+            for t_0 in range(offset, len(self._pos)-t, self.skip):
+                # Compute the actual time intervale between the frames in steps
+                dt = self.trajectory.steps[t_0 + t] - self.trajectory.steps[t_0]
+                cf = my_correlation(self.grid, self._pos[t_0 + t], self._pos[t_0])
+                raw[dt].append(cf)
+
+        # Normalization by the value at zero
+        self.value = [numpy.mean(raw[dt]) / numpy.mean(raw[0]) for dt in raw]
+
+nw = NewDynamicCorrelation(th, [0.0, 1.0, 2.0])
+nw.compute()
+#+end_src
 
 ** Storing results and analysis
 
