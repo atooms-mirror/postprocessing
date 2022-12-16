@@ -196,6 +196,33 @@ class TestRealSpace(unittest.TestCase):
         self.assertLess(deviation(gr_AX.value[15:25], 0.8 * gr_AA.value[15:25] + 0.2 * gr_AB.value[15:25]), 0.04)
         ts.close()
 
+    def test_gr_partial_2d_open(self):
+        from atooms.postprocessing.partial import Partial
+        import numpy
+        def fix_2d(system):
+            cm = system.cm_position[: 2]
+            system.cell.periodic = numpy.array([False, False])
+            system.cell.side = system.cell.side[0: 2]
+            for p in system.particle:
+                p.position = p.position[0: 2] - cm
+            return system
+        f = os.path.join('atoms_coordinates_test.xyz')
+        ts = trajectory.TrajectoryXYZ(f)
+        ts.add_callback(fix_2d)        
+        gr = Partial(postprocessing.RadialDistributionFunction, ['0', '1'], ts, rmax=2.0)
+        gr.compute()
+
+        import matplotlib.pyplot as plt
+        plt.plot(gr.partial[('0', '0')].grid[1:], gr.partial[('0', '0')].value[1:])
+        plt.plot(gr.partial[('0', '1')].grid[1:], gr.partial[('0', '1')].value[1:])
+        plt.plot(gr.partial[('1', '1')].grid[1:], gr.partial[('1', '1')].value[1:])
+        plt.grid()
+        # p = ts[0].dump('pos')
+        # plt.plot(p[:, 0], p[:, 1], 'o')
+        plt.show()
+        ts.close()
+
+        
 class TestFourierSpace(unittest.TestCase):
 
     def setUp(self):

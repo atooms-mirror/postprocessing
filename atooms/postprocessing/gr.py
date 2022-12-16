@@ -109,7 +109,9 @@ class RadialDistributionFunctionLegacy(Correlation):
                 # Redefine grid to extend up to L
                 # The grid will be cropped later to L/2
                 # This retains the original dr
-                self.grid = linear_grid(self.dr/2, min(system.cell.side), self.dr)
+                # TODO: this should be the max no?
+                #self.grid = linear_grid(self.dr/2, min(system.cell.side), self.dr)
+                self.grid = linear_grid(self.dr/2, max(system.cell.side), self.dr)
             else:
                 # If there is no cell, then rmax must have been given
                 # This retains the original dr
@@ -119,6 +121,7 @@ class RadialDistributionFunctionLegacy(Correlation):
                     self.grid = linear_grid(self.dr/2, self.dr*1000, self.dr)
 
         # Internal max distance (/= user provided rmax)
+        # TODO: not used
         self._rmax = self.grid[-1]
 
     def _compute(self):
@@ -279,13 +282,16 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
             # domain, we must crop particles close to the surface
             # self_term = 0
             if hasattr(system.cell, 'periodic') and not numpy.any(system.cell.periodic):
+                # Return booleans does not work here
                 # mask = numpy.ndarray(pos_0.shape[1], dtype=numpy.bool)
-                # TODO: bool does not work
+                # So we just use integers, which are 1 is particles are on the surface
                 mask = compute.on_surface_c(pos_0, side, self.rmax)
                 mask = mask == 1
-                pos_0 = pos_0[:, mask]
-                # Force distinct calculation
+                pos_0 = pos_0[mask, :]
+                # Force distinct calculation. This gives a spurious signal at r=0.
                 distinct = True
+                # TODO: with rmax and linked cells we have normalization issues so disabled
+                linkedcells = None
 
             # Store number of particles for normalization
             N_0.append(pos_0.shape[0])
