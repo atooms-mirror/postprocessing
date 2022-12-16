@@ -403,7 +403,7 @@ contains
     integer(8), intent(in)    :: neighbors(:,:), number_of_neighbors(:)
     integer(8), intent(inout) :: hist(:)
     real(8), intent(inout) :: bins(:)
-    real(8)                   :: distances(size(positions,1))  ! stack
+    real(8)                   :: distances(size(other,1))  ! stack
     real(8), intent(in)       :: box(:)
     real(8)    :: dist(size(box)), dist_sq, pos(size(box)), rmax, hbox(size(box))
     integer(8) :: i, j, ii, jj, bin, k, delta
@@ -424,7 +424,7 @@ contains
        do jj=1,number_of_neighbors(i)
           j = neighbors(i,jj) + delta
           k = k+1
-          dist(:) = other(:,j) - pos(:)
+          dist(:) = other(j,:) - pos(:)
           where (abs(dist) > hbox)
              dist = dist - sign(box,dist)
           end where
