@@ -204,6 +204,7 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
     """
 
     def _compute(self):
+        import sys
         from atooms.postprocessing.realspace_wrap import compute
         from atooms.postprocessing.linkedcells import LinkedCells
 
@@ -214,8 +215,6 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
         gr_all = []
 
         # Grid setup.
-        # Get side of cell. If the system does not have a cell,
-        # wrap it in an infinite cell and estimate a reasonable grid.
         system = self.trajectory.read(0)
         ndims = system.number_of_dimensions
         self._setup_grid(system)
@@ -228,6 +227,7 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
         # - memory footprint is < ~1Gb
         # These tests are done of the first framce
         # TODO: if memory footprint is surpassed skip particles
+        # TODO: fix fluctating cell case!
         linkedcells = None
         if self.rmax > 0.0 and system.cell is not None:
             n_0 = len(self._pos_0[0])
@@ -247,44 +247,34 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
         # Main loop for average
         origins = range(0, len(self.trajectory), self.skip)
         for i in progress(origins):
+            # Shortcuts
+            pos_0 = self._pos_0[i]
+            pos_1 = self._pos_1[i]
+                
             # Skip if there are no particles
-            if len(self._pos_0[i]) == 0 or len(self._pos_1[i]) == 0:
+            if len(pos_0) == 0 or len(pos_1) == 0:
                 continue
 
             # Switch between self and distinct calculation
-            distinct = self._pos_0 is not self._pos_1
+            distinct = pos_0 is not pos_1
 
             # Store side
             system = self.trajectory.read(i)
             if system.cell is not None:
                 side = system.cell.side
             else:
-                import sys
+                # If the system does not have a cell,
+                # wrap it in an infinite cell
                 side = numpy.ndarray(ndims, dtype=float)
                 side[:] = sys.float_info.max
-
-            # When using linked cells, we precalculate the neighbors
-            if linkedcells:
-                if self._pos_0 is self._pos_1:
-                    neighbors, number_of_neighbors = linkedcells.compute(side, self._pos_0[i], as_array=True)
-                else:
-                    neighbors, number_of_neighbors = linkedcells.compute(side, self._pos_0[i], self._pos_1[i], as_array=True)
-
-            # Shortcuts
-            if distinct:
-                pos_0 = self._pos_0[i]
-                pos_1 = self._pos_1[i]
-            else:
-                pos_0 = self._pos_0[i]
-                pos_1 = pos_0
 
             # With a non-periodic cell, which just bounds the physical
             # domain, we must crop particles close to the surface
             # self_term = 0
-            if hasattr(system.cell, 'periodic') and not numpy.any(system.cell.periodic):
-                # Return booleans does not work here
-                # mask = numpy.ndarray(pos_0.shape[1], dtype=numpy.bool)
-                # So we just use integers, which are 1 is particles are on the surface
+            if system.cell is not None and hasattr(system.cell, 'periodic') and \
+               not numpy.any(system.cell.periodic):
+                # Booleans do not work here,
+                # so we just use integers, which are 1 is particles are on the surface
                 mask = compute.on_surface_c(pos_0, side, self.rmax)
                 mask = mask == 1
                 pos_0 = pos_0[mask, :]
@@ -293,9 +283,19 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
                 # TODO: with rmax and linked cells we have normalization issues so disabled
                 linkedcells = None
 
+            # When using linked cells, we precalculate the neighbors
+            if linkedcells:
+                if not distinct:
+                    neighbors, number_of_neighbors = linkedcells.compute(side, pos_0, as_array=True)
+                else:
+                    neighbors, number_of_neighbors = linkedcells.compute(side, pos_0, pos_1, as_array=True)
+                
             # Store number of particles for normalization
             N_0.append(pos_0.shape[0])
-            N_1.append(pos_1.shape[0])
+            if distinct:
+                N_1.append(pos_1.shape[0])
+            else:
+                N_1.append(pos_0.shape[0])
 
             # Compute g(r)
             if not distinct:
