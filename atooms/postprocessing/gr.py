@@ -109,9 +109,7 @@ class RadialDistributionFunctionLegacy(Correlation):
                 # Redefine grid to extend up to L
                 # The grid will be cropped later to L/2
                 # This retains the original dr
-                # TODO: this should be the max no?
-                #self.grid = linear_grid(self.dr/2, min(system.cell.side), self.dr)
-                self.grid = linear_grid(self.dr/2, max(system.cell.side), self.dr)
+                self.grid = linear_grid(self.dr/2, max(system.cell.side)*ndims**0.5, self.dr)
             else:
                 # If there is no cell, then rmax must have been given
                 # This retains the original dr
@@ -196,10 +194,17 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
     with a spacing of `dr`. Here, L is the side of the simulation cell
     along the x axis at the first step.
 
+    If `cell` is not `None`, then
+    - if all directions are periodic, we do the standard calculation
+    - if all directions are non periodic, we crop the bulk of the cell
+      (this can be used to analyze a subsystem)
+    - (TODO) if only some directions are non periodic, we shouldadd
+      means to bin g(r) according to some callback of system
+
     Additional parameters:
     ----------------------
 
-    - norigins: controls the number of trajectory frames to compute
+    - `norigins`: controls the number of trajectory frames to compute
       the time average
     """
 
@@ -250,46 +255,53 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
             # Shortcuts
             pos_0 = self._pos_0[i]
             pos_1 = self._pos_1[i]
-                
+
             # Skip if there are no particles
             if len(pos_0) == 0 or len(pos_1) == 0:
                 continue
 
             # Switch between self and distinct calculation
             distinct = pos_0 is not pos_1
+            remove_self_term = False
 
             # Store side
             system = self.trajectory.read(i)
-            if system.cell is not None:
-                side = system.cell.side
-            else:
-                # If the system does not have a cell,
-                # wrap it in an infinite cell
-                side = numpy.ndarray(ndims, dtype=float)
-                side[:] = sys.float_info.max
-
-            # With a non-periodic cell, which just bounds the physical
-            # domain, we must crop particles close to the surface
-            # self_term = 0
             if system.cell is not None and hasattr(system.cell, 'periodic') and \
-               not numpy.any(system.cell.periodic):
-                # Booleans do not work here,
-                # so we just use integers, which are 1 is particles are on the surface
-                mask = compute.on_surface_c(pos_0, side, self.rmax)
-                mask = mask == 1
-                pos_0 = pos_0[mask, :]
-                # Force distinct calculation. This gives a spurious signal at r=0.
+               sum(system.cell.periodic) == 0 and self.rmax > 0:
+                # With a non-periodic cell, which just bounds the physical
+                # domain, we crop particles away from the surface (within rmax)
+                assert self.rmax > 0, 'provide rmax>0'
+                # Booleans do not work here, so we just use integers,
+                # which are 1 is particles are on the surface and 0 otherwise
+                mask = compute.on_surface_c(pos_0, system.cell.side, self.rmax)
+                pos_0 = pos_0[mask == 0, :]
+                # Force distinct calculation. This gives a spurious signal at r=0, which we remove
                 distinct = True
-                # TODO: with rmax and linked cells we have normalization issues so disabled
-                linkedcells = None
+                remove_self_term = True
 
             # When using linked cells, we precalculate the neighbors
+            # This will only happen if the system is within a cell (and all directions are periodic)
             if linkedcells:
                 if not distinct:
-                    neighbors, number_of_neighbors = linkedcells.compute(side, pos_0, as_array=True)
+                    neighbors, number_of_neighbors = linkedcells.compute(system.cell.side, pos_0, as_array=True, periodic=system.cell.periodic)
                 else:
-                    neighbors, number_of_neighbors = linkedcells.compute(side, pos_0, pos_1, as_array=True)
-                
+                    neighbors, number_of_neighbors = linkedcells.compute(system.cell.side, pos_0, pos_1, as_array=True, periodic=system.cell.periodic)
+
+            # If there is no cell and anyway along non-periodic directions,
+            # we replace sides with infty to work with f90 kernels (which apply PBC)
+            if system.cell is not None:
+                side = system.cell.side.copy()
+                # TODO: fix partly periodic boundaries
+                assert sum(system.cell.periodic) in [0, ndims], \
+                    'partly periodic cells are not supported yet'
+                for i in range(len(side)):
+                    if not system.cell.periodic[i]:
+                        side[i] = sys.float_info.max
+            else:
+                # If the system does not have a cell, wrap it in an
+                # infinite cell. This way we can still use PBC in f90 kernels
+                side = sys.float_info.max * numpy.ones(ndims, dtype=float)
+
             # Store number of particles for normalization
             N_0.append(pos_0.shape[0])
             if distinct:
@@ -320,7 +332,6 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
         if system.cell is not None:
             volume = system.cell.volume
         else:
-            # TODO: this only works with recent atooms
             volume = len(system.particle) / system.density
         if ndims == 2:
             vol = math.pi * (r[1:]**2 - r[:-1]**2)
@@ -333,14 +344,17 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
 
         rho = N_1 / volume
         norm = rho * vol * N_0
+
         if not distinct:
             # We used Newton III
             norm /= 2
         gr = numpy.average(gr_all, axis=0)
 
-        # We crop the last entry
-        self.grid = bins[:-1]
+        # Normalize and clean up boundaries
         self.value = gr[:-1] / norm
+        self.grid = bins[:-1]
+        if remove_self_term:
+            self.value[0] = self.value[1]
 
         # Restrict distances to L/2 (in last frame) or rmax
         if self.rmax > 0:

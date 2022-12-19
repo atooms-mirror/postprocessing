@@ -124,8 +124,8 @@ class TestRealSpace(unittest.TestCase):
         p1 = postprocessing.RadialDistributionFunctionFast(ts, rmax=5)
         p1.add_filter(filter_species, isp)
         res[5] = p1.compute()
-        # p.show(now=False)
-        # p1.show()
+        #p.show(now=False)
+        #p1.show()
         #self.assertLess(deviation(res[-1][1], res[5][1]), 1e-3)
         ts.close()
 
@@ -196,33 +196,44 @@ class TestRealSpace(unittest.TestCase):
         self.assertLess(deviation(gr_AX.value[15:25], 0.8 * gr_AA.value[15:25] + 0.2 * gr_AB.value[15:25]), 0.04)
         ts.close()
 
-    # def test_gr_partial_2d_open(self):
-    #     from atooms.postprocessing.partial import Partial
-    #     import numpy
-    #     def fix_2d(system):
-    #         cm = system.cm_position[: 2]
-    #         system.cell.periodic = numpy.array([False, False])
-    #         system.cell.side = system.cell.side[0: 2]
-    #         for p in system.particle:
-    #             p.position = p.position[0: 2] - cm
-    #         return system
-    #     f = os.path.join('atoms_coordinates_test.xyz')
-    #     ts = trajectory.TrajectoryXYZ(f)
-    #     ts.add_callback(fix_2d)        
-    #     gr = Partial(postprocessing.RadialDistributionFunction, ['0', '1'], ts, rmax=2.0)
-    #     gr.compute()
+    def test_gr_partial_2d_open(self):
+        from atooms.trajectory import TrajectoryRam
+        from atooms.system import System
+        from atooms.postprocessing.partial import Partial
+        import numpy
+        numpy.random.seed(1)
 
-    #     import matplotlib.pyplot as plt
-    #     plt.plot(gr.partial[('0', '0')].grid[1:], gr.partial[('0', '0')].value[1:])
-    #     plt.plot(gr.partial[('0', '1')].grid[1:], gr.partial[('0', '1')].value[1:])
-    #     plt.plot(gr.partial[('1', '1')].grid[1:], gr.partial[('1', '1')].value[1:])
-    #     plt.grid()
-    #     # p = ts[0].dump('pos')
-    #     # plt.plot(p[:, 0], p[:, 1], 'o')
-    #     plt.show()
-    #     ts.close()
+        def fix_2d(system, periodic):
+            system.cell.periodic = numpy.array(periodic)
+            system.cell.side = system.cell.side[0: 2]
+            for p in system.particle:
+                p.position = p.position[0: 2]
+            return system
 
-        
+        def _kernel(rmax, periodic):
+            s = System(N=1000)
+            for p in s.particle:
+                p.position[:] = numpy.random.random(s.cell.side.shape) - 0.5
+            s.density = 1.0
+            s = fix_2d(s, periodic)
+            ts = TrajectoryRam()
+            ts.write(s)
+            gr = postprocessing.RadialDistributionFunction(ts, dr=0.1, rmax=rmax)
+            gr.compute()
+            # import matplotlib.pyplot as plt
+            # plt.plot(gr.grid, gr.value)
+            # p = ts[0].dump('pos')
+            # #plt.plot(p[:, 0], p[:, 1], 'o')
+            # plt.show()
+            ts.close()
+
+            self.assertTrue(numpy.all(numpy.abs(gr.value - 1) < 0.1))
+
+        _kernel(rmax=-1.0, periodic=[True, True])
+        _kernel(rmax=+2.0, periodic=[True, True])
+        _kernel(rmax=+2.0, periodic=[False, False])
+
+
 class TestFourierSpace(unittest.TestCase):
 
     def setUp(self):
