@@ -324,6 +324,11 @@ class RadialDistributionFunctionFast(RadialDistributionFunctionLegacy):
             # Damned copies in python
             gr_all.append(gr.copy())
 
+        # import matplotlib.pyplot as plt
+        # plt.plot(pos_0[:, 0], pos_0[:, 1], 'o')
+        # plt.plot(pos_1[:, 0], pos_1[:, 1], '+')
+        # plt.show()
+        
         # Normalization
         # Array r is used to compute shells, we thus use the bin boundaries
         r = bins - (bins[1] - bins[0]) / 2
