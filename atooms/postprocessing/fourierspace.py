@@ -24,7 +24,7 @@ def expo_sphere(k0, nk_max, pos):
     # Technical note: we use ellipsis, so that we can pass either a
     # single sample or multiple samples without having to add a
     # trivial extra dimension to input array
-    im = numpy.complex(0.0, 1.0)
+    im = numpy.complex128('0+1j')
     # The integer grid must be the same as the one set in kgrid,
     # otherwise there is an offset the problem is that integer
     # negative indexing is impossible in python and rounding or
@@ -35,7 +35,7 @@ def expo_sphere(k0, nk_max, pos):
     # could be dropped using different nkmax for x, y, z
     # The shape of expo is nframes, N, ndim, 2*nk+1
     expo = numpy.ndarray((len(pos), ) + pos[0].shape + (2*nk_max+1, ), numpy.complex128)
-    expo[..., nk_max] = numpy.complex(1.0, 0.0)
+    expo[..., nk_max] = numpy.complex128('1+0j')
     # First fill positive k
     for j in range(pos[0].shape[-1]):
         expo[..., j, nk_max+1] = numpy.exp(im * k0[j] * pos[..., j])
@@ -56,11 +56,11 @@ def expo_sphere_safe(k0, kmax, pos):
     Returns the exponentials of the input positions for each k.
     It does not use ellipsis.
     """
-    im = numpy.complex(0.0, 1.0)
+    im = numpy.complex128('0+1j')
     ndims = pos.shape[-1]
     nk_max = 1 + int(kmax / min(k0))
     expo = numpy.ndarray(pos.shape + (2*nk_max+1, ), numpy.complex128)
-    expo[:, :, :, nk_max] = numpy.complex(1.0, 0.0)
+    expo[:, :, :, nk_max] = numpy.complex128('1+0j')
 
     for j in range(ndims):
         expo[:, :, j, nk_max+1] = numpy.exp(im*k0[j]*pos[:, :, j])
