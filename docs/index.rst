@@ -13,7 +13,7 @@ In this tutorial, we are going to show how to perform standard analysis of molec
 Setup
 ~~~~~
 
-We start with a few imports and plot customizations. We will read a trajectory file in XYZ format, so we also load the ``TrajectoryXYZ`` class from ``atooms``.
+We start with a few imports. We will read a trajectory file in XYZ format, so we also load the ``TrajectoryXYZ`` class from ``atooms``.
 
 .. code:: python
 
@@ -51,6 +51,7 @@ The trajectory is a list-like object, in the sense that it can be iterated upon 
     with chemical concentration x={'A': 0.8, 'B': 0.2}
     enclosed in a cubic box at number density rho=1.200000
 
+
 To know how many frames we have
 
 .. code:: python
@@ -60,6 +61,7 @@ To know how many frames we have
 ::
 
     521
+
 
 .. note::
 
@@ -178,10 +180,11 @@ In this case, the result contains a dictionary ``gr.partial``
 
 ::
 
-    {('A', 'A'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7fca93e8dd60>,
-     ('A', 'B'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7fca93e8dbe0>,
-     ('B', 'A'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7fca93e8dc70>,
-     ('B', 'B'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7fca93e8de80>}
+    >>> {('A', 'A'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f4cf1a53b80>,
+     ('A', 'B'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f4cf1a53be0>,
+     ('B', 'A'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f4cf1a53ca0>,
+     ('B', 'B'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f4cf1a53a60>}
+
 
 We plot all correlation functions
 
@@ -265,7 +268,7 @@ We compute the self part of the intermediate scattering function (ISF) at specif
     tgrid = th.timestep * numpy.logspace(0, 5, base=10)
     isf = pp.Partial(pp.SelfIntermediateScattering, species=["A"], trajectory=th,
                      kgrid=[pi, 7.0], nk=3, dk=0.1, tgrid=tgrid)
-    isf.do()
+    isf.compute()
 
 .. note::
 
@@ -410,11 +413,12 @@ The output file path is interpolated using the variable ``core.pp_output_path``
 
 .. code:: python
 
-    print({} gives {}'.format(pp.core.pp_output_path, msd._output_file))
+    print('{} gives {}'.format(pp.core.pp_output_path, msd._output_file))
 
 ::
 
-    {trajectory.filename}.pp.{symbol}.{tag} leads to /tmp/kalj-small.xyz.pp.msd
+    {trajectory.filename}.pp.{symbol}.{tag} gives /tmp/kalj.xyz.pp.msd
+
 
 To change the output file pattern just modify the string. You can use any ``Correlation`` attribute enclosed in brackets to parameterize the output.
 
@@ -429,8 +433,9 @@ Some correlation functions may implement some basic analysis as well
 
 ::
 
-    {'diffusion coefficient D': 0.004481283121206189,
-     'diffusive time tau_D': 30.841529039944426}
+    {'diffusion coefficient D': 0.012115095529748822,
+     'diffusive time tau_D': 14.341564407459972}
+
 
 If ``analyze()`` is called before ``compute()``, the above dictionary will be written in the output file as well.
 

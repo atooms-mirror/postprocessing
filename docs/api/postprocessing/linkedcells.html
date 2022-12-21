@@ -44,20 +44,39 @@ class LinkedCells(object):
         self.neighbors = []
         self._is_adjusted = False
 
-    def _map(self, newton):
+    def adjust(self, box, newton, periodic=None):
+        self.box = box
+        self.hbox = box / 2
+        self.n_cell = (box / self.rcut).astype(int)
+        self.box_cell = self.box / self.n_cell
+        if periodic is None:
+            periodic = numpy.array([True] * len(box))
+        self._map(newton, periodic)
+
+    def _map(self, newton, periodic):
         def _pbc(t, N):
+            &#34;&#34;&#34;Apply PBCs to cell only along periodic directions&#34;&#34;&#34;
             for i in range(len(t)):
+                if not periodic[i]:
+                    continue
                 if t[i] &gt;= N[i]:
                     t[i] -= N[i]
                 elif t[i] &lt; 0:
                     t[i] += N[i]
             return t
 
+        def _outside(t, N):
+            &#34;&#34;&#34;Check whether subcell is outside cell&#34;&#34;&#34;
+            for i in range(len(t)):
+                if t[i] &gt;= N[i] or t[i] &lt; 0:
+                    return True
+            return False
+
         def _map_3d_newton(n_cell):
             neigh_cell = {}
-            for ix in range(self.n_cell[0]):
-                for iy in range(self.n_cell[1]):
-                    for iz in range(self.n_cell[2]):
+            for ix in range(n_cell[0]):
+                for iy in range(n_cell[1]):
+                    for iz in range(n_cell[2]):
                         # This is a map of neighbouring cells obeying III law
                         neigh_cell[(ix, iy, iz)] = \
                             [(ix+1, iy, iz), (ix+1, iy+1, iz), (ix, iy+1, iz),
@@ -69,8 +88,8 @@ class LinkedCells(object):
 
         def _map_2d_newton(n_cell):
             neigh_cell = {}
-            for ix in range(self.n_cell[0]):
-                for iy in range(self.n_cell[1]):
+            for ix in range(n_cell[0]):
+                for iy in range(n_cell[1]):
                     # This is a map of neighbouring cells obeying III law
                     neigh_cell[(ix, iy)] = \
                         [(ix+1, iy), (ix+1, iy+1), (ix, iy+1), (ix-1, iy+1)]
@@ -115,20 +134,21 @@ class LinkedCells(object):
         else:
             raise ValueError(&#39;linked cells not supported for dimensions not in {2,3}&#39;)
 
-        # Apply PBC to neighboring &#34;ghost&#34; cells
-        for i in self._neigh_cell:
-            for j in range(len(self._neigh_cell[i])):
-                # if numpy.any(numpy.array(self._neigh_cell[i][j]) &lt; 0) or \
-                #    numpy.any(numpy.array(self._neigh_cell[i][j]) &gt;= self.n_cell):
-                folded = _pbc(list(self._neigh_cell[i][j]), self.n_cell)
-                self._neigh_cell[i][j] = tuple(folded)
+        # Apply PBC
+        for key in self._neigh_cell:
+            for idx in range(len(self._neigh_cell[key])):
+                folded = _pbc(list(self._neigh_cell[key][idx]), self.n_cell)
+                self._neigh_cell[key][idx] = tuple(folded)
 
-    def adjust(self, box, newton):
-        self.box = box
-        self.hbox = box / 2
-        self.n_cell = (box / self.rcut).astype(int)
-        self.box_cell = self.box / self.n_cell
-        self._map(newton=newton)
+        # Remove subcells that are out of bounds
+        # (this is only applied to non periodic directions)
+        new_neigh_cell = {}
+        for key in self._neigh_cell:
+            new_neigh_cell[key] = []
+            for subcell in self._neigh_cell[key]:
+                if not _outside(subcell, self.n_cell):
+                    new_neigh_cell[key].append(subcell)
+        self._neigh_cell = new_neigh_cell
 
     def _index(self, pos):
         x = ((pos + self.hbox) / self.box_cell)
@@ -143,9 +163,9 @@ class LinkedCells(object):
                 break
         return found
 
-    def compute(self, box, pos, other=None, as_array=False, newton=True):
+    def compute(self, box, pos, other=None, as_array=False, newton=True, periodic=None):
         if not self._is_adjusted:
-            self.adjust(box, newton=other is None and newton)
+            self.adjust(box, newton=other is None and newton, periodic=periodic)
             self._is_adjusted = True
         # We only need positions here but how can we be sure that
         # this is the same set of particles we use when retrieving
@@ -311,20 +331,39 @@ class LinkedCells(object):
         self.neighbors = []
         self._is_adjusted = False
 
-    def _map(self, newton):
+    def adjust(self, box, newton, periodic=None):
+        self.box = box
+        self.hbox = box / 2
+        self.n_cell = (box / self.rcut).astype(int)
+        self.box_cell = self.box / self.n_cell
+        if periodic is None:
+            periodic = numpy.array([True] * len(box))
+        self._map(newton, periodic)
+
+    def _map(self, newton, periodic):
         def _pbc(t, N):
+            &#34;&#34;&#34;Apply PBCs to cell only along periodic directions&#34;&#34;&#34;
             for i in range(len(t)):
+                if not periodic[i]:
+                    continue
                 if t[i] &gt;= N[i]:
                     t[i] -= N[i]
                 elif t[i] &lt; 0:
                     t[i] += N[i]
             return t
 
+        def _outside(t, N):
+            &#34;&#34;&#34;Check whether subcell is outside cell&#34;&#34;&#34;
+            for i in range(len(t)):
+                if t[i] &gt;= N[i] or t[i] &lt; 0:
+                    return True
+            return False
+
         def _map_3d_newton(n_cell):
             neigh_cell = {}
-            for ix in range(self.n_cell[0]):
-                for iy in range(self.n_cell[1]):
-                    for iz in range(self.n_cell[2]):
+            for ix in range(n_cell[0]):
+                for iy in range(n_cell[1]):
+                    for iz in range(n_cell[2]):
                         # This is a map of neighbouring cells obeying III law
                         neigh_cell[(ix, iy, iz)] = \
                             [(ix+1, iy, iz), (ix+1, iy+1, iz), (ix, iy+1, iz),
@@ -336,8 +375,8 @@ class LinkedCells(object):
 
         def _map_2d_newton(n_cell):
             neigh_cell = {}
-            for ix in range(self.n_cell[0]):
-                for iy in range(self.n_cell[1]):
+            for ix in range(n_cell[0]):
+                for iy in range(n_cell[1]):
                     # This is a map of neighbouring cells obeying III law
                     neigh_cell[(ix, iy)] = \
                         [(ix+1, iy), (ix+1, iy+1), (ix, iy+1), (ix-1, iy+1)]
@@ -382,20 +421,21 @@ class LinkedCells(object):
         else:
             raise ValueError(&#39;linked cells not supported for dimensions not in {2,3}&#39;)
 
-        # Apply PBC to neighboring &#34;ghost&#34; cells
-        for i in self._neigh_cell:
-            for j in range(len(self._neigh_cell[i])):
-                # if numpy.any(numpy.array(self._neigh_cell[i][j]) &lt; 0) or \
-                #    numpy.any(numpy.array(self._neigh_cell[i][j]) &gt;= self.n_cell):
-                folded = _pbc(list(self._neigh_cell[i][j]), self.n_cell)
-                self._neigh_cell[i][j] = tuple(folded)
+        # Apply PBC
+        for key in self._neigh_cell:
+            for idx in range(len(self._neigh_cell[key])):
+                folded = _pbc(list(self._neigh_cell[key][idx]), self.n_cell)
+                self._neigh_cell[key][idx] = tuple(folded)
 
-    def adjust(self, box, newton):
-        self.box = box
-        self.hbox = box / 2
-        self.n_cell = (box / self.rcut).astype(int)
-        self.box_cell = self.box / self.n_cell
-        self._map(newton=newton)
+        # Remove subcells that are out of bounds
+        # (this is only applied to non periodic directions)
+        new_neigh_cell = {}
+        for key in self._neigh_cell:
+            new_neigh_cell[key] = []
+            for subcell in self._neigh_cell[key]:
+                if not _outside(subcell, self.n_cell):
+                    new_neigh_cell[key].append(subcell)
+        self._neigh_cell = new_neigh_cell
 
     def _index(self, pos):
         x = ((pos + self.hbox) / self.box_cell)
@@ -410,9 +450,9 @@ class LinkedCells(object):
                 break
         return found
 
-    def compute(self, box, pos, other=None, as_array=False, newton=True):
+    def compute(self, box, pos, other=None, as_array=False, newton=True, periodic=None):
         if not self._is_adjusted:
-            self.adjust(box, newton=other is None and newton)
+            self.adjust(box, newton=other is None and newton, periodic=periodic)
             self._is_adjusted = True
         # We only need positions here but how can we be sure that
         # this is the same set of particles we use when retrieving
@@ -467,7 +507,7 @@ class LinkedCells(object):
 <h3>Methods</h3>
 <dl>
 <dt id="postprocessing.linkedcells.LinkedCells.adjust"><code class="name flex">
-<span>def <span class="ident">adjust</span></span>(<span>self, box, newton)</span>
+<span>def <span class="ident">adjust</span></span>(<span>self, box, newton, periodic=None)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -475,16 +515,18 @@ class LinkedCells(object):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def adjust(self, box, newton):
+<pre><code class="python">def adjust(self, box, newton, periodic=None):
     self.box = box
     self.hbox = box / 2
     self.n_cell = (box / self.rcut).astype(int)
     self.box_cell = self.box / self.n_cell
-    self._map(newton=newton)</code></pre>
+    if periodic is None:
+        periodic = numpy.array([True] * len(box))
+    self._map(newton, periodic)</code></pre>
 </details>
 </dd>
 <dt id="postprocessing.linkedcells.LinkedCells.compute"><code class="name flex">
-<span>def <span class="ident">compute</span></span>(<span>self, box, pos, other=None, as_array=False, newton=True)</span>
+<span>def <span class="ident">compute</span></span>(<span>self, box, pos, other=None, as_array=False, newton=True, periodic=None)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -492,9 +534,9 @@ class LinkedCells(object):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def compute(self, box, pos, other=None, as_array=False, newton=True):
+<pre><code class="python">def compute(self, box, pos, other=None, as_array=False, newton=True, periodic=None):
     if not self._is_adjusted:
-        self.adjust(box, newton=other is None and newton)
+        self.adjust(box, newton=other is None and newton, periodic=periodic)
         self._is_adjusted = True
     # We only need positions here but how can we be sure that
     # this is the same set of particles we use when retrieving
