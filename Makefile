@@ -23,7 +23,7 @@ debug: version
 docs:
 	rm -rf docs/api
 	pdoc -o docs/api --force --html --skip-errors $(PROJECT)
-	emacs docs/index.org --batch -l ~/.emacs.d/init.el -l ~/.emacs.d/config.el -f org-rst-export-to-rst --kill
+	emacs --batch -l ~/.emacs.d/init.el -l ~/.emacs.d/config.el --file=docs/index.org -f org-rst-export-to-rst --kill
 	orgnb.py docs/*.org
 	make -C docs/ singlehtml
 
