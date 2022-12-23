@@ -43,10 +43,6 @@ div.sphinxsidebar {
     height: auto;
 }
 }
-div.body h1 {
-  padding-bottom: 4px;
-  border-bottom: 1px solid rgb(151, 157, 164);
-}
 div.body h2 {
   padding-bottom: 4px;
   border-bottom: 1px solid rgb(151, 157, 164);
