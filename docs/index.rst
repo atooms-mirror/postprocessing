@@ -8,7 +8,7 @@ Postprocessing with atooms
 
     index
 
-In this tutorial, we are going to show how to perform standard analysis of molecular dynamics trajectories using the ``atooms`` package and its ``postprocessing`` component. You can install ``postprocessing`` from pypi: ``pip install atooms-pp``. 
+In this tutorial, we'll show how to analyze molecular dynamics trajectories using the ``atooms`` package and its ``postprocessing`` component. You can install ``postprocessing`` from pypi: ``pip install atooms-pp``.
 
 Setup
 ~~~~~
@@ -37,6 +37,11 @@ A trajectory is an object with many properties. To load a trajectory, we create 
 .. code:: python
 
     th = TrajectoryXYZ(path)
+
+::
+
+    >>>
+
 
 The trajectory is a list-like object, in the sense that it can be iterated upon and sliced. Each frame of the trajectory contains a ``System`` object, which is a snaphot of the system at a given instant ("frame") during the simulation. We have a look at the last frame
 
@@ -92,17 +97,10 @@ If the trajectory contains metadata, these can be retrieved directly:
 Analysis of the trajectory
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Now that we have constructed a trajectory object, we can proceed to the analysis. We are going to consider two main aspects of the analysis:
-
-- structural correlations
-
-- dynamical correlations
-
-Structural correlations
-^^^^^^^^^^^^^^^^^^^^^^^
+Now that we have constructed a trajectory object, we can proceed to the analysis. We will consider a few basic static and dynamic correlation functions.
 
 Radial distribution function
-::::::::::::::::::::::::::::
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The radial distribution function :math:`g(r)` describes how the local density varies as a function of the distance from a reference particle. In liquids, one normally averages over all particles, obtaining a descriptor of the probability to find a second particle a distance :math:`r` from a given particle, relative to that of the ideal gas.
 
@@ -147,8 +145,8 @@ As you can see there is very little improvement when using the full trajectory.
 
     pl.plot(gr.grid, gr.value, label='Default')
     pl.plot(gr_all.grid, gr_all.value, label='All time origins')
-    pl.xlabel("r")
-    pl.ylabel("g(r)")
+    pl.xlabel("$r$")
+    pl.ylabel("$g(r)$")
 
 .. image:: gr.png
 
@@ -169,7 +167,7 @@ We can compute separate distribution functions for the :math:`A` and :math:`B` p
     gr.partial[('B', 'B')].dr = 0.06
     gr.compute() 
 
-Note how we modified the bin width ``dr`` for the $B$-:math:`B` correlations to compensate for the reduced statistics for the minority species.
+Note how we modified the bin width ``dr`` for the :math:`B` - :math:`B` correlations to compensate for the reduced statistics for the minority species.
 
 In this case, the result contains a dictionary ``gr.partial``
 
@@ -180,10 +178,10 @@ In this case, the result contains a dictionary ``gr.partial``
 
 ::
 
-    >>> {('A', 'A'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f4cf1a53b80>,
-     ('A', 'B'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f4cf1a53be0>,
-     ('B', 'A'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f4cf1a53ca0>,
-     ('B', 'B'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f4cf1a53a60>}
+    {('A', 'A'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f66f4f683d0>,
+     ('A', 'B'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f66f4f750d0>,
+     ('B', 'A'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f66f4f68070>,
+     ('B', 'B'): <atooms.postprocessing.gr.RadialDistributionFunctionFast object at 0x7f66f4f750a0>}
 
 
 We plot all correlation functions
@@ -207,16 +205,13 @@ Sometimes, it is useful to analyse only sections of a trajectory. To this purpos
     gr = pp.RadialDistributionFunction(t, dr=0.03)
     gr.compute()
     pl.plot(gr.grid, gr.value)
-    pl.xlabel("r")
-    pl.ylabel("g(r)")
+    pl.xlabel("$r$")
+    pl.ylabel("$g(r)$")
 
 .. image:: gr_slice.png
 
-Dynamical correlations
-^^^^^^^^^^^^^^^^^^^^^^
-
 Mean square displacement
-::::::::::::::::::::::::
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 We can also compute dynamical correlation functions. The simplest of such quantities is the mean squared displacement (MSD). This is defined as
 
@@ -235,8 +230,8 @@ The analysis process is now familiar. First we construct the msd object and then
     msd = pp.MeanSquareDisplacement(th)
     msd.compute()
     pl.plot(msd.grid, msd.value, '-o')
-    pl.xlabel("t")
-    pl.ylabel("MSD(t)");
+    pl.xlabel("$t$")
+    pl.ylabel("MSD");
 
 .. image:: msd.png
 
@@ -251,13 +246,13 @@ Again, we can compute partial mean square displacements using the ``Partial`` cl
     pl.loglog(msds.partial['A'].grid, msds.partial['A'].value, '-o', label='A')
     pl.loglog(msds.partial['B'].grid, msds.partial['B'].value, '-o', label='B')
     pl.legend()
-    pl.xlabel("t")
-    pl.ylabel("MSD(t)")
+    pl.xlabel("$t$")
+    pl.ylabel("MSD")
 
 .. image:: msd_ab.png
 
 Self intermediate scattering function
-:::::::::::::::::::::::::::::::::::::
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 We compute the self part of the intermediate scattering function (ISF) at specific wave-vectors using a logarithmic time grid. We specify the norm of the wave-vector we want to use for our calculation (``kgrid``) and the number of wave-vectors over which the correlation function will be averaged (``nk``). They are chosen at random in a shell of width ``dk``. To get more info on the parameters passed to compute the ISF, have a look at the help for the base class with ``help(pp.fourierspace.FourierSpaceCorrelation)``.
 
@@ -272,7 +267,7 @@ We compute the self part of the intermediate scattering function (ISF) at specif
 
 .. note::
 
-    Note that now ``grid`` is a tuple of lists: the first one is the list of all the :math:`k`'s (the $k$-number grid) while the second is the list of :math:`t`'s (the time grid, which is identical for all wave-vectors).
+    Note that now ``grid`` is a tuple of lists: the first one is the list of all the :math:`k`'s (the :math:`k` number grid) while the second is the list of :math:`t`'s (the time grid, which is identical for all wave-vectors).
 
 The ISF decays to zero at long times, as it should in an ergodic liquid.
 
@@ -282,7 +277,7 @@ The ISF decays to zero at long times, as it should in an ergodic liquid.
     pl.semilogx(isf_A.grid[1], isf_A.value[0], '-o', label=f'k={isf_A.grid[0][0]:.2f}') 
     pl.semilogx(isf_A.grid[1], isf_A.value[1], '-o', label=f'k={isf_A.grid[0][1]:.2f}') 
     pl.legend()
-    pl.xlabel('t')
+    pl.xlabel('$t$')
     pl.ylabel('ISF')
 
 .. image:: isf.png
