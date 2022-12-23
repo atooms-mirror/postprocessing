@@ -38,11 +38,6 @@ A trajectory is an object with many properties. To load a trajectory, we create 
 
     th = TrajectoryXYZ(path)
 
-::
-
-    >>>
-
-
 The trajectory is a list-like object, in the sense that it can be iterated upon and sliced. Each frame of the trajectory contains a ``System`` object, which is a snaphot of the system at a given instant ("frame") during the simulation. We have a look at the last frame
 
 .. code:: python
